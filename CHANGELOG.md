@@ -1,3 +1,7 @@
+## 1.1.0-beta.12 (2025-3-14)
+
+- chore(example): add concurrency reflection handoff workflow examples
+
 ## 1.1.0-beta.11 (2025-3-14)
 
 - feat(core): add sequential and parallel helper function
