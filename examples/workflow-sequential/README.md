@@ -2,6 +2,26 @@
 
 This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) to build a sequential workflow.
 
+```mermaid
+flowchart LR
+in(In)
+out(Out)
+conceptExtractor(Concept Extractor)
+writer(Writer)
+formatProof(Format Proof)
+
+in --> conceptExtractor --> writer --> formatProof --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class conceptExtractor processing
+class writer processing
+class formatProof processing
+```
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) and npm installed on your machine

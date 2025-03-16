@@ -24,15 +24,6 @@ importers:
         specifier: ^8.4.0
         version: 8.4.0
 
-  examples/agents:
-    dependencies:
-      '@aigne/core-next':
-        specifier: workspace:^
-        version: link:../../packages/core
-      zod:
-        specifier: ^3.24.2
-        version: 3.24.2
-
   examples/mcp-server-puppeteer:
     dependencies:
       '@aigne/core-next':
@@ -43,6 +34,33 @@ importers:
         version: 3.24.2
 
   examples/mcp-server-sqlite:
+    dependencies:
+      '@aigne/core-next':
+        specifier: workspace:^
+        version: link:../../packages/core
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+
+  examples/workflow-concurrency:
+    dependencies:
+      '@aigne/core-next':
+        specifier: workspace:^
+        version: link:../../packages/core
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+
+  examples/workflow-handoff:
+    dependencies:
+      '@aigne/core-next':
+        specifier: workspace:^
+        version: link:../../packages/core
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+
+  examples/workflow-reflection:
     dependencies:
       '@aigne/core-next':
         specifier: workspace:^

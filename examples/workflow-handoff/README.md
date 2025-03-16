@@ -2,6 +2,44 @@
 
 This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) to build a handoff workflow.
 
+```mermaid
+flowchart LR
+
+in(In)
+out(Out)
+agentA(Agent A)
+agentB(Agent B)
+
+in --> agentA --transfer to b--> agentB --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class agentA processing
+class agentB processing
+```
+
+Workflow of a handoff between user and two agents:
+
+
+```mermaid
+sequenceDiagram
+
+participant User
+participant A as Agent A
+participant B as Agent B
+
+User ->> A: transfer to agent b
+A ->> B: transfer to agent b
+B ->> User: What do you need, friend?
+loop
+  User ->> B: It's a beautiful day
+  B ->> User: Sunshine warms the earth,<br />Gentle breeze whispers softly,<br />Nature sings with joy.
+end
+```
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) and npm installed on your machine
