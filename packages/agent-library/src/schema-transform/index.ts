@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
 import type { JSONSchema } from "openai/src/lib/jsonschema.js";
 
+import toJsonSchema from "to-json-schema";
 import mapper from "./agents/mapper";
 import reviewer from "./agents/reviewer";
 
@@ -13,8 +14,9 @@ assert(OPENAI_BASE_URL, "Please set the OPENAI_BASE_URL environment variable");
 export interface TransformInput {
   responseSchema: string;
   responseMapping?: string;
-  responseSampleData?: unknown;
-  sourceData?: unknown;
+  responseSampleData?: string;
+  sourceData?: string;
+  sourceSchema?: string;
   instruction?: string;
   [key: string]: unknown;
 }
@@ -43,6 +45,11 @@ export async function generateMapping({
     const model = new ChatModelOpenAI({
       apiKey: OPENAI_API_KEY,
     });
+
+    // if sourceSchema is not provided, generate it from sourceData
+    if (!input.sourceSchema && input.sourceData) {
+      input.sourceSchema = JSON.stringify(toJsonSchema(JSON.parse(input.sourceData)));
+    }
 
     const engine = new ExecutionEngine({ model, agents: [mapper, reviewer] });
 

@@ -7,6 +7,7 @@ const mapper = AIAgent.from({
   publishTopic: "review_request",
   inputSchema: z.object({
     sourceData: z.string(),
+    sourceSchema: z.string().optional(),
     responseSchema: z.string(),
     instruction: z.string().optional(),
     responseData: z.string().optional(),
@@ -37,12 +38,14 @@ const mapper = AIAgent.from({
                 Important: The output should be a jsonata expression creating an object that matches the following schema:
                 {{responseSchema}}
 
+                特别注意字段描述中的需求
+
                 The instruction from the user is: {{instruction}}
 
                 ------
 
                 Source Data Structure:
-                {{sourceData}}
+                {{sourceSchema}}
 
                 Source data Sample:
                 {{sourceData}}
