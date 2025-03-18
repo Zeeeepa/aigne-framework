@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Agent, FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core-next";
 
 test("Agent.tools", async () => {
   const greeting = FunctionAgent.from({
@@ -16,7 +16,7 @@ test("Agent.tools", async () => {
     }),
   });
 
-  const agent = Agent.from({
+  const agent = FunctionAgent.from({
     tools: [greeting, bye],
   });
 

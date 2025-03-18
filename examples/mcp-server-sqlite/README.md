@@ -2,6 +2,61 @@
 
 This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) and [MCP Server SQlite](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite) to interact with SQLite databases.
 
+```mermaid
+flowchart LR
+
+in(In)
+out(Out)
+agent(Agent)
+sqlite(SQLite MCP Server)
+read_query(Read Query)
+write_query(Write Query)
+create_table(Create Table)
+list_tables(List Tables)
+describe_table(Describe Table)
+
+subgraph SQLite MCP Server
+  sqlite <--> read_query
+  sqlite <--> write_query
+  sqlite <--> create_table
+  sqlite <--> list_tables
+  sqlite <--> describe_table
+end
+
+in --> agent <--> sqlite
+agent --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class agent processing
+class sqlite processing
+class read_query processing
+class write_query processing
+class create_table processing
+class list_tables processing
+class describe_table processing
+```
+
+Following is a sequence diagram of the workflow to interact with an SQLite database:
+
+```mermaid
+sequenceDiagram
+participant User
+participant AI as AI Agent
+participant S as SQLite MCP Server
+participant R as Read Query
+
+User ->> AI: How many products?
+AI ->> S: read_query("SELECT COUNT(*) FROM products")
+S ->> R: execute("SELECT COUNT(*) FROM products")
+R ->> S: 10
+S ->> AI: 10
+AI ->> User: There are 10 products in the database.
+```
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) and npm installed on your machine

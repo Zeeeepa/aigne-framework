@@ -8,17 +8,17 @@
 [![NPM Version](https://img.shields.io/npm/v/@aigne/core-next)](https://www.npmjs.com/package/@aigne/core-next)
 [![MIT licensed](https://img.shields.io/npm/l/@aigne/core-next)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
-## What is AIGNE Framework
+## AIGNE Framework 简介
 
-AIGNE Framework is a functional AI application development framework designed to simplify and accelerate the process of building modern applications. It combines functional programming features, powerful artificial intelligence capabilities, and modular design principles to help developers easily create scalable solutions. AIGNE Framework is also deeply integrated with the Blocklet ecosystem, providing developers with a wealth of tools and resources.
+AIGNE Framework 是一个功能型 AI 应用开发框架，旨在简化和加速现代应用程序的构建过程。它结合了函数式编程特性、强大的人工智能能力和模块化设计原则，帮助开发者轻松创建可扩展的解决方案。AIGNE Framework 还深度集成了 Blocklet 生态系统，为开发者提供丰富的工具和资源。
 
-## Key Features
+## 核心特性
 
-- **Modular Design**: With a clear modular structure, developers can easily organize code, improve development efficiency, and simplify maintenance.
-- **TypeScript Support**: Comprehensive TypeScript type definitions are provided, ensuring type safety and enhancing the developer experience.
-- **Blocklet Ecosystem Integration**: Closely integrated with the Blocklet ecosystem, providing developers with a one-stop solution for development and deployment.
+- **模块化设计**：采用清晰的模块化结构，开发者可以轻松组织代码，提高开发效率，简化维护工作。
+- **TypeScript 支持**：提供全面的 TypeScript 类型定义，确保类型安全并增强开发体验。
+- **Blocklet 生态系统集成**：与 Blocklet 生态系统紧密集成，为开发者提供一站式开发和部署解决方案。
 
-## Usage
+## 使用示例
 
 ```ts
 import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
@@ -56,40 +56,40 @@ const engine = new ExecutionEngine({ model });
 const userAgent = await engine.run(agentA);
 
 const response = await userAgent.run("transfer to agent b");
-// output
+// 输出
 // {
 //   B: "Agent B awaits here,  \nIn haikus I shall speak now,  \nWhat do you seek, friend?",
 // }
 ```
 
-## Packages
+## 包结构
 
-- [examples](./examples) - Example project demonstrating how to use different agents to handle various tasks.
-- [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
+- [examples](./examples) - 示例项目，演示如何使用不同的代理处理各种任务。
+- [packages/core](./packages/core) - 核心包，为构建 AIGNE 应用程序提供基础。
 
-## Documentation
+## 文档
 
-- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): Practical recipes and patterns for common AIGNE Framework usage scenarios
-- API References:
+- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): AIGNE Framework 常见使用场景的实用方案和模式
+- API 参考:
   - [Agent API](./docs/apis/agent-api.md) ([English](./docs/apis/agent-api.en.md) | [中文](./docs/apis/agent-api.zh.md))
   - [AI Agent API](./docs/apis/ai-agent-api.md) ([English](./docs/apis/ai-agent-api.en.md) | [中文](./docs/apis/ai-agent-api.zh.md))
   - [Function Agent API](./docs/apis/function-agent-api.md) ([English](./docs/apis/function-agent-api.en.md) | [中文](./docs/apis/function-agent-api.zh.md))
   - [MCP Agent API](./docs/apis/mcp-agent-api.md) ([English](./docs/apis/mcp-agent-api.en.md) | [中文](./docs/apis/mcp-agent-api.zh.md))
   - [Execution Engine API](./docs/apis/execution-engine-api.md) ([English](./docs/apis/execution-engine-api.en.md) | [中文](./docs/apis/execution-engine-api.zh.md))
 
-## Architecture
+## 架构
 
-AIGNE Framework supports various workflow patterns to address different AI application needs:
+AIGNE Framework 支持多种工作流模式，以满足不同 AI 应用需求：
 
-### Sequential Workflow
+### 顺序工作流
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-conceptExtractor(Concept Extractor)
-writer(Writer)
-formatProof(Format Proof)
+in(输入)
+out(输出)
+conceptExtractor(概念提取器)
+writer(撰写器)
+formatProof(格式校对)
 
 in --> conceptExtractor --> writer --> formatProof --> out
 
@@ -103,15 +103,15 @@ class writer processing
 class formatProof processing
 ```
 
-### Concurrency Workflow
+### 并发工作流
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-featureExtractor(Feature Extractor)
-audienceAnalyzer(Audience Analyzer)
-aggregator(Aggregator)
+in(输入)
+out(输出)
+featureExtractor(特征提取器)
+audienceAnalyzer(受众分析器)
+aggregator(聚合器)
 
 in --> featureExtractor --> aggregator
 in --> audienceAnalyzer --> aggregator
@@ -127,16 +127,16 @@ class audienceAnalyzer processing
 class aggregator processing
 ```
 
-### Router Workflow
+### 路由工作流
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-triage(Triage)
-productSupport(Product Support)
-feedback(Feedback)
-other(Other)
+in(输入)
+out(输出)
+triage(分类)
+productSupport(产品支持)
+feedback(反馈)
+other(其他)
 
 in ==> triage
 triage ==> productSupport ==> out
@@ -154,17 +154,17 @@ class feedback processing
 class other processing
 ```
 
-### Handoff Workflow
+### 交接工作流
 
 ```mermaid
 flowchart LR
 
-in(In)
-out(Out)
-agentA(Agent A)
-agentB(Agent B)
+in(输入)
+out(输出)
+agentA(代理 A)
+agentB(代理 B)
 
-in --> agentA --transfer to b--> agentB --> out
+in --> agentA --转交给 b--> agentB --> out
 
 classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
 classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
@@ -175,17 +175,17 @@ class agentA processing
 class agentB processing
 ```
 
-### Reflection Workflow
+### 反思工作流
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-coder(Coder)
-reviewer(Reviewer)
+in(输入)
+out(输出)
+coder(编码者)
+reviewer(审核者)
 
-in --Ideas--> coder ==Solution==> reviewer --Approved--> out
-reviewer ==Rejected==> coder
+in --想法--> coder ==解决方案==> reviewer --通过--> out
+reviewer ==拒绝==> coder
 
 classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
 classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
@@ -196,15 +196,15 @@ class coder processing
 class reviewer processing
 ```
 
-### Code Execution Workflow
+### 代码执行工作流
 
 ```mermaid
 flowchart LR
 
-in(In)
-out(Out)
-coder(Coder)
-sandbox(Sandbox)
+in(输入)
+out(输出)
+coder(编码者)
+sandbox(沙箱)
 
 coder -.-> sandbox
 sandbox -.-> coder
@@ -220,26 +220,41 @@ class coder processing
 class sandbox processing
 ```
 
-## Examples
+代码执行工作流交互序列：
 
-### MCP Server Integration
+```mermaid
+sequenceDiagram
 
-- [Puppeteer MCP Server](./examples/mcp-server-puppeteer) - Learn how to leverage Puppeteer for automated web scraping through the AIGNE Framework.
-- [SQLite MCP Server](./examples/mcp-server-sqlite) - Explore database operations by connecting to SQLite through the Model Context Protocol.
+participant User as 用户
+participant Coder as 编码代理
+participant Sandbox as 沙箱代理
 
-### Workflow Patterns
+User ->> Coder: 10! = ?
+Coder ->> Sandbox: "function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1) } factorial(10)"
+Sandbox ->> Coder: { result: 3628800 }
+Coder ->> User: 10!（10的阶乘）的值是 3,628,800。
+```
 
-- [Workflow Router](./examples/workflow-router) - Implement intelligent routing logic to direct requests to appropriate handlers based on content.
-- [Workflow Sequential](./examples/workflow-sequential) - Build step-by-step processing pipelines with guaranteed execution order.
-- [Workflow Concurrency](./examples/workflow-concurrency) - Optimize performance by processing multiple tasks simultaneously with parallel execution.
-- [Workflow Handoff](./examples/workflow-handoff) - Create seamless transitions between specialized agents to solve complex problems.
-- [Workflow Reflection](./examples/workflow-reflection) - Enable self-improvement through output evaluation and refinement capabilities.
-- [Workflow Orchestration](./examples/workflow-orchestration) - Coordinate multiple agents working together in sophisticated processing pipelines.
-- [Workflow Code Execution](./examples/workflow-code-execution) - Safely execute dynamically generated code within AI-driven workflows.
+## 示例
 
-## Community and Support
+### MCP 服务器集成
 
-AIGNE Framework has a vibrant developer community offering various support channels:
+- [Puppeteer MCP Server](./examples/mcp-server-puppeteer) - 学习如何通过 AIGNE Framework 利用 Puppeteer 进行自动化网页抓取。
+- [SQLite MCP Server](./examples/mcp-server-sqlite) - 探索通过模型上下文协议连接 SQLite 进行数据库操作。
 
-- [Documentation Center](https://www.arcblock.io/docs/aigne-framework/introduce): Comprehensive official documentation to help developers get started quickly.
-- [Technical Forum](https://community.arcblock.io/discussions/boards/aigne): Exchange experiences with global developers and solve technical problems.
+### 工作流模式
+
+- [Workflow Router](./examples/workflow-router) - 实现智能路由逻辑，根据内容将请求定向到适当的处理程序。
+- [Workflow Sequential](./examples/workflow-sequential) - 构建具有保证执行顺序的步骤式处理管道。
+- [Workflow Concurrency](./examples/workflow-concurrency) - 通过并行执行同时处理多个任务优化性能。
+- [Workflow Handoff](./examples/workflow-handoff) - 在专业代理之间创建无缝转换以解决复杂问题。
+- [Workflow Reflection](./examples/workflow-reflection) - 通过输出评估和修正能力实现自我提升。
+- [Workflow Orchestration](./examples/workflow-orchestration) - 协调多个代理在复杂处理管道中共同工作。
+- [Workflow Code Execution](./examples/workflow-code-execution) - 在 AI 驱动的工作流中安全执行动态生成的代码。
+
+## 社区与支持
+
+AIGNE Framework 拥有活跃的开发者社区，提供多种支持渠道：
+
+- [文档中心](https://www.arcblock.io/docs/aigne-framework/introduce)：全面的官方文档，帮助开发者快速入门。
+- [技术论坛](https://community.arcblock.io/discussions/boards/aigne)：与全球开发者交流经验，解决技术问题。

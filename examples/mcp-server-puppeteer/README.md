@@ -2,6 +2,57 @@
 
 This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) and [Puppeteer MCP Server](https://github.com/modelcontextprotocol/servers/tree/8bd41eb0b3cf48aea0d1fe5b6c7029736092dcb1/src/puppeteer) to extract content from websites using Puppeteer.
 
+```mermaid
+flowchart LR
+
+in(In)
+out(Out)
+agent(AI Agent)
+puppeteer(Puppeteer MCP Agent)
+navigate(Navigate to URL)
+evaluate(Evaluate JS)
+
+in --> agent <--> puppeteer
+
+subgraph MCP Agent
+  puppeteer <--> navigate
+  puppeteer <--> evaluate
+end
+
+agent --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class agent processing
+class puppeteer processing
+class navigate processing
+class evaluate processing
+```
+
+Following is a sequence diagram of the workflow to summarize content from a website:
+
+
+```mermaid
+sequenceDiagram
+participant User
+participant AI as AI Agent
+participant P as Puppeteer MCP Agent
+participant N as Navigate to URL
+participant E as Evaluate JS
+
+User ->> AI: summarize content from https://www.arcblock.io
+AI ->> P: extract content from https://www.arcblock.io
+P ->> N: navigate to https://www.arcblock.io
+N ->> P: navigation completed
+P ->> E: evaluate document.body.innerText
+E ->> P: content extracted
+E ->> AI: extracted content as context
+AI ->> User: The content is as follows: ...
+```
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) and npm installed on your machine

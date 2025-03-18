@@ -12,6 +12,7 @@ import type {
   ReadResourceResult,
 } from "@modelcontextprotocol/sdk/types";
 import {} from "zod";
+import type { Context } from "../execution-engine/context";
 import { logger } from "../utils/logger";
 import { promptFromMCPPrompt, resourceFromMCPResource, toolFromMCPTool } from "../utils/mcp-utils";
 import { createAccessorArray } from "../utils/type-utils";
@@ -117,7 +118,13 @@ export class MCPAgent extends Agent {
           )
       : undefined;
 
-    return new MCPAgent({ client, tools, prompts, resources });
+    return new MCPAgent({
+      name: client.getServerVersion()?.name,
+      client,
+      tools,
+      prompts,
+      resources,
+    });
   }
 
   constructor(options: MCPAgentOptions) {
@@ -137,6 +144,14 @@ export class MCPAgent extends Agent {
   readonly resources = createAccessorArray<MCPResource>([], (arr, name) =>
     arr.find((i) => i.name === name),
   );
+
+  get isCallable(): boolean {
+    return false;
+  }
+
+  async process(_input: AgentInput, _context?: Context): Promise<AgentOutput> {
+    throw new Error("Method not implemented.");
+  }
 
   override async shutdown() {
     super.shutdown();

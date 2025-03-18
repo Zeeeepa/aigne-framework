@@ -40,16 +40,10 @@ export interface AgentOptions<
   disableLogging?: boolean;
 }
 
-export class Agent<
+export abstract class Agent<
   I extends AgentInput = AgentInput,
   O extends AgentOutput = AgentOutput,
 > extends EventEmitter {
-  static from<I extends AgentInput = AgentInput, O extends AgentOutput = AgentOutput>(
-    options: AgentOptions<I, O>,
-  ): Agent<I, O> {
-    return new Agent(options);
-  }
-
   constructor(options: AgentOptions<I, O>) {
     super();
 
@@ -113,7 +107,7 @@ export class Agent<
     );
   }
 
-  process?(input: I, context?: Context): Promise<O>;
+  abstract process(input: I, context?: Context): Promise<O>;
 
   async shutdown() {}
 }

@@ -3,7 +3,7 @@ import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
 import { isNil } from "lodash";
 import { ZodObject, type ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { Agent, type AgentInput } from "../agents/agent";
+import { Agent, type AgentInput, type AgentOptions } from "../agents/agent";
 import type { AIAgent } from "../agents/ai-agent";
 import type { Context } from "../execution-engine/context";
 import type {
@@ -26,6 +26,13 @@ export const USER_INPUT_MESSAGE_KEY = "$user_input_message";
 
 export function userInput(message: string | object): AgentInput {
   return { [USER_INPUT_MESSAGE_KEY]: message };
+}
+
+export function getUserInputMessage(input: AgentInput): string | undefined {
+  const userInputMessage = input[USER_INPUT_MESSAGE_KEY];
+  if (typeof userInputMessage === "string") return userInputMessage;
+  if (!isNil(userInputMessage)) return JSON.stringify(userInputMessage);
+  return undefined;
 }
 
 export function addMessagesToInput(
@@ -64,6 +71,7 @@ export interface PromptBuilderBuildOptions {
   agent?: AIAgent;
   input?: AgentInput;
   model?: ChatModel;
+  outputSchema?: AgentOptions["outputSchema"];
 }
 
 export class PromptBuilder {
@@ -184,7 +192,7 @@ export class PromptBuilder {
   private buildResponseFormat(
     options: PromptBuilderBuildOptions,
   ): ChatModelInputResponseFormat | undefined {
-    const outputSchema = options.agent?.outputSchema;
+    const outputSchema = options.outputSchema || options.agent?.outputSchema;
     if (!outputSchema) return undefined;
 
     const isJsonOutput = !isEmptyObjectType(outputSchema);
