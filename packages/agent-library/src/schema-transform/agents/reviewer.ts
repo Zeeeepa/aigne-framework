@@ -1,6 +1,6 @@
 import { FunctionAgent, UserOutputTopic } from "@aigne/core-next";
 import { z } from "zod";
-import { applyJsonataWithValidation } from "../tools";
+import { applyJsonataWithValidation } from "../tools.js";
 
 const reviewer = FunctionAgent.from({
   name: "check_mapping",

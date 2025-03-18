@@ -1,6 +1,6 @@
 import { AIAgent, PromptBuilder, UserInputTopic } from "@aigne/core-next";
 import { z } from "zod";
-import { PROMPT_MAPPING } from "../prompts";
+import { PROMPT_MAPPING } from "../prompts.js";
 
 const mapper = AIAgent.from({
   subscribeTopic: [UserInputTopic, "mapping_request"],
@@ -15,8 +15,8 @@ const mapper = AIAgent.from({
   }),
   outputSchema: z.object({
     jsonata: z.string().describe("JSONata expression"),
-    confidence: z.number().describe(`Confidence score for the JSONata expression between 0 and 100. 
-      Give a low confidence score if there are missing fields in the source data. 
+    confidence: z.number().describe(`Confidence score for the JSONata expression between 0 and 100.
+      Give a low confidence score if there are missing fields in the source data.
       Give a low confidence score if there are multiple options for a field and it is unclear which one to choose.`),
     confidenceReasoning: z.string().describe("Reasoning for the confidence score"),
   }),
@@ -49,7 +49,7 @@ const mapper = AIAgent.from({
 
                 Source data Sample:
                 {{sourceData}}
-                
+
                 ------
 
                 Previous feedback:

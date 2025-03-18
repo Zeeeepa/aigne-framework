@@ -3,8 +3,8 @@ import { ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
 import type { JSONSchema } from "openai/src/lib/jsonschema.js";
 
 import toJsonSchema from "to-json-schema";
-import mapper from "./agents/mapper";
-import reviewer from "./agents/reviewer";
+import mapper from "./agents/mapper.js";
+import reviewer from "./agents/reviewer.js";
 
 const { OPENAI_API_KEY, OPENAI_BASE_URL } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
