@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
-import type { JSONSchema } from "openai/src/lib/jsonschema.js";
 
 import toJsonSchema from "to-json-schema";
 import mapper from "./agents/mapper.js";
@@ -12,22 +11,10 @@ assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 // 接口定义
 export interface TransformInput {
   responseSchema: string;
-  responseMapping?: string;
   responseSampleData?: string;
   sourceData?: string;
   sourceSchema?: string;
   instruction?: string;
-  [key: string]: unknown;
-}
-
-export interface TransformConfig {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  responseSchema: JSONSchema;
-  responseMapping: string;
-  confidence?: number;
-  confidence_reasoning?: string;
   [key: string]: unknown;
 }
 
@@ -55,7 +42,6 @@ export async function generateMapping({
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const result: any = await engine.run({ ...input });
 
-    console.log("validation succeeded", result);
     // Unwrap the data property
     return {
       jsonata: result.jsonata || "",

@@ -38,7 +38,7 @@ const mapper = AIAgent.from({
                 Important: The output should be a jsonata expression creating an object that matches the following schema:
                 {{responseSchema}}
 
-                特别注意字段描述中的需求
+                Pay special attention to the requirements in field descriptions
 
                 The instruction from the user is: {{instruction}}
 
