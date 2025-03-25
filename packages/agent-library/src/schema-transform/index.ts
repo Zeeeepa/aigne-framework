@@ -6,9 +6,8 @@ import toJsonSchema from "to-json-schema";
 import mapper from "./agents/mapper.js";
 import reviewer from "./agents/reviewer.js";
 
-const { OPENAI_API_KEY, OPENAI_BASE_URL } = process.env;
+const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
-assert(OPENAI_BASE_URL, "Please set the OPENAI_BASE_URL environment variable");
 
 // 接口定义
 export interface TransformInput {
@@ -68,3 +67,5 @@ export async function generateMapping({
   }
   return null;
 }
+
+export { applyJsonata } from "./tools.js";
