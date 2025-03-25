@@ -2,9 +2,9 @@ import { readFile } from "node:fs/promises";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { isNil } from "lodash-es";
 import { ZodObject, type ZodType } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
-import { Agent, type AgentInput, type AgentOptions } from "../agents/agent.js";
+import { Agent, type AgentOptions, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
+import type { AgentMemory } from "../agents/memory.js";
 import type { Context } from "../execution-engine/context.js";
 import type {
   ChatModel,
@@ -13,51 +13,27 @@ import type {
   ChatModelInputResponseFormat,
   ChatModelInputTool,
   ChatModelInputToolChoice,
-} from "../models/chat.js";
+} from "../models/chat-model.js";
+import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
   SystemMessageTemplate,
   UserMessageTemplate,
-  parseChatMessages,
 } from "./template.js";
 
-export const USER_INPUT_MESSAGE_KEY = "$user_input_message";
+export const MESSAGE_KEY = "$message";
+export const DEFAULT_MAX_HISTORY_MESSAGES = 10;
 
-export function userInput(message: string | object): AgentInput {
-  return { [USER_INPUT_MESSAGE_KEY]: message };
+export function createMessage(message: string | object): Message {
+  return { [MESSAGE_KEY]: message };
 }
 
-export function getUserInputMessage(input: AgentInput): string | undefined {
-  const userInputMessage = input[USER_INPUT_MESSAGE_KEY];
+export function getMessage(input: Message): string | undefined {
+  const userInputMessage = input[MESSAGE_KEY];
   if (typeof userInputMessage === "string") return userInputMessage;
   if (!isNil(userInputMessage)) return JSON.stringify(userInputMessage);
   return undefined;
-}
-
-export function addMessagesToInput(
-  input: AgentInput,
-  messages: ChatModelInputMessage[],
-): AgentInput {
-  const originalUserInputMessages = input[USER_INPUT_MESSAGE_KEY];
-
-  const newMessages: ChatModelInputMessage[] = [];
-
-  if (typeof originalUserInputMessages === "string") {
-    newMessages.push({ role: "user", content: originalUserInputMessages });
-  } else {
-    const messages = parseChatMessages(originalUserInputMessages);
-    if (messages) newMessages.push(...messages.map((i) => i.format()));
-    else
-      newMessages.push({
-        role: "user",
-        content: JSON.stringify(originalUserInputMessages),
-      });
-  }
-
-  newMessages.push(...messages);
-
-  return { ...input, [USER_INPUT_MESSAGE_KEY]: newMessages };
 }
 
 export interface PromptBuilderOptions {
@@ -65,11 +41,10 @@ export interface PromptBuilderOptions {
 }
 
 export interface PromptBuilderBuildOptions {
-  enableHistory?: boolean;
-  maxHistoryMessages?: number;
+  memory?: AgentMemory;
   context?: Context;
   agent?: AIAgent;
-  input?: AgentInput;
+  input?: Message;
   model?: ChatModel;
   outputSchema?: AgentOptions["outputSchema"];
 }
@@ -134,12 +109,6 @@ export class PromptBuilder {
 
   instructions?: string | ChatMessagesTemplate;
 
-  histories: ChatModelInputMessage[] = [];
-
-  addHistory(...messages: ChatModelInputMessage[]) {
-    this.histories.push(...messages);
-  }
-
   async build(
     options: PromptBuilderBuildOptions,
   ): Promise<ChatModelInput & { toolAgents?: Agent[] }> {
@@ -159,31 +128,26 @@ export class PromptBuilder {
         : this.instructions
       )?.format(options.input) ?? [];
 
-    if (options.enableHistory) {
-      messages.push(
-        ...(options.maxHistoryMessages
-          ? this.histories.slice(-options.maxHistoryMessages)
-          : this.histories),
-      );
+    const memory = options.memory ?? options.agent?.memory;
+
+    if (memory?.enabled) {
+      const k = memory.maxMemoriesInChat ?? DEFAULT_MAX_HISTORY_MESSAGES;
+      const histories = memory.memories.slice(-k);
+
+      if (histories?.length)
+        messages.push(
+          ...histories.map((i) => ({
+            role: i.role,
+            content: convertMessageToContent(i.content),
+            name: i.source,
+          })),
+        );
     }
 
-    const userMessages: ChatModelInputMessage[] = [];
-    const userInputMessage = input?.[USER_INPUT_MESSAGE_KEY];
-
-    // Parse messages from the user input with the key $user_input_message
-    if (!isNil(userInputMessage)) {
-      if (typeof userInputMessage === "string") {
-        userMessages.push(UserMessageTemplate.from(userInputMessage).format());
-      } else {
-        const messages = parseChatMessages(userInputMessage);
-        if (messages) userMessages.push(...messages.map((i) => i.format()));
-        else userMessages.push(UserMessageTemplate.from(JSON.stringify(userInputMessage)).format());
-      }
-    }
-
-    if (userMessages.length) {
-      if (options.enableHistory) this.addHistory(...userMessages);
-      messages.push(...userMessages);
+    const content = input && getMessage(input);
+    // add user input if it's not the same as the last message
+    if (content && messages.at(-1)?.content !== content) {
+      messages.push({ role: "user", content });
     }
 
     return messages;
@@ -201,7 +165,7 @@ export class PromptBuilder {
           type: "json_schema",
           jsonSchema: {
             name: "output",
-            schema: zodToJsonSchema(outputSchema),
+            schema: outputSchemaToResponseFormatSchema(outputSchema),
             strict: true,
           },
         }
@@ -221,7 +185,9 @@ export class PromptBuilder {
       function: {
         name: i.name,
         description: i.description,
-        parameters: !isEmptyObjectType(i.inputSchema) ? zodToJsonSchema(i.inputSchema) : {},
+        parameters: !isEmptyObjectType(i.inputSchema)
+          ? outputSchemaToResponseFormatSchema(i.inputSchema)
+          : {},
       },
     }));
 
@@ -269,4 +235,9 @@ function isFromPath(value: Parameters<typeof PromptBuilder.from>[0]): value is {
 
 function isEmptyObjectType(schema: ZodType) {
   return schema instanceof ZodObject && Object.keys(schema.shape).length === 0;
+}
+
+function convertMessageToContent(i: Message) {
+  const str = i[MESSAGE_KEY];
+  return !isNil(str) ? (typeof str === "string" ? str : JSON.stringify(str)) : JSON.stringify(i);
 }

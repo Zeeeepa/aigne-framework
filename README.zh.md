@@ -1,12 +1,12 @@
-# AIGNE Framework
+![](https://www.arcblock.io/.well-known/service/blocklet/og.png?template=banner&title=AIGNE%20Framework&logo=https://store.blocklet.dev/assets/z2qaBP9SahqU2L2YA3ip7NecwKACMByTFuiJ2/screenshots/0453ca48c18784b78a0354c9369ad377.png?imageFilter=resize&w=160&h=160&v=0.4.227)
 
 [English](./README.md) | [中文](./README.zh.md)
 
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
-[![NPM Version](https://img.shields.io/npm/v/@aigne/core-next)](https://www.npmjs.com/package/@aigne/core-next)
-[![MIT licensed](https://img.shields.io/npm/l/@aigne/core-next)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/@aigne/core)](https://www.npmjs.com/package/@aigne/core)
+[![MIT licensed](https://img.shields.io/npm/l/@aigne/core)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
 ## AIGNE Framework 简介
 
@@ -21,10 +21,10 @@ AIGNE Framework 是一个功能型 AI 应用开发框架，旨在简化和加速
 ## 使用示例
 
 ```ts
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
   model: DEFAULT_CHAT_MODEL,
 });
@@ -53,9 +53,9 @@ const agentB = AIAgent.from({
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(agentA);
+const userAgent = await engine.call(agentA);
 
-const response = await userAgent.run("transfer to agent b");
+const response = await userAgent.call("transfer to agent b");
 // 输出
 // {
 //   B: "Agent B awaits here,  \nIn haikus I shall speak now,  \nWhat do you seek, friend?",
@@ -239,8 +239,9 @@ Coder ->> User: 10!（10的阶乘）的值是 3,628,800。
 
 ### MCP 服务器集成
 
-- [Puppeteer MCP Server](./examples/mcp-server-puppeteer) - 学习如何通过 AIGNE Framework 利用 Puppeteer 进行自动化网页抓取。
-- [SQLite MCP Server](./examples/mcp-server-sqlite) - 探索通过模型上下文协议连接 SQLite 进行数据库操作。
+- [Puppeteer MCP Server](./examples/mcp-puppeteer) - 学习如何通过 AIGNE Framework 利用 Puppeteer 进行自动化网页抓取。
+- [SQLite MCP Server](./examples/mcp-sqlite) - 探索通过模型上下文协议连接 SQLite 进行数据库操作。
+- [Github](./examples/mcp-github) - 了解如何使用 AIGNE Framework 和 GitHub MCP 服务器与 GitHub 仓库进行交互。
 
 ### 工作流模式
 
@@ -251,6 +252,11 @@ Coder ->> User: 10!（10的阶乘）的值是 3,628,800。
 - [Workflow Reflection](./examples/workflow-reflection) - 通过输出评估和修正能力实现自我提升。
 - [Workflow Orchestration](./examples/workflow-orchestration) - 协调多个代理在复杂处理管道中共同工作。
 - [Workflow Code Execution](./examples/workflow-code-execution) - 在 AI 驱动的工作流中安全执行动态生成的代码。
+- [Workflow Group Chat](./examples/workflow-group-chat) - 通过聊天模型实现群聊功能，支持多个用户同时参与。
+
+## 贡献与发布
+
+AIGNE Framework 使用 [release-please](https://github.com/googleapis/release-please) 进行版本管理和发布自动化。有关发布流程和贡献指南的详细信息，请参阅 [RELEASING.zh.md](./RELEASING.zh.md) 和 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 社区与支持
 

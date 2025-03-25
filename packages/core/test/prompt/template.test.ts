@@ -4,7 +4,7 @@ import {
   PromptTemplate,
   ToolMessageTemplate,
   parseChatMessages,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 test("PromptTemplate.format", async () => {
   const prompt = PromptTemplate.from("Hello, {{name}}!").format({ name: "Alice" });

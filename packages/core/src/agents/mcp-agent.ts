@@ -3,6 +3,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
   StdioClientTransport,
   type StdioServerParameters,
+  getDefaultEnvironment,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { UriTemplate } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
@@ -20,7 +21,7 @@ import {
   toolFromMCPTool,
 } from "../utils/mcp-utils.js";
 import { createAccessorArray } from "../utils/type-utils.js";
-import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent.js";
+import { Agent, type AgentOptions, type Message } from "./agent.js";
 
 const MCP_AGENT_CLIENT_NAME = "MCPAgent";
 const MCP_AGENT_CLIENT_VERSION = "0.0.1";
@@ -63,7 +64,14 @@ export class MCPAgent extends Agent {
     }
 
     if (isStdioServerParameters(options)) {
-      const transport = new StdioClientTransport({ ...options, stderr: "pipe" });
+      const transport = new StdioClientTransport({
+        ...options,
+        env: {
+          ...getDefaultEnvironment(),
+          ...options.env,
+        },
+        stderr: "pipe",
+      });
       return MCPAgent.fromTransport(transport);
     }
 
@@ -153,7 +161,7 @@ export class MCPAgent extends Agent {
     return false;
   }
 
-  async process(_input: AgentInput, _context?: Context): Promise<AgentOutput> {
+  async process(_input: Message, _context?: Context): Promise<Message> {
     throw new Error("Method not implemented.");
   }
 
@@ -163,12 +171,12 @@ export class MCPAgent extends Agent {
   }
 }
 
-export interface MCPToolBaseOptions<I extends AgentInput, O extends AgentOutput>
+export interface MCPToolBaseOptions<I extends Message, O extends Message>
   extends AgentOptions<I, O> {
   client: Client;
 }
 
-export abstract class MCPBase<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
+export abstract class MCPBase<I extends Message, O extends Message> extends Agent<I, O> {
   constructor(options: MCPToolBaseOptions<I, O>) {
     super(options);
     this.client = options.client;
@@ -181,8 +189,8 @@ export abstract class MCPBase<I extends AgentInput, O extends AgentOutput> exten
   }
 }
 
-export class MCPTool extends MCPBase<AgentInput, CallToolResult> {
-  async process(input: AgentInput): Promise<CallToolResult> {
+export class MCPTool extends MCPBase<Message, CallToolResult> {
+  async process(input: Message): Promise<CallToolResult> {
     const result = await debug.spinner(
       this.client.callTool({ name: this.name, arguments: input }),
       `Call tool ${this.name} from ${this.mcpServer}`,
@@ -193,10 +201,14 @@ export class MCPTool extends MCPBase<AgentInput, CallToolResult> {
   }
 }
 
-export class MCPPrompt extends MCPBase<{ [key: string]: string }, GetPromptResult> {
-  async process(input: AgentInput): Promise<GetPromptResult> {
+export interface MCPPromptInput extends Message {
+  [key: string]: string;
+}
+
+export class MCPPrompt extends MCPBase<MCPPromptInput, GetPromptResult> {
+  async process(input: MCPPromptInput): Promise<GetPromptResult> {
     const result = await debug.spinner(
-      this.client.getPrompt({ name: this.name, arguments: input as Record<string, string> }),
+      this.client.getPrompt({ name: this.name, arguments: input }),
       `Get prompt ${this.name} from ${this.mcpServer}`,
       (output) => debug("input: %O\noutput: %O", input, output),
     );
@@ -205,12 +217,11 @@ export class MCPPrompt extends MCPBase<{ [key: string]: string }, GetPromptResul
   }
 }
 
-export interface MCPResourceOptions
-  extends MCPToolBaseOptions<{ [key: string]: never }, ReadResourceResult> {
+export interface MCPResourceOptions extends MCPToolBaseOptions<MCPPromptInput, ReadResourceResult> {
   uri: string;
 }
 
-export class MCPResource extends MCPBase<{ [key: string]: string }, ReadResourceResult> {
+export class MCPResource extends MCPBase<MCPPromptInput, ReadResourceResult> {
   constructor(options: MCPResourceOptions) {
     super(options);
     this.uri = options.uri;
@@ -218,7 +229,7 @@ export class MCPResource extends MCPBase<{ [key: string]: string }, ReadResource
 
   uri: string;
 
-  async process(input: { [key: string]: string }): Promise<ReadResourceResult> {
+  async process(input: MCPPromptInput): Promise<ReadResourceResult> {
     const uri = new UriTemplate(this.uri).expand(input);
 
     const result = await debug.spinner(

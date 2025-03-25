@@ -101,7 +101,7 @@ type FunctionAgentFn<I extends AgentInput = AgentInput, O extends AgentOutput = 
 ### 基本用法
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // 创建一个简单的函数
 function greet(input) {
@@ -129,7 +129,7 @@ console.log(output); // { message: "Hello, John!" }
 ### 异步函数
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // 创建一个异步函数
 async function fetchUserData(input) {
@@ -157,9 +157,9 @@ console.log(userData); // { id: 123, name: "John Doe", email: "john@example.com"
 ### 在工具链中使用
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, ChatModelOpenAI } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
   model: "gpt-4"
 });
@@ -193,9 +193,9 @@ const aiAgent = AIAgent.from({
 const engine = new ExecutionEngine({ model });
 
 // 运行工作流
-const result = await engine.run(
-  { data: [1, 2, 3, 4, 5] },
-  aiAgent
+const result = await engine.call(
+  aiAgent,
+  { data: [1, 2, 3, 4, 5] }
 );
 
 console.log(result); // 包含 AI 对数据的分析结果

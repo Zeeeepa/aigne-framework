@@ -261,13 +261,13 @@ The following example demonstrates how to use the AIGNE framework and Puppeteer 
 ```typescript
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // Create AI model
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY
 });
 
@@ -293,9 +293,9 @@ const agent = AIAgent.from({
 });
 
 // Run Agent to extract content from specified website
-const result = await engine.run(
-  "extract content from https://www.arcblock.io",
-  agent
+const result = await engine.call(
+  agent,
+  "extract content from https://www.arcblock.io"
 );
 
 console.log(result);
@@ -312,11 +312,11 @@ await engine.shutdown();
 
 The basic workflow for using Puppeteer MCP Agent to extract website content is as follows:
 
-1. Create a ChatModelOpenAI instance
+1. Create a OpenAIChatModel instance
 2. Use MCPAgent.from method to connect to the Puppeteer MCP server
 3. Create an ExecutionEngine and add the Puppeteer MCP Agent as a tool
 4. Create an AIAgent and set instructions for extracting website content
-5. Use engine.run method to run the Agent, passing in the request to extract website content
+5. Use engine.call method to run the Agent, passing in the Agent and the request to extract website content
 6. The AI Agent will use the tools provided by the Puppeteer MCP Agent to perform the following operations:
    - Navigate to the specified URL
    - Use JavaScript to extract the page content
@@ -328,7 +328,7 @@ The basic workflow for using Puppeteer MCP Agent to extract website content is a
 In addition to the Puppeteer MCP server, you can also use other MCP servers, such as the SQLite MCP server:
 
 ```typescript
-import { MCPAgent } from "@aigne/core-next";
+import { MCPAgent } from "@aigne/core";
 
 // Connect to SQLite MCP server
 const sqliteMCPAgent = await MCPAgent.from({

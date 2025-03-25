@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "packages": {
+    ".": {},
+    "packages/agent-library": {},
+    "packages/core": {},
+    "examples/mcp-github": {},
+    "examples/mcp-puppeteer": {},
+    "examples/mcp-sqlite": {},
+    "examples/workflow-code-execution": {},
+    "examples/workflow-concurrency": {},
+    "examples/workflow-group-chat": {},
+    "examples/workflow-handoff": {},
+    "examples/workflow-orchestrator": {},
+    "examples/workflow-reflection": {},
+    "examples/workflow-router": {},
+    "examples/workflow-sequential": {}
+  }
+}

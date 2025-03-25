@@ -1,10 +1,10 @@
 import assert from "node:assert";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -27,7 +27,7 @@ const agentB = AIAgent.from({
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(agentA);
+const userAgent = engine.call(agentA);
 
 const result1 = await userAgent.call("transfer to agent b");
 console.log(result1);

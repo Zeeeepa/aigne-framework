@@ -1,6 +1,6 @@
 {
-  "name": "@aigne/core-next",
-  "version": "1.1.0-beta.17",
+  "name": "@aigne/core",
+  "version": "1.3.1",
   "description": "AIGNE core library for building AI-powered applications",
   "publishConfig": {
     "access": "public"
@@ -12,7 +12,14 @@
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
   },
-  "files": ["lib/cjs", "lib/dts", "lib/esm", "LICENSE", "README.md", "CHANGELOG.md"],
+  "files": [
+    "lib/cjs",
+    "lib/dts",
+    "lib/esm",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "type": "module",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -25,8 +32,7 @@
     }
   },
   "scripts": {
-    "lint": "biome check",
-    "lint:fix": "biome check --write",
+    "lint": "tsc --noEmit",
     "build": "tsc --build scripts/tsconfig.build.json",
     "clean": "rimraf lib coverage",
     "prepublishOnly": "run-s clean build",
@@ -35,30 +41,30 @@
   },
   "dependencies": {
     "@aigne/json-schema-to-zod": "^1.3.2",
-    "@google/generative-ai": "^0.24.0",
     "@modelcontextprotocol/sdk": "^1.7.0",
     "@types/debug": "^4.1.12",
     "@types/mustache": "^4.2.5",
     "debug": "^4.4.0",
     "inquirer": "^12.5.0",
-    "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "mustache": "^4.2.0",
-    "nanoid": "^5.1.4",
-    "openai": "^4.87.3",
+    "nanoid": "^5.1.5",
     "ora": "^8.2.0",
     "zod": "^3.24.2",
-    "zod-to-json-schema": "^3.24.4"
+    "zod-to-json-schema": "^3.24.5"
   },
   "peerDependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "openai": "^4.79.1"
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
+    "openai": "^4.87.3"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
     "@types/bun": "^1.2.5",
-    "@types/lodash": "^4.17.16",
     "@types/lodash-es": "^4.17.12",
     "npm-run-all": "^4.1.5",
+    "openai": "^4.89.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.2"
   }

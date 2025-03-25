@@ -1,12 +1,12 @@
-# AIGNE Framework
+![](https://www.arcblock.io/.well-known/service/blocklet/og.png?template=banner&title=AIGNE%20Framework&logo=https://store.blocklet.dev/assets/z2qaBP9SahqU2L2YA3ip7NecwKACMByTFuiJ2/screenshots/0453ca48c18784b78a0354c9369ad377.png?imageFilter=resize&w=160&h=160&v=0.4.227)
 
 [English](./README.md) | [中文](./README.zh.md)
 
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
-[![NPM Version](https://img.shields.io/npm/v/@aigne/core-next)](https://www.npmjs.com/package/@aigne/core-next)
-[![MIT licensed](https://img.shields.io/npm/l/@aigne/core-next)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/@aigne/core)](https://www.npmjs.com/package/@aigne/core)
+[![MIT licensed](https://img.shields.io/npm/l/@aigne/core)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
 ## What is AIGNE Framework
 
@@ -21,10 +21,10 @@ AIGNE Framework is a functional AI application development framework designed to
 ## Usage
 
 ```ts
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
   model: DEFAULT_CHAT_MODEL,
 });
@@ -53,9 +53,9 @@ const agentB = AIAgent.from({
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(agentA);
+const userAgent = await engine.call(agentA);
 
-const response = await userAgent.run("transfer to agent b");
+const response = await userAgent.call("transfer to agent b");
 // output
 // {
 //   B: "Agent B awaits here,  \nIn haikus I shall speak now,  \nWhat do you seek, friend?",
@@ -224,8 +224,9 @@ class sandbox processing
 
 ### MCP Server Integration
 
-- [Puppeteer MCP Server](./examples/mcp-server-puppeteer) - Learn how to leverage Puppeteer for automated web scraping through the AIGNE Framework.
-- [SQLite MCP Server](./examples/mcp-server-sqlite) - Explore database operations by connecting to SQLite through the Model Context Protocol.
+- [Puppeteer MCP Server](./examples/mcp-puppeteer) - Learn how to leverage Puppeteer for automated web scraping through the AIGNE Framework.
+- [SQLite MCP Server](./examples/mcp-sqlite) - Explore database operations by connecting to SQLite through the Model Context Protocol.
+- [Github](./examples/mcp-github) - Interact with GitHub repositories using the GitHub MCP Server.
 
 ### Workflow Patterns
 
@@ -236,6 +237,11 @@ class sandbox processing
 - [Workflow Reflection](./examples/workflow-reflection) - Enable self-improvement through output evaluation and refinement capabilities.
 - [Workflow Orchestration](./examples/workflow-orchestration) - Coordinate multiple agents working together in sophisticated processing pipelines.
 - [Workflow Code Execution](./examples/workflow-code-execution) - Safely execute dynamically generated code within AI-driven workflows.
+- [Workflow Group Chat](./examples/workflow-group-chat) - Share messages and interact with multiple agents in a group chat environment.
+
+## Contributing and Releasing
+
+AIGNE Framework uses [release-please](https://github.com/googleapis/release-please) for version management and release automation. For details on the release process and contributing guidelines, please see [RELEASING.md](./RELEASING.md) and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Community and Support
 

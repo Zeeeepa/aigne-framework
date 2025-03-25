@@ -90,13 +90,13 @@ The following example demonstrates how to build a code-execution workflow:
 
 ```typescript
 import assert from "node:assert";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -125,11 +125,11 @@ Work with the sandbox to execute your code.
 
 const engine = new ExecutionEngine({ model });
 
-const result = await engine.run("10! = ?", coder);
+const result = await engine.call(coder, "10! = ?");
 console.log(result);
 // Output:
 // {
-//   text: "The value of \\(10!\\) (10 factorial) is 3,628,800.",
+//   $message: "The value of \\(10!\\) (10 factorial) is 3,628,800.",
 // }
 ```
 

@@ -3,17 +3,17 @@
 import assert from "node:assert";
 import {
   AIAgent,
-  ChatModelOpenAI,
   ExecutionEngine,
   FunctionAgent,
+  OpenAIChatModel,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -38,13 +38,14 @@ You are a proficient coder. You write code to solve problems.
 Work with the sandbox to execute your code.
 `,
   tools: [sandbox],
+  memory: true,
 });
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(coder);
+const user = engine.call(coder);
 
-await runChatLoopInTerminal(userAgent, {
+await runChatLoopInTerminal(user, {
   welcome:
     "Welcome to the code execution workflow! you can ask me anything can be resolved by running code.",
   defaultQuestion: "10! = ?",

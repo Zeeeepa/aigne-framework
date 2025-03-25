@@ -1,10 +1,9 @@
 import { expect, spyOn, test } from "bun:test";
-import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
-import type { FullPlanOutput } from "../../src/orchestrator/orchestrator-prompts";
+import { type FullPlanOutput, OrchestratorAgent } from "@aigne/agent-library";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core";
 
 test("AIAgent.call", async () => {
-  const model = new ChatModelOpenAI();
+  const model = new OpenAIChatModel();
   const engine = new ExecutionEngine({ model });
 
   const finder = AIAgent.from({
@@ -66,13 +65,13 @@ test("AIAgent.call", async () => {
   const finderProcess = spyOn(finder, "call");
   const writerProcess = spyOn(writer, "call");
 
-  const result = await engine.run("Deep research ArcBlock and write a professional report", agent);
+  const result = await engine.call(agent, "Deep research ArcBlock and write a professional report");
 
-  expect(result).toEqual({ text: "Task finished" });
+  expect(result).toEqual(createMessage("Task finished"));
   expect(finderProcess.mock.calls).toEqual([
-    [expect.stringContaining("Find the closest match to a user's request"), engine],
+    [createMessage(expect.stringContaining("Find the closest match to a user's request")), engine],
   ]);
   expect(writerProcess.mock.calls).toEqual([
-    [expect.stringContaining("Write to the filesystem"), engine],
+    [createMessage(expect.stringContaining("Write to the filesystem")), engine],
   ]);
 });

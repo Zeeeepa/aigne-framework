@@ -9,6 +9,7 @@
   - [目录](#目录)
   - [介绍](#介绍)
   - [基础概念](#基础概念)
+    - [聊天模型（ChatModel）](#聊天模型chatmodel)
     - [Agent](#agent)
     - [工作流](#工作流)
     - [执行引擎](#执行引擎)
@@ -34,6 +35,38 @@
 AIGNE Framework是一个用于构建基于大型语言模型(LLM)的应用程序的框架。它提供了一系列工具和抽象，使开发者能够轻松地创建复杂的AI工作流程。本Cookbook旨在帮助开发者理解AIGNE Framework的核心概念，并通过示例展示如何使用不同的工作流模式来解决实际问题。
 
 ## 基础概念
+
+### 聊天模型（ChatModel）
+
+在AIGNE Framework中，ChatModel是与大型语言模型（LLM）交互的抽象基类。它提供了统一的接口来处理不同的底层模型实现，包括：
+
+- **OpenAIChatModel**: 用于与OpenAI的GPT系列模型进行通信
+- **ClaudeChatModel**: 用于与Anthropic的Claude系列模型进行通信
+
+ChatModel可以直接使用，但通常建议通过ExecutionEngine来使用，以获得更高级的功能如工具集成、错误处理和状态管理。
+
+**示例**:
+
+```typescript
+import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core";
+
+// 初始化OpenAI模型
+const openaiModel = new OpenAIChatModel({
+  apiKey: "YOUR_OPENAI_API_KEY",
+  model: "gpt-4o-mini", // 可选，默认为"gpt-4o-mini"
+});
+
+// 初始化Claude模型
+const claudeModel = new ClaudeChatModel({
+  apiKey: "YOUR_ANTHROPIC_API_KEY",
+  model: "claude-3-7-sonnet-latest", // 可选，默认为"claude-3-7-sonnet-latest"
+});
+
+// 使用ExecutionEngine
+const engine = new ExecutionEngine({ model: openaiModel });
+```
+
+更多信息请参考[ChatModel API文档](./apis/chat-model.zh.md)。
 
 ### Agent
 
@@ -77,7 +110,7 @@ const engine = new ExecutionEngine({ model });
 **示例**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
 import { z } from "zod";
 
 // 创建JavaScript沙箱
@@ -106,7 +139,7 @@ Work with the sandbox to execute your code.
 
 // 创建执行引擎并运行
 const engine = new ExecutionEngine({ model });
-const result = await engine.run("10! = ?", coder);
+const result = await engine.call(coder, "10! = ?");
 console.log(result);
 // 输出: { text: "The value of \\(10!\\) (10 factorial) is 3,628,800." }
 ```
@@ -123,7 +156,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 概念提取Agent
 const conceptExtractor = AIAgent.from({
@@ -172,11 +205,8 @@ Draft copy:
 
 // 按顺序执行三个Agent
 const engine = new ExecutionEngine({ model });
-const result = await engine.run(
-  { product: "AIGNE is a No-code Generative AI Apps Engine" },
-  conceptExtractor,
-  writer,
-  formatProof,
+const result = await engine.call(sequential(conceptExtractor, writer, formatProof),
+  { product: "AIGNE is a No-code Generative AI Apps Engine" }
 );
 
 console.log(result);
@@ -195,7 +225,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, parallel } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core";
 
 // 功能提取Agent
 const featureExtractor = AIAgent.from({
@@ -219,9 +249,9 @@ Product description:
 
 // 并行执行两个Agent
 const engine = new ExecutionEngine({ model });
-const result = await engine.run(
-  { product: "AIGNE is a No-code Generative AI Apps Engine" },
+const result = await engine.call(
   parallel(featureExtractor, audienceAnalyzer),
+  { product: "AIGNE is a No-code Generative AI Apps Engine" }
 );
 
 console.log(result);
@@ -243,11 +273,11 @@ console.log(result);
 ```typescript
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 // 编码Agent
@@ -307,7 +337,7 @@ Please review the code. If previous feedback was provided, see if it was address
 
 // 执行反思工作流
 const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
-const result = await engine.run("Write a function to find the sum of all even numbers in a list.");
+const result = await engine.call("Write a function to find the sum of all even numbers in a list.");
 console.log(result);
 // 输出包含通过审查的代码及反馈
 ```
@@ -324,7 +354,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 转交给Agent B的函数
 function transfer_to_b() {
@@ -348,7 +378,7 @@ const agentB = AIAgent.from({
 
 // 执行交接工作流
 const engine = new ExecutionEngine({ model });
-const userAgent = await engine.run(agentA);
+const userAgent = await engine.call(agentA);
 
 // 转交给Agent B
 const result1 = await userAgent.call("transfer to agent b");
@@ -373,7 +403,7 @@ console.log(result2);
 **示例**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 产品支持Agent
 const productSupport = AIAgent.from({
@@ -422,17 +452,17 @@ const triage = AIAgent.from({
 const engine = new ExecutionEngine({ model });
 
 // 产品相关问题自动路由到产品支持
-const result1 = await engine.run("How to use this product?", triage);
+const result1 = await engine.call(triage, "How to use this product?");
 console.log(result1);
 // { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
 
 // 反馈相关问题自动路由到反馈
-const result2 = await engine.run("I have feedback about the app.", triage);
+const result2 = await engine.call(triage, "I have feedback about the app.");
 console.log(result2);
 // { feedback: "Thank you for sharing your feedback! I'm here to listen..." }
 
 // 一般问题自动路由到一般查询
-const result3 = await engine.run("What is the weather today?", triage);
+const result3 = await engine.call(triage, "What is the weather today?");
 console.log(result3);
 // { other: "I can't provide real-time weather updates. However, you can check a reliable weather website..." }
 ```
@@ -450,7 +480,7 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 // 创建各专业Agent
 const puppeteer = await MCPAgent.from({
@@ -529,12 +559,12 @@ const agent = OrchestratorAgent.from({
 
 // 执行编排工作流
 const engine = new ExecutionEngine({ model });
-const result = await engine.run(
+const result = await engine.call(
+  agent,
   `Conduct an in-depth research on ArcBlock using only the official website\
 (avoid search engines or third-party sources) and compile a detailed report saved as arcblock.md. \
 The report should include comprehensive insights into the company's products \
-(with detailed research findings and links), technical architecture, and future plans.`,
-  agent,
+(with detailed research findings and links), technical architecture, and future plans.`
 );
 console.log(result);
 ```
@@ -557,10 +587,10 @@ Puppeteer MCP服务器允许AIGNE Framework访问和操作网页内容。
 ```typescript
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // 创建Puppeteer MCP Agent
 const puppeteerMCPAgent = await MCPAgent.from({
@@ -584,9 +614,9 @@ const agent = AIAgent.from({
 });
 
 // 执行内容提取
-const result = await engine.run(
-  "extract content from https://www.arcblock.io",
-  agent
+const result = await engine.call(
+  agent,
+  "extract content from https://www.arcblock.io"
 );
 
 console.log(result);
@@ -612,10 +642,10 @@ SQLite MCP服务器允许AIGNE Framework与SQLite数据库交互。
 import { join } from "node:path";
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // 创建SQLite MCP Agent
 const sqlite = await MCPAgent.from({
@@ -641,17 +671,17 @@ const agent = AIAgent.from({
 
 // 创建表
 console.log(
-  await engine.run(
-    "create a product table with columns name description and createdAt",
-    agent
+  await engine.call(
+    agent,
+    "create a product table with columns name description and createdAt"
   )
 );
 
 // 插入数据
-console.log(await engine.run("create 10 products for test", agent));
+console.log(await engine.call(agent, "create 10 products for test"));
 
 // 查询数据
-console.log(await engine.run("how many products?", agent));
+console.log(await engine.call(agent, "how many products?"));
 // 输出: { text: "There are 10 products in the database." }
 
 await engine.shutdown();
@@ -697,7 +727,7 @@ await engine.shutdown();
    - 下一个Agent可以通过`{{key}}`访问这些数据
 
 2. **如何处理Agent失败或错误？**
-   - 使用try/catch包装engine.run调用
+   - 使用try/catch包装engine.call调用
    - 设计工作流时考虑可能的失败路径，添加错误处理Agent
 
 3. **如何限制Agent的输出格式？**

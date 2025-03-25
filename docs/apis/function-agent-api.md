@@ -101,7 +101,7 @@ type FunctionAgentFn<I extends AgentInput = AgentInput, O extends AgentOutput = 
 ### Basic Usage
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // Create a simple function
 function greet(input) {
@@ -129,7 +129,7 @@ console.log(output); // { message: "Hello, John!" }
 ### Asynchronous Functions
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // Create an asynchronous function
 async function fetchUserData(input) {
@@ -157,9 +157,9 @@ console.log(userData); // { id: 123, name: "John Doe", email: "john@example.com"
 ### Agent Transfer
 
 ```typescript
-import { FunctionAgent, AIAgent, ChatModelOpenAI } from "@aigne/core-next";
+import { FunctionAgent, AIAgent, OpenAIChatModel } from "@aigne/core";
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
   model: "gpt-4"
 });
@@ -198,9 +198,9 @@ const result = await intentAnalyzer.call({ text: "I need some help" });
 ### Using in a Tool Chain
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, ChatModelOpenAI } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
   model: "gpt-4"
 });
@@ -234,9 +234,9 @@ const aiAgent = AIAgent.from({
 const engine = new ExecutionEngine({ model });
 
 // Run the workflow
-const result = await engine.run(
-  { data: [1, 2, 3, 4, 5] },
-  aiAgent
+const result = await engine.call(
+  aiAgent,
+  { data: [1, 2, 3, 4, 5] }
 );
 
 console.log(result); // Contains AI's analysis of the data

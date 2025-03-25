@@ -3,16 +3,16 @@
 import assert from "node:assert";
 import {
   AIAgent,
-  ChatModelOpenAI,
   ExecutionEngine,
+  OpenAIChatModel,
   parallel,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -36,7 +36,7 @@ Product description:
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(parallel(featureExtractor, audienceAnalyzer));
+const userAgent = engine.call(parallel(featureExtractor, audienceAnalyzer));
 
 await runChatLoopInTerminal(userAgent, {
   welcome: `Hello, I'm a product analyst and market researcher. I can help you with extracting features and identifying target audience.`,

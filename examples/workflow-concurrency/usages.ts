@@ -1,10 +1,10 @@
 import assert from "node:assert";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, parallel } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, parallel } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -28,10 +28,9 @@ Product description:
 
 const engine = new ExecutionEngine({ model });
 
-const result = await engine.run(
-  { product: "AIGNE is a No-code Generative AI Apps Engine" },
-  parallel(featureExtractor, audienceAnalyzer),
-);
+const result = await engine.call(parallel(featureExtractor, audienceAnalyzer), {
+  product: "AIGNE is a No-code Generative AI Apps Engine",
+});
 
 console.log(result);
 

@@ -1,9 +1,9 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, userInput } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core";
 import { z } from "zod";
 
 test("AIAgent.call", async () => {
-  const model = new ChatModelOpenAI();
+  const model = new OpenAIChatModel();
   const engine = new ExecutionEngine({ model });
 
   const agent = AIAgent.from({
@@ -12,13 +12,13 @@ test("AIAgent.call", async () => {
 
   spyOn(model, "call").mockReturnValueOnce(Promise.resolve({ text: "Hello, how can I help you?" }));
 
-  const result = await engine.run("hello", agent);
+  const result = await engine.call(agent, "hello");
 
-  expect(result).toEqual({ text: "Hello, how can I help you?" });
+  expect(result).toEqual(createMessage("Hello, how can I help you?"));
 });
 
 test("AIAgent.call with structured output", async () => {
-  const model = new ChatModelOpenAI();
+  const model = new OpenAIChatModel();
   const engine = new ExecutionEngine({ model });
 
   const agent = AIAgent.from({
@@ -38,13 +38,13 @@ test("AIAgent.call with structured output", async () => {
     }),
   );
 
-  const result = await engine.run("hello, i'm Alice", agent);
+  const result = await engine.call(agent, "hello, i'm Alice");
 
   expect(result).toEqual({ username: "Alice", questionCategory: "greeting" });
 });
 
 test("AIAgent should pass both arguments (model generated) and input (user provided) to the tool", async () => {
-  const model = new ChatModelOpenAI();
+  const model = new OpenAIChatModel();
   const engine = new ExecutionEngine({ model });
 
   const plus = AIAgent.from({
@@ -94,14 +94,14 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
       }),
     );
 
-  const result = await engine.run("1 + 1 = ?", agent);
+  const result = await engine.call(agent, "1 + 1 = ?");
 
-  expect(plusCall).toHaveBeenCalledWith({ ...userInput("1 + 1 = ?"), a: 1, b: 1 }, engine);
-  expect(result).toEqual({ text: "The sum is 2" });
+  expect(plusCall).toHaveBeenCalledWith({ ...createMessage("1 + 1 = ?"), a: 1, b: 1 }, engine);
+  expect(result).toEqual(createMessage("The sum is 2"));
 });
 
 test("AIAgent with router toolChoice mode should return tool result", async () => {
-  const model = new ChatModelOpenAI();
+  const model = new OpenAIChatModel();
   const engine = new ExecutionEngine({ model });
 
   const plus = AIAgent.from({
@@ -141,8 +141,8 @@ test("AIAgent with router toolChoice mode should return tool result", async () =
     )
     .mockReturnValueOnce(Promise.resolve({ json: { sum: 2 } }));
 
-  const result = await engine.run("1 + 1 = ?", agent);
+  const result = await engine.call(agent, "1 + 1 = ?");
 
-  expect(plusCall).toHaveBeenCalledWith({ ...userInput("1 + 1 = ?"), a: 1, b: 1 }, engine);
+  expect(plusCall).toHaveBeenCalledWith({ ...createMessage("1 + 1 = ?"), a: 1, b: 1 }, engine);
   expect(result).toEqual({ sum: 2 });
 });

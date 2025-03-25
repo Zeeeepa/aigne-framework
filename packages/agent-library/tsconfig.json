@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@aigne/core-next": ["../core/src"],
+      "@aigne/core": ["../core/src"],
       "@aigne/agent-library": ["./src"]
     }
   },

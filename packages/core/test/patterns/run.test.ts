@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { ExecutionEngine, FunctionAgent } from "@aigne/core";
 
 test("Patterns - Run", async () => {
   const plus = FunctionAgent.from(({ a, b }: { a: number; b: number }) => ({
@@ -8,7 +8,7 @@ test("Patterns - Run", async () => {
 
   const engine = new ExecutionEngine();
 
-  const result = await engine.run({ a: 1, b: 2 }, plus);
+  const result = await engine.call(plus, { a: 1, b: 2 });
 
   expect(result).toEqual({ sum: 3 });
 });

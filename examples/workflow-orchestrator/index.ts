@@ -4,25 +4,23 @@ import assert from "node:assert";
 import { OrchestratorAgent } from "@aigne/agent-library";
 import {
   AIAgent,
-  ChatModelOpenAI,
   ExecutionEngine,
   MCPAgent,
+  OpenAIChatModel,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
 const puppeteer = await MCPAgent.from({
   command: "npx",
   args: ["-y", "@modelcontextprotocol/server-puppeteer"],
-  env: {
-    ...(process.env as Record<string, string>),
-  },
+  env: process.env as Record<string, string>,
 });
 
 const finder = AIAgent.from({
@@ -94,7 +92,7 @@ const agent = OrchestratorAgent.from({
 
 const engine = new ExecutionEngine({ model });
 
-const userAgent = await engine.run(agent);
+const userAgent = engine.call(agent);
 
 await runChatLoopInTerminal(userAgent, {
   welcome: "Welcome to the Orchestrator Agent!",

@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@aigne/core-next": ["../../packages/core/src"]
+      "@aigne/core": ["../../packages/core/src"]
     }
   }
 }

@@ -3,18 +3,19 @@
 import assert from "node:assert";
 import {
   AIAgent,
-  ChatModelOpenAI,
   ExecutionEngine,
+  OpenAIChatModel,
+  UserAgent,
   UserInputTopic,
   UserOutputTopic,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const model = new ChatModelOpenAI({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
@@ -78,7 +79,11 @@ Please review the code. If previous feedback was provided, see if it was address
 
 const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
 
-const userAgent = await engine.run();
+const userAgent = UserAgent.from({
+  context: engine,
+  publishTopic: UserInputTopic,
+  subscribeTopic: UserOutputTopic,
+});
 
 await runChatLoopInTerminal(userAgent, {
   welcome: `Hello, I'm a coder with a reviewer. I can help you write code and get it reviewed.`,
