@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { ExecutionEngine, OpenAIChatModel, UserInputTopic, UserOutputTopic } from "@aigne/core";
 
 import toJsonSchema from "to-json-schema";
 import mapper from "./agents/mapper.js";
@@ -24,10 +24,10 @@ export async function generateMapping({
 }): Promise<{
   jsonata: string;
   confidence: number;
-  confidence_reasoning: string;
+  confidenceReasoning: string;
 } | null> {
   try {
-    const model = new ChatModelOpenAI({
+    const model = new OpenAIChatModel({
       apiKey: OPENAI_API_KEY,
     });
 
@@ -38,13 +38,14 @@ export async function generateMapping({
 
     const engine = new ExecutionEngine({ model, agents: [mapper, reviewer] });
 
-    const result = await engine.run({ ...input });
+    engine.publish(UserInputTopic, input);
 
-    // Unwrap the data property
+    const { message } = await engine.subscribe(UserOutputTopic);
+
     return {
-      jsonata: (result.jsonata as string) || "",
-      confidence: (result.confidence as number) || 0,
-      confidence_reasoning: (result.confidence_reasoning as string) || "",
+      jsonata: (message.jsonata as string) || "",
+      confidence: (message.confidence as number) || 0,
+      confidenceReasoning: (message.confidenceReasoning as string) || "",
     };
   } catch (error: unknown) {
     console.error("Error generating mapping:", String(error));

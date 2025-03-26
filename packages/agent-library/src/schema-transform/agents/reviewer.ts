@@ -1,4 +1,4 @@
-import { FunctionAgent, UserOutputTopic } from "@aigne/core-next";
+import { FunctionAgent, UserOutputTopic } from "@aigne/core";
 import { z } from "zod";
 import { applyJsonataWithValidation } from "../tools.js";
 

@@ -1,4 +1,4 @@
-import { AIAgent, PromptBuilder, UserInputTopic } from "@aigne/core-next";
+import { AIAgent, PromptBuilder, UserInputTopic } from "@aigne/core";
 import { z } from "zod";
 import { PROMPT_MAPPING } from "../prompts.js";
 
