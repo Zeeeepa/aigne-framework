@@ -1,2 +1,2 @@
 export * from "./orchestrator/index.js";
-export * from "./schema-transform/index.js";
+export * from "./data-mapper/index.js";

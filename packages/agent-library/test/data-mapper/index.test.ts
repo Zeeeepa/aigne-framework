@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { generateMapping } from "../../src/schema-transform";
-import { applyJsonata } from "../../src/schema-transform/tools";
+import { generateMapping } from "../../src/data-mapper";
+import { applyJsonata } from "../../src/data-mapper/tools";
 import { testData, testData2, testData3 } from "./test-data";
 
 test(
