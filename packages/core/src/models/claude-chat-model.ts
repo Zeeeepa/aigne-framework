@@ -11,41 +11,56 @@ import type {
 import { isEmpty } from "lodash-es";
 import type { Message } from "../agents/agent.js";
 import { parseJSON } from "../utils/json-schema.js";
+import { logger } from "../utils/logger.js";
 import { isNonNullable } from "../utils/type-utils.js";
 import {
   ChatModel,
   type ChatModelInput,
   type ChatModelInputMessageContent,
+  type ChatModelOptions,
   type ChatModelOutput,
 } from "./chat-model.js";
 
 const CHAT_MODEL_CLAUDE_DEFAULT_MODEL = "claude-3-7-sonnet-latest";
 
+export interface ClaudeChatModelOptions {
+  apiKey?: string;
+  model?: string;
+  modelOptions?: ChatModelOptions;
+}
+
 export class ClaudeChatModel extends ChatModel {
-  constructor(public config?: { apiKey?: string; model?: string }) {
+  constructor(public options?: ClaudeChatModelOptions) {
     super();
   }
 
   private _client?: Anthropic;
 
   get client() {
-    if (!this.config?.apiKey) throw new Error("Api Key is required for ClaudeChatModel");
+    if (!this.options?.apiKey) throw new Error("Api Key is required for ClaudeChatModel");
 
-    this._client ??= new Anthropic({ apiKey: this.config.apiKey });
+    this._client ??= new Anthropic({ apiKey: this.options.apiKey });
     return this._client;
   }
 
+  get modelOptions() {
+    return this.options?.modelOptions;
+  }
+
   async process(input: ChatModelInput): Promise<ChatModelOutput> {
-    const model = this.config?.model || CHAT_MODEL_CLAUDE_DEFAULT_MODEL;
+    const model = this.options?.model || CHAT_MODEL_CLAUDE_DEFAULT_MODEL;
+    const disableParallelToolUse =
+      input.modelOptions?.parallelToolCalls === false ||
+      this.modelOptions?.parallelToolCalls === false;
 
     const body: Anthropic.Messages.MessageCreateParams = {
       model,
-      temperature: input.modelOptions?.temperature,
-      top_p: input.modelOptions?.topP,
+      temperature: input.modelOptions?.temperature ?? this.modelOptions?.temperature,
+      top_p: input.modelOptions?.topP ?? this.modelOptions?.topP,
       // TODO: make dynamic based on model https://docs.anthropic.com/en/docs/about-claude/models/all-models
       max_tokens: /claude-3-[5|7]/.test(model) ? 8192 : 4096,
       ...convertMessages(input),
-      ...convertTools(input),
+      ...convertTools({ ...input, disableParallelToolUse }),
     };
 
     const stream = this.client.messages.stream({
@@ -65,48 +80,61 @@ export class ClaudeChatModel extends ChatModel {
   }
 
   private async extractResultFromClaudeStream(stream: MessageStream) {
-    let text = "";
-    const toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
-      args: string;
-    })[] = [];
+    const logs: string[] = [];
 
-    for await (const chunk of stream) {
-      // handle streaming text
-      if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-        text += chunk.delta.text;
+    try {
+      let text = "";
+      const toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
+        args: string;
+      })[] = [];
+
+      for await (const chunk of stream) {
+        logs.push(JSON.stringify(chunk));
+
+        // handle streaming text
+        if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+          text += chunk.delta.text;
+        }
+
+        if (chunk.type === "content_block_start" && chunk.content_block.type === "tool_use") {
+          toolCalls[chunk.index] = {
+            type: "function",
+            id: chunk.content_block.id,
+            function: {
+              name: chunk.content_block.name,
+              arguments: {},
+            },
+            args: "",
+          };
+        }
+
+        if (chunk.type === "content_block_delta" && chunk.delta.type === "input_json_delta") {
+          const call = toolCalls[chunk.index];
+          if (!call) throw new Error("Tool call not found");
+          call.args += chunk.delta.partial_json;
+        }
       }
 
-      if (chunk.type === "content_block_start" && chunk.content_block.type === "tool_use") {
-        toolCalls[chunk.index] = {
-          type: "function",
-          id: chunk.content_block.id,
-          function: {
-            name: chunk.content_block.name,
-            arguments: {},
-          },
-          args: "",
-        };
+      const result: ChatModelOutput = { text };
+
+      if (toolCalls.length) {
+        result.toolCalls = toolCalls
+          .map(({ args, ...c }) => ({
+            ...c,
+            function: {
+              ...c.function,
+              // NOTE: claude may return a blank string for empty object (the tool's input schema is a empty object)
+              arguments: args.trim() ? parseJSON(args) : {},
+            },
+          }))
+          .filter(isNonNullable);
       }
 
-      if (chunk.type === "content_block_delta" && chunk.delta.type === "input_json_delta") {
-        const call = toolCalls[chunk.index];
-        if (!call) throw new Error("Tool call not found");
-        call.args += chunk.delta.partial_json;
-      }
+      return result;
+    } catch (error) {
+      logger.debug("Failed to process Claude stream", { error, logs });
+      throw error;
     }
-
-    const result: ChatModelOutput = { text };
-
-    if (toolCalls.length) {
-      result.toolCalls = toolCalls
-        .map(({ args, ...c }) => ({
-          ...c,
-          function: { ...c.function, arguments: parseJSON(args) },
-        }))
-        .filter(isNonNullable);
-    }
-
-    return result;
   }
 
   private async requestStructuredOutput(
@@ -221,17 +249,21 @@ function convertContent(content: ChatModelInputMessageContent): string | Content
 function convertTools({
   tools,
   toolChoice,
-}: ChatModelInput): { tools?: ToolUnion[]; tool_choice?: ToolChoice } | undefined {
+  disableParallelToolUse,
+}: ChatModelInput & {
+  disableParallelToolUse?: boolean;
+}): { tools?: ToolUnion[]; tool_choice?: ToolChoice } | undefined {
   let choice: ToolChoice | undefined;
   if (typeof toolChoice === "object" && "type" in toolChoice && toolChoice.type === "function") {
     choice = {
       type: "tool",
       name: toolChoice.function.name,
+      disable_parallel_tool_use: disableParallelToolUse,
     };
   } else if (toolChoice === "required") {
-    choice = { type: "any" };
+    choice = { type: "any", disable_parallel_tool_use: disableParallelToolUse };
   } else if (toolChoice === "auto") {
-    choice = { type: "auto" };
+    choice = { type: "auto", disable_parallel_tool_use: disableParallelToolUse };
   } else if (toolChoice === "none") {
     choice = { type: "none" };
   }
