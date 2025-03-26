@@ -38,13 +38,12 @@ export async function generateMapping({
 
     const engine = new ExecutionEngine({ model, agents: [mapper, reviewer] });
 
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    const result: any = await engine.run({ ...input });
+    const result = await engine.run({ ...input });
 
     // Unwrap the data property
     return {
-      jsonata: result.jsonata || "",
-      confidence: result.confidence || 0,
+      jsonata: (result.jsonata as string) || "",
+      confidence: (result.confidence as number) || 0,
       confidence_reasoning: (result.confidence_reasoning as string) || "",
     };
   } catch (error: unknown) {

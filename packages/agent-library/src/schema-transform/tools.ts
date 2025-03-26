@@ -1,4 +1,4 @@
-// eslint-disable @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonata from "jsonata";
 import { Validator } from "jsonschema";
 import type { Schema } from "jsonschema";
@@ -51,7 +51,7 @@ export async function applyJsonataWithValidation(
     }
     return { success: true, data: result };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: `Validation failed: ${error.message}` };
   }
 }
 
@@ -61,7 +61,7 @@ export async function applyJsonata(data: unknown, expr: string): Promise<unknown
     const result = await expression.evaluate(data);
     return result;
   } catch (error) {
-    throw new Error(`Mapping transformation failed: ${error.message}`);
+    throw new Error(`JSONata evaluation failed for expression "${expr}": ${error.message}`);
   }
 }
 

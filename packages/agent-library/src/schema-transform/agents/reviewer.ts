@@ -22,10 +22,22 @@ const reviewer = FunctionAgent.from({
     responseSchema: string;
   }) => {
     try {
+      let parsedSourceData = null;
+      let parsedResponseSchema = null;
+      try {
+        parsedSourceData = sourceData ? JSON.parse(sourceData) : null;
+        parsedResponseSchema = responseSchema ? JSON.parse(responseSchema) : null;
+      } catch (parseError) {
+        return {
+          success: false,
+          data: null,
+          feedback: `JSON parsing failed: ${parseError.message}`,
+        };
+      }
       const transformation = await applyJsonataWithValidation(
-        sourceData ? JSON.parse(sourceData) : null,
+        parsedSourceData,
         jsonata,
-        responseSchema ? JSON.parse(responseSchema) : null,
+        parsedResponseSchema,
       );
 
       // if transformation is successful, return success
@@ -39,7 +51,7 @@ const reviewer = FunctionAgent.from({
       return {
         success: transformation.success,
         data: transformation.data,
-        feedback: `Validation failed: ${transformation.error}`,
+        feedback: transformation.error,
       };
     } catch (error) {
       return {
