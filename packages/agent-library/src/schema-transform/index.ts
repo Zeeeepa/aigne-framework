@@ -8,7 +8,6 @@ import reviewer from "./agents/reviewer.js";
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-// 接口定义
 export interface TransformInput {
   responseSchema: string;
   responseSampleData?: string;

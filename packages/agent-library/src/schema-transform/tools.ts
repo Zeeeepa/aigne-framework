@@ -11,9 +11,9 @@ export interface TransformResult {
 }
 
 /**
- * 从数据中提取 JSON Schema
- * @param data 任意数据
- * @returns JSON Schema 或 null
+ * Extract JSON Schema from data
+ * @param data Any data
+ * @returns JSON Schema or null
  */
 export function getSchemaFromData(data: unknown): unknown {
   if (!data) return null;

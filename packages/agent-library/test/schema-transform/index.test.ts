@@ -14,12 +14,12 @@ test(
     expect(result?.confidence).toBeGreaterThanOrEqual(80);
     expect(result).not.toBeNull();
 
-    // 验证数据转换
+    // Verify data transformation
     const sourceData = JSON.parse(testData.sourceData);
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
-    // 验证关键字段
+    // Verify key fields
     expect(transformedData.sectionsData.ContentSearchResult.sourceList).toBeDefined();
     expect(transformedData.sectionsData.ContentSearchResult.sourceList.length).toBeGreaterThan(0);
     expect(transformedData.sectionsData.ContentSearchResult.sourceList[0].title).toBeDefined();
@@ -40,12 +40,12 @@ test(
     expect(result?.confidence).toBeGreaterThanOrEqual(80);
     expect(result).not.toBeNull();
 
-    // 验证数据转换
+    // Verify data transformation
     const sourceData = JSON.parse(testData2.sourceData);
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
-    // 验证关键字段
+    // Verify key fields
     expect(transformedData.product.basicInfo.name).toBe("iPhone 15 Pro");
     expect(transformedData.product.basicInfo.price).toBe(999.99);
     expect(transformedData.product.specifications.length).toBe(2);
@@ -69,12 +69,12 @@ test(
     expect(result?.confidence).toBeGreaterThanOrEqual(80);
     expect(result).not.toBeNull();
 
-    // 验证数据转换
+    // Verify data transformation
     const sourceData = JSON.parse(testData3.sourceData);
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
-    // 验证关键字段
+    // Verify key fields
     expect(transformedData.order.orderId).toBe("ORD-2024-001");
     expect(transformedData.order.status).toBe("processing");
     expect(transformedData.order.items.length).toBe(2);
