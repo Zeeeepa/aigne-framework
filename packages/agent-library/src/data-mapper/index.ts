@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import { ExecutionEngine, OpenAIChatModel, UserInputTopic, UserOutputTopic } from "@aigne/core";
+import { ExecutionEngine, UserInputTopic, UserOutputTopic } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 import toJsonSchema from "to-json-schema";
 import mapper from "./agents/mapper.js";

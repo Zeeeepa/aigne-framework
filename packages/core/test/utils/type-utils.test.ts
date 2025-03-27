@@ -1,10 +1,13 @@
 import { expect, test } from "bun:test";
+import { Agent, type FunctionAgentFn } from "@aigne/core";
 import {
+  checkArguments,
   createAccessorArray,
   get,
   isNonNullable,
   orArrayToArray,
-} from "../../src/utils/type-utils.js";
+} from "@aigne/core/utils/type-utils.js";
+import { type ZodType, z } from "zod";
 
 test("type-utils.isNonNullable", async () => {
   expect([null, undefined, 0].filter(isNonNullable)).toEqual([0]);
@@ -31,4 +34,26 @@ test("type-utils.createAccessorArray", async () => {
   expect(accessorArray.foo).toEqual({ name: "foo" });
   expect(accessorArray.bar).toEqual({ name: "bar" });
   expect(accessorArray.baz).toBeUndefined();
+});
+
+test("type-utils.checkArguments should throw an error if the arguments do not match the schema", async () => {
+  expect(() => {
+    checkArguments("test", z.object({ foo: z.string() }), { foo: 1 } as unknown);
+  }).toThrow("test check arguments error: foo: Expected string, received number");
+});
+
+test("type-utils.checkArguments should throw an error if the arguments do not match the union schema", async () => {
+  expect(() => {
+    checkArguments("test", z.object({ foo: z.union([z.string(), z.boolean()]) }), {
+      foo: 1,
+    } as unknown);
+  }).toThrow("test check arguments error: foo: Expected string or boolean, received number");
+
+  expect(() => {
+    checkArguments(
+      "test",
+      z.object({ agent: z.union([z.function() as ZodType<FunctionAgentFn>, z.instanceof(Agent)]) }),
+      { agent: 1 } as unknown,
+    );
+  }).toThrow("test check arguments error: agent: Input not instance of Agent");
 });
