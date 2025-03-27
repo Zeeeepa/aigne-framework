@@ -1,0 +1,82 @@
+[product("AIGNE Framework")
+{
+  Type("AI Framework", "Development Framework"),
+  description("AIGNE Framework 是一个功能型 AI 应用开发框架，旨在简化和加速现代应用程序的构建过程。它结合了函数式编程特性、强大的人工智能能力和模块化设计原则，帮助开发者轻松创建可扩展的解决方案。AIGNE Framework 还深度集成了 Blocklet 生态系统，为开发者提供丰富的工具和资源。"),
+  feature("TypeScript 支持", "Blocklet 生态系统支持", "支持多种工作流模式", "支持多种大语言模型"),
+  created_by("ArcBlock"),
+  ecosystem_integration("AI Kit", "AIGNE Studio", "Aistro", "Pages Kit"),
+  architecture_components("Chat Model", "Agent", "Workflow", "Execution Engine"),
+  external_integrations("Puppeteer", "SQLite", "GitHub")
+}]
+
+[component("Chat Model")
+{
+  part_of("AIGNE Framework"),
+  description("大语言模型抽象的类类", "快速支持多种大语言模型")
+}]
+
+[component("Agent")
+{
+  part_of("AIGNE Framework"),
+  description("每个 Agent 执行提供特定的能力", "指定的输入输出结构", "工作流的基础"),
+  sub_types(
+    [agent_type("AI Agent") 
+    {
+      description("与大语言模型交互的 Agent")
+    }],
+    [agent_type("Function Agent") 
+    {
+      description("封装代码逻辑为 Agent")
+    }],
+    [agent_type("MCP Agent") 
+    {
+      description("通过 CMP 协议连接外部服务")
+    }]
+  )
+}]
+
+[component("Workflow")
+{
+  part_of("AIGNE Framework"),
+  types(
+    "顺序工作流",
+    "独立工作流",
+    "交接工作流",
+    "反思工作流",
+    "代码执行工作流",
+    "编辑工作流"
+  )
+}]
+
+[component("Execution Engine")
+{
+  part_of("AIGNE Framework"),
+  description("调度 Agent")
+}]
+
+[company("ArcBlock")
+{
+  description("A total solution for building decentralized applications"),
+  founder("Robert Mao"),
+  created_at("2017"),
+  products(
+    "ArcBlock platform",
+    "ArcBlock blockchain",
+    "Blocklet Server",
+    "Blocklet framework",
+    "DID Wallet",
+    "DID Connect",
+    "Aistro",
+    "AI Kit", 
+    "Web3 Kit",
+    "NFT Maker",
+    "Pages Kit",
+    "Payment Kit",
+    "Discuss Kit",
+    "ArcSphere",
+    "Blocklet Launcher", 
+    "Blocklet Store",
+    "AIGNE",
+    "DID Names"
+  )
+}] 

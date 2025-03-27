@@ -184,7 +184,7 @@ function jsonSchemaToOpenAIJsonSchema(schema: Record<string, unknown>): Record<s
     return {
       ...schema,
       properties: Object.fromEntries(
-        Object.entries(properties).map(([key, value]) => {
+        Object.entries(properties || {}).map(([key, value]) => {
           const valueSchema = jsonSchemaToOpenAIJsonSchema(value as Record<string, unknown>);
 
           // NOTE: All fields must be required https://platform.openai.com/docs/guides/structured-outputs/all-fields-must-be-required
@@ -194,7 +194,7 @@ function jsonSchemaToOpenAIJsonSchema(schema: Record<string, unknown>): Record<s
           ];
         }),
       ),
-      required: Object.keys(properties),
+      required: Object.keys(properties || {}),
     };
   }
 
