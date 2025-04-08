@@ -1,6 +1,11 @@
 import { expect, spyOn, test } from "bun:test";
-import { type FullPlanOutput, OrchestratorAgent, getFullPlanSchema } from "@aigne/agent-library";
-import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core";
+import {
+  type FullPlanOutput,
+  OrchestratorAgent,
+  getFullPlanSchema,
+} from "@aigne/agent-library/orchestrator/index.js";
+import { AIAgent, ExecutionEngine, createMessage } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 test("AIAgent.call", async () => {
   const model = new OpenAIChatModel();
@@ -75,10 +80,13 @@ test("AIAgent.call", async () => {
 
   expect(result).toEqual(createMessage("Task finished"));
   expect(finderCall.mock.calls).toEqual([
-    [createMessage(expect.stringContaining("Find the closest match to a user's request")), engine],
+    [
+      createMessage(expect.stringContaining("Find the closest match to a user's request")),
+      expect.anything(),
+    ],
   ]);
   expect(writerCall.mock.calls).toEqual([
-    [createMessage(expect.stringContaining("Write to the filesystem")), engine],
+    [createMessage(expect.stringContaining("Write to the filesystem")), expect.anything()],
   ]);
 });
 
@@ -94,5 +102,5 @@ test("getFullPlanSchema should throw error if tools name is not unique", async (
         description: "Write to the filesystem",
       }),
     ]),
-  ).toThrowError("Tools name must be unique for orchestrator: finder");
+  ).toThrowError("Duplicate agent names found in orchestrator: finder");
 });

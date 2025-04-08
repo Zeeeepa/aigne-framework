@@ -1,5 +1,6 @@
-import { type Agent, type Message, ensureZodUnionArray } from "@aigne/core";
-import { groupBy, pickBy } from "lodash-es";
+import type { Agent, Message } from "@aigne/core";
+import { ensureZodUnionArray } from "@aigne/core/utils/json-schema.js";
+import { duplicates } from "@aigne/core/utils/type-utils.js";
 import { z } from "zod";
 
 export const SYNTHESIZE_PLAN_USER_PROMPT_TEMPLATE = `\
@@ -9,10 +10,8 @@ Synthesize the results of executing all steps in the plan into a cohesive result
 export function getFullPlanSchema(agents: Agent[]) {
   const agentNames = agents.map((i) => i.name);
   if (new Set(agentNames).size !== agentNames.length) {
-    const duplicates = pickBy(groupBy(agentNames), (x) => x.length > 1);
-    throw new Error(
-      `Tools name must be unique for orchestrator: ${Object.keys(duplicates).join(",")}`,
-    );
+    const dup = duplicates(agentNames);
+    throw new Error(`Duplicate agent names found in orchestrator: ${dup.join(",")}`);
   }
 
   const TaskSchema = z.object({

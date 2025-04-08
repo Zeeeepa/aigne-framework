@@ -8,17 +8,19 @@ import type {
   ToolUnion,
   ToolUseBlockParam,
 } from "@anthropic-ai/sdk/resources/index.js";
-import { isEmpty } from "lodash-es";
+import { z } from "zod";
 import type { Message } from "../agents/agent.js";
 import { parseJSON } from "../utils/json-schema.js";
 import { logger } from "../utils/logger.js";
-import { isNonNullable } from "../utils/type-utils.js";
+import { mergeUsage } from "../utils/model-utils.js";
+import { checkArguments, isEmpty, isNonNullable } from "../utils/type-utils.js";
 import {
   ChatModel,
   type ChatModelInput,
   type ChatModelInputMessageContent,
   type ChatModelOptions,
   type ChatModelOutput,
+  type ChatModelOutputUsage,
 } from "./chat-model.js";
 
 const CHAT_MODEL_CLAUDE_DEFAULT_MODEL = "claude-3-7-sonnet-latest";
@@ -29,17 +31,34 @@ export interface ClaudeChatModelOptions {
   modelOptions?: ChatModelOptions;
 }
 
+export const claudeChatModelOptionsSchema = z.object({
+  apiKey: z.string().optional(),
+  model: z.string().optional(),
+  modelOptions: z
+    .object({
+      model: z.string().optional(),
+      temperature: z.number().optional(),
+      topP: z.number().optional(),
+      frequencyPenalty: z.number().optional(),
+      presencePenalty: z.number().optional(),
+      parallelToolCalls: z.boolean().optional().default(true),
+    })
+    .optional(),
+});
+
 export class ClaudeChatModel extends ChatModel {
   constructor(public options?: ClaudeChatModelOptions) {
+    if (options) checkArguments("ClaudeChatModel", claudeChatModelOptionsSchema, options);
     super();
   }
 
-  private _client?: Anthropic;
+  protected _client?: Anthropic;
 
   get client() {
-    if (!this.options?.apiKey) throw new Error("Api Key is required for ClaudeChatModel");
+    const apiKey = this.options?.apiKey || process.env.CLAUDE_API_KEY;
+    if (!apiKey) throw new Error("Api Key is required for ClaudeChatModel");
 
-    this._client ??= new Anthropic({ apiKey: this.options.apiKey });
+    this._client ??= new Anthropic({ apiKey });
     return this._client;
   }
 
@@ -73,7 +92,13 @@ export class ClaudeChatModel extends ChatModel {
     // Claude doesn't support json_schema response and tool calls in the same request,
     // so we need to make a separate request for json_schema response when the tool calls is empty
     if (!result.toolCalls?.length && input.responseFormat?.type === "json_schema") {
-      return this.requestStructuredOutput(body, input.responseFormat);
+      const output = await this.requestStructuredOutput(body, input.responseFormat);
+
+      return {
+        ...output,
+        // merge usage from both requests
+        usage: mergeUsage(result.usage, output.usage),
+      };
     }
 
     return result;
@@ -87,8 +112,22 @@ export class ClaudeChatModel extends ChatModel {
       const toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
         args: string;
       })[] = [];
+      let usage: ChatModelOutputUsage | undefined;
 
       for await (const chunk of stream) {
+        if (chunk.type === "message_start") {
+          const { input_tokens, output_tokens } = chunk.message.usage;
+
+          usage = {
+            promptTokens: input_tokens,
+            completionTokens: output_tokens,
+          };
+        }
+
+        if (chunk.type === "message_delta" && usage) {
+          usage.completionTokens = chunk.usage.output_tokens;
+        }
+
         logs.push(JSON.stringify(chunk));
 
         // handle streaming text
@@ -115,7 +154,7 @@ export class ClaudeChatModel extends ChatModel {
         }
       }
 
-      const result: ChatModelOutput = { text };
+      const result: ChatModelOutput = { usage, text };
 
       if (toolCalls.length) {
         result.toolCalls = toolCalls
@@ -168,6 +207,10 @@ export class ClaudeChatModel extends ChatModel {
     if (!jsonTool) throw new Error("Json tool not found");
     return {
       json: jsonTool.input as Message,
+      usage: {
+        promptTokens: result.usage.input_tokens,
+        completionTokens: result.usage.output_tokens,
+      },
     };
   }
 }

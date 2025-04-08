@@ -63,13 +63,13 @@ static from<I extends AgentInput, O extends AgentOutput>(options: AIAgentOptions
 处理输入并生成输出，与 AI 模型交互并处理响应。
 
 ```typescript
-async process(input: I, context?: Context): Promise<O>
+async process(input: I, context: Context): Promise<O>
 ```
 
 ##### 参数
 
 - `input`: `I` - 输入数据
-- `context`: `Context` (可选) - 执行上下文
+- `context`: `Context` - 执行上下文
 
 ##### 返回值
 
@@ -122,7 +122,8 @@ type AIAgentToolChoice = "auto" | "none" | "required" | "router" | Agent;
 ### 创建基本的 AIAgent
 
 ```typescript
-import { AIAgent, OpenAIChatModel } from "@aigne/core";
+import { AIAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -143,7 +144,8 @@ console.log(output.text); // 输出 AI 的回复
 ### 使用工具的 AIAgent
 
 ```typescript
-import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
+import { AIAgent, FunctionAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -184,7 +186,8 @@ console.log(output.text); // "北京今天天气晴朗，温度24°C，湿度60%
 ### 使用路由模式的 AIAgent
 
 ```typescript
-import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
+import { AIAgent, FunctionAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

@@ -21,7 +21,8 @@ AIGNE Framework 是一个功能型 AI 应用开发框架，旨在简化和加速
 ## 使用示例
 
 ```ts
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
 const model = new OpenAIChatModel({
@@ -69,7 +70,9 @@ const response = await userAgent.call("transfer to agent b");
 
 ## 文档
 
-- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): AIGNE Framework 常见使用场景的实用方案和模式
+- [CLI 指南](./docs/cli.md) ([中文](./docs/cli.zh.md)): AIGNE CLI 工具的全面指南
+- [代理开发指南](./docs/agent-development.md) ([中文](./docs/agent-development.zh.md)): 使用 YAML/JS 配置文件开发 AIGNE 代理的指南
+- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): AIGNE Framework API 使用的实用方案和模式
 - API 参考:
   - [Agent API](./docs/apis/agent-api.md) ([English](./docs/apis/agent-api.en.md) | [中文](./docs/apis/agent-api.zh.md))
   - [AI Agent API](./docs/apis/ai-agent-api.md) ([English](./docs/apis/ai-agent-api.en.md) | [中文](./docs/apis/ai-agent-api.zh.md))

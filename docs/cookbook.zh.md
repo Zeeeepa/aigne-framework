@@ -8,6 +8,9 @@
 - [AIGNE Framework Cookbook](#aigne-framework-cookbook)
   - [目录](#目录)
   - [介绍](#介绍)
+  - [安装](#安装)
+    - [安装 AIGNE Framework](#安装-aigne-framework)
+    - [在 CommonJS 环境中使用 @aigne/core](#在-commonjs-环境中使用-aignecore)
   - [基础概念](#基础概念)
     - [聊天模型（ChatModel）](#聊天模型chatmodel)
     - [Agent](#agent)
@@ -34,6 +37,73 @@
 
 AIGNE Framework是一个用于构建基于大型语言模型(LLM)的应用程序的框架。它提供了一系列工具和抽象，使开发者能够轻松地创建复杂的AI工作流程。本Cookbook旨在帮助开发者理解AIGNE Framework的核心概念，并通过示例展示如何使用不同的工作流模式来解决实际问题。
 
+## 安装
+
+要开始使用AIGNE Framework，你需要安装相关依赖。
+
+### 安装 AIGNE Framework
+
+**npm**
+
+```bash
+npm install @aigne/core
+
+# 如果需要 Agent Library 中的高级 Agent
+npm install @aigne/agent-library
+
+# 根据需要选择安装 LLM
+npm install openai @anthropic-ai/sdk @google/generative-ai
+```
+
+**yarn**
+
+```bash
+yarn add @aigne/core
+
+# 如果需要 Agent Library 中的高级 Agent
+yarn add @aigne/agent-library
+
+# 根据需要选择安装 LLM
+yarn add openai @anthropic-ai/sdk @google/generative-ai
+```
+
+**pnpm**
+
+```bash
+pnpm install @aigne/core
+
+# 如果需要 Agent Library 中的高级 Agent
+pnpm install @aigne/agent-library
+
+# 根据需要选择安装 LLM
+pnpm install openai @anthropic-ai/sdk @google/generative-ai
+```
+
+### 在 CommonJS 环境中使用 @aigne/core
+
+@aigne/core 支持在 CommonJS 和 ES Module 环境中使用。如果你的项目使用 CommonJS 模块系统，但由于一个[第三方 lib 不支持 ESM](https://github.com/AIGNE-io/aigne-framework/issues/36)，在问题修复前，需要在项目中的 package.json 中加入下面的配置：
+
+**npm**
+
+```json
+{
+  "overrides": {
+    "pkce-challenge": "https://github.com/AIGNE-io/pkce-challenge#dist"
+  }
+}
+```
+
+**yarn or pnpm**
+
+```json
+{
+  "resolutions": {
+    "pkce-challenge": "https://github.com/AIGNE-io/pkce-challenge#dist"
+  }
+}
+```
+
+
 ## 基础概念
 
 ### 聊天模型（ChatModel）
@@ -49,7 +119,9 @@ ChatModel可以直接使用，但通常建议通过ExecutionEngine来使用，�
 **示例**:
 
 ```typescript
-import { OpenAIChatModel, ClaudeChatModel, XAIChatModel } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
+import { XAIChatModel } from "@aigne/core/models/xai-chat-model.js";
 
 // 初始化OpenAI模型
 const openaiModel = new OpenAIChatModel({
@@ -117,7 +189,8 @@ const engine = new ExecutionEngine({ model });
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { AIAgent, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
 // 创建JavaScript沙箱
@@ -163,7 +236,8 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 概念提取Agent
 const conceptExtractor = AIAgent.from({
@@ -232,7 +306,8 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core";
+import { AIAgent, ExecutionEngine, parallel } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 功能提取Agent
 const featureExtractor = AIAgent.from({
@@ -280,11 +355,11 @@ console.log(result);
 ```typescript
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
 // 编码Agent
@@ -361,7 +436,8 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 转交给Agent B的函数
 function transfer_to_b() {
@@ -410,7 +486,8 @@ console.log(result2);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 产品支持Agent
 const productSupport = AIAgent.from({
@@ -487,7 +564,8 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
+import { AIAgent, ExecutionEngine, MCPAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 创建各专业Agent
 const puppeteer = await MCPAgent.from({
@@ -594,10 +672,10 @@ Puppeteer MCP服务器允许AIGNE Framework访问和操作网页内容。
 ```typescript
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 创建Puppeteer MCP Agent
 const puppeteerMCPAgent = await MCPAgent.from({
@@ -649,10 +727,10 @@ SQLite MCP服务器允许AIGNE Framework与SQLite数据库交互。
 import { join } from "node:path";
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 创建SQLite MCP Agent
 const sqlite = await MCPAgent.from({

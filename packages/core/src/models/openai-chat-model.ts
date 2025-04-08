@@ -1,8 +1,9 @@
 import { nanoid } from "nanoid";
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources";
+import { z } from "zod";
 import { parseJSON } from "../utils/json-schema.js";
-import { isNonNullable } from "../utils/type-utils.js";
+import { checkArguments, isNonNullable } from "../utils/type-utils.js";
 import {
   ChatModel,
   type ChatModelInput,
@@ -10,6 +11,7 @@ import {
   type ChatModelInputTool,
   type ChatModelOptions,
   type ChatModelOutput,
+  type ChatModelOutputUsage,
   type Role,
 } from "./chat-model.js";
 
@@ -22,19 +24,37 @@ export interface OpenAIChatModelOptions {
   modelOptions?: ChatModelOptions;
 }
 
+export const openAIChatModelOptionsSchema = z.object({
+  apiKey: z.string().optional(),
+  baseURL: z.string().optional(),
+  model: z.string().optional(),
+  modelOptions: z
+    .object({
+      model: z.string().optional(),
+      temperature: z.number().optional(),
+      topP: z.number().optional(),
+      frequencyPenalty: z.number().optional(),
+      presencePenalty: z.number().optional(),
+      parallelToolCalls: z.boolean().optional().default(true),
+    })
+    .optional(),
+});
+
 export class OpenAIChatModel extends ChatModel {
   constructor(public options?: OpenAIChatModelOptions) {
+    if (options) checkArguments("OpenAIChatModel", openAIChatModelOptionsSchema, options);
     super();
   }
 
-  private _client?: OpenAI;
+  protected _client?: OpenAI;
 
-  private get client() {
-    if (!this.options?.apiKey) throw new Error("Api Key is required for OpenAIChatModel");
+  get client() {
+    const apiKey = this.options?.apiKey || process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("Api Key is required for OpenAIChatModel");
 
     this._client ??= new OpenAI({
-      baseURL: this.options.baseURL,
-      apiKey: this.options.apiKey,
+      baseURL: this.options?.baseURL,
+      apiKey,
     });
     return this._client;
   }
@@ -67,6 +87,9 @@ export class OpenAIChatModel extends ChatModel {
               },
             }
           : undefined,
+      stream_options: {
+        include_usage: true,
+      },
       stream: true,
     });
 
@@ -74,6 +97,7 @@ export class OpenAIChatModel extends ChatModel {
     const toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
       args: string;
     })[] = [];
+    let usage: ChatModelOutputUsage | undefined;
 
     for await (const chunk of res) {
       const choice = chunk.choices?.[0];
@@ -97,9 +121,18 @@ export class OpenAIChatModel extends ChatModel {
       }
 
       if (choice?.delta.content) text += choice.delta.content;
+
+      if (chunk.usage) {
+        usage = {
+          promptTokens: chunk.usage.prompt_tokens,
+          completionTokens: chunk.usage.completion_tokens,
+        };
+      }
     }
 
-    const result: ChatModelOutput = {};
+    const result: ChatModelOutput = {
+      usage,
+    };
 
     if (input.responseFormat?.type === "json_schema" && text) {
       result.json = parseJSON(text);

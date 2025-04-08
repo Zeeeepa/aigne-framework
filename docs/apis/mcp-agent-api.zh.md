@@ -10,12 +10,10 @@ MCP Agent 是为了与符合 Model Context Protocol (MCP) 的服务器进行交�
 
 ### 基本属性
 
-| 属性名 | 类型 | 描述 |
-|-------|------|------|
-| `client` | `Client` | MCP 客户端实例，用于与 MCP 服务器通信 |
-| `prompts` | `MCPPrompt[]` | MCP 服务器提供的提示模板列表 |
-| `resources` | `MCPResource[]` | MCP 服务器提供的资源列表 |
-| `isCallable` | `boolean` | 始终为 false，因为 MCPAgent 本身不可直接调用 |
+- `client`: `Client` - MCP 客户端实例，用于与 MCP 服务器通信
+- `prompts`: `MCPPrompt[]` - MCP 服务器提供的提示模板列表
+- `resources`: `MCPResource[]` - MCP 服务器提供的资源列表
+- `isCallable`: `boolean` - 始终为 false，因为 MCPAgent 本身不可直接调用
 
 ### 构造函数
 
@@ -26,12 +24,9 @@ constructor(options: MCPAgentOptions)
 #### 参数
 
 - `options`: `MCPAgentOptions` - MCPAgent 配置选项
-
-  | 选项名 | 类型 | 描述 |
-  |-------|------|------|
-  | `client` | `Client` | MCP 客户端实例 |
-  | `prompts` | `MCPPrompt[]` | 可选的提示模板列表 |
-  | `resources` | `MCPResource[]` | 可选的资源列表 |
+  - `client`: `Client` - MCP 客户端实例
+  - `prompts`: `MCPPrompt[]` - 可选的提示模板列表
+  - `resources`: `MCPResource[]` - 可选的资源列表
 
 ### 静态方法
 
@@ -47,45 +42,20 @@ static from(options: MCPAgentOptions): MCPAgent;
 ##### 参数
 
 - `options`: `MCPServerOptions | MCPAgentOptions` - 服务器选项或 MCPAgent 配置
+  - 当传入 `SSEServerParameters` 时：
+    - `url`: `string` - MCP 服务器的 URL 地址
+    - `maxReconnects`: `number` - 可选，最大重连次数，默认为10，设置为0表示禁用自动重连
+    - `shouldReconnect`: `(error: Error) => boolean` - 可选，自定义判断哪些错误需要重连的函数，默认为所有错误都会触发重连
+  - 当传入 `StdioServerParameters` 时：
+    - `command`: `string` - 启动 MCP 服务器的命令
+    - `args`: `string[]` - 可选，命令的参数列表
+    - `env`: `Record<string, string>` - 可选，环境变量配置
 
 ##### 返回值
 
 - `MCPAgent | Promise<MCPAgent>` - 返回创建的 MCPAgent 实例或创建实例的 Promise
 
-#### `fromTransport`
-
-从传输接口创建 MCPAgent 的私有静态方法。
-
-```typescript
-private static async fromTransport(transport: Transport): Promise<MCPAgent>
-```
-
-##### 参数
-
-- `transport`: `Transport` - MCP 传输接口
-
-##### 返回值
-
-- `Promise<MCPAgent>` - 返回创建的 MCPAgent 实例
-
 ### 方法
-
-#### `process`
-
-MCPAgent 本身不支持处理，所以这个方法始终抛出错误。
-
-```typescript
-async process(_input: AgentInput, _context?: Context): Promise<AgentOutput>
-```
-
-##### 参数
-
-- `_input`: `AgentInput` - 输入数据（未使用）
-- `_context`: `Context` (可选) - 执行上下文（未使用）
-
-##### 返回值
-
-- 总是抛出错误，不返回值
 
 #### `shutdown`
 
@@ -95,75 +65,41 @@ async process(_input: AgentInput, _context?: Context): Promise<AgentOutput>
 async shutdown()
 ```
 
-## MCPTool 类
+## MCPBase 类
 
-`MCPTool` 是用于调用 MCP 服务器提供的工具的 Agent 实现。
+`MCPBase` 是 `MCPTool`、`MCPPrompt` 和 `MCPResource` 的基类，提供了与 MCP 服务器交互的共同功能。
 
 ### 基本属性
 
-| 属性名 | 类型 | 描述 |
-|-------|------|------|
-| `client` | `Client` | MCP 客户端实例 |
-| `mcpServer` | `string \| undefined` | MCP 服务器名称 |
+- `client`: `ClientWithReconnect` - 支持自动重连的 MCP 客户端实例
+- `mcpServer`: `string \| undefined` - MCP 服务器名称
 
-### 方法
-
-#### `process`
-
-调用 MCP 工具并返回结果。
+### 构造函数
 
 ```typescript
-async process(input: AgentInput): Promise<CallToolResult>
+constructor(options: MCPBaseOptions<I, O>)
 ```
 
-##### 参数
+#### 参数
 
-- `input`: `AgentInput` - 输入数据，将作为参数传递给 MCP 工具
+- `options`: `MCPBaseOptions<I, O>` - MCPBase 配置选项
+  - `client`: `ClientWithReconnect` - 支持自动重连的 MCP 客户端实例
 
-##### 返回值
+## MCPTool 类
 
-- `Promise<CallToolResult>` - 返回 MCP 工具调用的结果
+`MCPTool` 继承自 `MCPBase`，用于调用 MCP 服务器提供的工具。
 
 ## MCPPrompt 类
 
-`MCPPrompt` 是用于获取 MCP 服务器提供的提示模板的 Agent 实现。
-
-### 基本属性
-
-| 属性名 | 类型 | 描述 |
-|-------|------|------|
-| `client` | `Client` | MCP 客户端实例 |
-| `mcpServer` | `string \| undefined` | MCP 服务器名称 |
-
-### 方法
-
-#### `process`
-
-获取 MCP 提示模板并返回结果。
-
-```typescript
-async process(input: AgentInput): Promise<GetPromptResult>
-```
-
-##### 参数
-
-- `input`: `AgentInput` - 输入数据，将作为参数传递给 MCP 提示模板
-
-##### 返回值
-
-- `Promise<GetPromptResult>` - 返回 MCP 提示模板的结果
+`MCPPrompt` 继承自 `MCPBase`，用于获取 MCP 服务器提供的提示模板。
 
 ## MCPResource 类
 
-`MCPResource` 是用于访问 MCP 服务器提供的资源的 Agent 实现。
+`MCPResource` 继承自 `MCPBase`，用于访问 MCP 服务器提供的资源。
 
 ### 基本属性
 
-| 属性名 | 类型 | 描述 |
-|-------|------|------|
-| `client` | `Client` | MCP 客户端实例 |
-| `mcpServer` | `string \| undefined` | MCP 服务器名称 |
-| `uri` | `string` | 资源 URI 或 URI 模板 |
+- `uri`: `string` - 资源 URI 或 URI 模板
 
 ### 构造函数
 
@@ -174,29 +110,8 @@ constructor(options: MCPResourceOptions)
 #### 参数
 
 - `options`: `MCPResourceOptions` - MCPResource 配置选项
-
-  | 选项名 | 类型 | 描述 |
-  |-------|------|------|
-  | `client` | `Client` | MCP 客户端实例 |
-  | `uri` | `string` | 资源 URI 或 URI 模板 |
-
-### 方法
-
-#### `process`
-
-读取 MCP 资源并返回结果。
-
-```typescript
-async process(input: { [key: string]: string }): Promise<ReadResourceResult>
-```
-
-##### 参数
-
-- `input`: `{ [key: string]: string }` - 用于扩展 URI 模板的键值对
-
-##### 返回值
-
-- `Promise<ReadResourceResult>` - 返回读取的 MCP 资源
+  - `client`: `Client` - MCP 客户端实例
+  - `uri`: `string` - 资源 URI 或 URI 模板
 
 ## 相关类型
 
@@ -227,8 +142,14 @@ type MCPServerOptions = SSEServerParameters | StdioServerParameters;
 ```typescript
 type SSEServerParameters = {
   url: string;
+  maxReconnects?: number;
+  shouldReconnect?: (error: Error) => boolean;
 };
 ```
+
+- `url`: `string` - MCP 服务器的 URL 地址
+- `maxReconnects`: `number` - 可选，最大重连次数，默认为10，设置为0表示禁用自动重连
+- `shouldReconnect`: `(error: Error) => boolean` - 可选，自定义判断哪些错误需要重连的函数，如果未提供则所有错误都会触发重连
 
 ### `StdioServerParameters`
 
@@ -242,12 +163,16 @@ interface StdioServerParameters {
 }
 ```
 
+- `command`: `string` - 启动 MCP 服务器的命令
+- `args`: `string[]` - 可选，命令的参数列表
+- `env`: `Record<string, string>` - 可选，环境变量配置
+
 ### `MCPResourceOptions`
 
 定义 MCPResource 的配置选项。
 
 ```typescript
-interface MCPResourceOptions extends MCPToolBaseOptions<{ [key: string]: never }, ReadResourceResult> {
+interface MCPResourceOptions extends MCPBaseOptions<MCPPromptInput, ReadResourceResult> {
   uri: string;
 }
 ```

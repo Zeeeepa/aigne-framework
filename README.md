@@ -21,7 +21,8 @@ AIGNE Framework is a functional AI application development framework designed to
 ## Usage
 
 ```ts
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
 const model = new OpenAIChatModel({
@@ -69,7 +70,9 @@ const response = await userAgent.call("transfer to agent b");
 
 ## Documentation
 
-- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): Practical recipes and patterns for common AIGNE Framework usage scenarios
+- [CLI Guide](./docs/cli.md) ([中文](./docs/cli.zh.md)): Comprehensive guide to the AIGNE CLI tool
+- [Agent Development Guide](./docs/agent-development.md) ([中文](./docs/agent-development.zh.md)): Guide to developing AIGNE agents using YAML/JS configuration files
+- [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): Practical recipes and patterns for AIGNE Framework API usage
 - API References:
   - [Agent API](./docs/apis/agent-api.md) ([English](./docs/apis/agent-api.en.md) | [中文](./docs/apis/agent-api.zh.md))
   - [AI Agent API](./docs/apis/ai-agent-api.md) ([English](./docs/apis/ai-agent-api.en.md) | [中文](./docs/apis/ai-agent-api.zh.md))

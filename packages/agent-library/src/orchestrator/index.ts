@@ -8,7 +8,9 @@ import {
   createMessage,
   getMessage,
 } from "@aigne/core";
+import { checkArguments } from "@aigne/core/utils/type-utils.js";
 import fastq from "fastq";
+import { z } from "zod";
 import {
   FULL_PLAN_PROMPT_TEMPLATE,
   type FullPlanInput,
@@ -54,6 +56,8 @@ export class OrchestratorAgent<
   }
 
   constructor(options: OrchestratorAgentOptions<I, O>) {
+    checkArguments("OrchestratorAgent", orchestratorAgentOptionsSchema, options);
+
     super({ ...options });
     this.maxIterations = options.maxIterations;
     this.tasksConcurrency = options.tasksConcurrency;
@@ -79,8 +83,8 @@ export class OrchestratorAgent<
 
   tasksConcurrency?: number;
 
-  async process(input: I, context?: Context) {
-    const model = context?.model;
+  async process(input: I, context: Context) {
+    const { model } = context;
     if (!model) throw new Error("model is required to run OrchestratorAgent");
 
     const objective = getMessage(input);
@@ -146,11 +150,11 @@ export class OrchestratorAgent<
   private async executeStep(
     planResult: FullPlanWithResult,
     step: Step,
-    context?: Context,
+    context: Context,
   ): Promise<StepWithResult> {
     const concurrency = this.tasksConcurrency ?? DEFAULT_TASK_CONCURRENCY;
 
-    const model = context?.model;
+    const { model } = context;
     if (!model) throw new Error("model is required to run OrchestratorAgent");
 
     const queue = fastq.promise(async (task: Task) => {
@@ -216,3 +220,8 @@ function getMessageOrJsonString(output: Message): string {
   }
   return JSON.stringify(output);
 }
+
+const orchestratorAgentOptionsSchema = z.object({
+  maxIterations: z.number().optional(),
+  tasksConcurrency: z.number().optional(),
+});

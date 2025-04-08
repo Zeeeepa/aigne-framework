@@ -1,18 +1,14 @@
 import { expect, spyOn, test } from "bun:test";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
-  OpenAIChatModel,
   SystemMessageTemplate,
   ToolMessageTemplate,
   UserMessageTemplate,
 } from "@aigne/core";
-import type OpenAI from "openai";
-import type { APIPromise } from "openai/core";
-import type { ChatCompletion, ChatCompletionChunk } from "openai/resources";
-import type { Stream } from "openai/streaming";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { createMockEventStream } from "../_utils/event-stream.js";
 
 test("OpenAIChatModel.call", async () => {
   const model = new OpenAIChatModel({
@@ -20,16 +16,10 @@ test("OpenAIChatModel.call", async () => {
     model: "gpt-4o-mini",
   });
 
-  spyOn((model as unknown as { client: OpenAI }).client.chat.completions, "create").mockReturnValue(
-    new ReadableStream({
-      async start(controller) {
-        const file = await readFile(join(import.meta.dirname, "openai-streaming-response.txt"));
-        for (const line of file.toString().split("\n")) {
-          if (line) controller.enqueue(JSON.parse(line.replace("data:", "")));
-        }
-        controller.close();
-      },
-    }) as unknown as APIPromise<Stream<ChatCompletionChunk> | ChatCompletion>,
+  spyOn(model.client.chat.completions, "create").mockReturnValue(
+    createMockEventStream({
+      path: join(import.meta.dirname, "openai-streaming-response.txt"),
+    }),
   );
 
   const result = await model.call({
@@ -83,5 +73,9 @@ test("OpenAIChatModel.call", async () => {
 
   expect(result).toEqual({
     json: { text: "The current temperature in New York is 20°C." },
+    usage: {
+      promptTokens: 100,
+      completionTokens: 20,
+    },
   });
 });

@@ -3,13 +3,13 @@ import { join } from "node:path";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
-  ClaudeChatModel,
   SystemMessageTemplate,
   ToolMessageTemplate,
   UserMessageTemplate,
 } from "@aigne/core";
+import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
 import type Anthropic from "@anthropic-ai/sdk";
-import { createMockEventStream } from "../_utils/event-stream";
+import { createMockEventStream } from "../_utils/event-stream.js";
 
 test("ClaudeChatModel.call", async () => {
   const model = new ClaudeChatModel({
@@ -82,6 +82,10 @@ test("ClaudeChatModel.call", async () => {
           },
         },
       ],
+      usage: {
+        promptTokens: 416,
+        completionTokens: 54,
+      },
     }),
   );
 
@@ -136,6 +140,10 @@ test("ClaudeChatModel.call", async () => {
 
   expect(result2).toEqual({
     json: { text: "The current temperature in New York is 20 degrees." },
+    usage: {
+      promptTokens: 955,
+      completionTokens: 54,
+    },
   });
 });
 

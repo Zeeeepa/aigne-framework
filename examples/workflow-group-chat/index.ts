@@ -6,22 +6,26 @@ import {
   AIAgent,
   ExecutionEngine,
   FunctionAgent,
-  OpenAIChatModel,
   PromptTemplate,
   UserAgent,
   createMessage,
   getMessage,
-  logger,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { logger } from "@aigne/core/utils/logger.js";
 import inquirer from "inquirer";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
-const gpt = new OpenAIChatModel({
+const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
   model: "gpt-4o",
+});
+
+const engine = new ExecutionEngine({
+  model,
 });
 
 const DEFAULT_TOPIC = "DEFAULT_TOPIC";
@@ -83,12 +87,13 @@ Make sure the images have consistent characters and style.`,
 let isFirstQuestion = true;
 
 const user = UserAgent.from({
+  context: engine.newContext(),
   name: "user",
   description: "User for providing final approval",
   publishTopic: DEFAULT_TOPIC,
   memory: { subscribeTopic: DEFAULT_TOPIC },
   async process() {
-    logger.globalSpinner.stop();
+    logger.globalSpinner?.stop();
     const { question } = await inquirer.prompt([
       {
         type: "input",
@@ -101,7 +106,7 @@ const user = UserAgent.from({
       },
     ]);
     isFirstQuestion = false;
-    logger.globalSpinner.start();
+    logger.globalSpinner?.start();
     return createMessage(question);
   },
 });
@@ -136,10 +141,7 @@ const manager = AIAgent.from({
   }),
 });
 
-const engine = new ExecutionEngine({
-  model: gpt,
-  agents: [user, manager, writer, editor, illustrator],
-});
+engine.addAgent(user, writer, editor, illustrator, manager);
 
 engine.subscribe(DEFAULT_TOPIC, (message) => {
   console.log(

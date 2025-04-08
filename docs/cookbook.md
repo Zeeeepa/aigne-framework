@@ -8,6 +8,9 @@
 - [AIGNE Framework Cookbook](#aigne-framework-cookbook)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
+  - [Installation](#installation)
+    - [Installing AIGNE Framework](#installing-aigne-framework)
+    - [Using @aigne/core in CommonJS Environment](#using-aignecore-in-commonjs-environment)
   - [Core Concepts](#core-concepts)
     - [Chat Model](#chat-model)
     - [Agent](#agent)
@@ -34,6 +37,72 @@
 
 AIGNE Framework is a framework for building applications based on Large Language Models (LLMs). It provides a series of tools and abstractions that enable developers to easily create complex AI workflows. This Cookbook aims to help developers understand the core concepts of AIGNE Framework and demonstrate through examples how to use different workflow patterns to solve real-world problems.
 
+## Installation
+
+To get started with AIGNE Framework, you need to install the relevant dependencies.
+
+### Installing AIGNE Framework
+
+**npm**
+
+```bash
+npm install @aigne/core
+
+# If you need advanced Agents from Agent Library
+npm install @aigne/agent-library
+
+# Install LLM libraries as needed
+npm install openai @anthropic-ai/sdk @google/generative-ai
+```
+
+**yarn**
+
+```bash
+yarn add @aigne/core
+
+# If you need advanced Agents from Agent Library
+yarn add @aigne/agent-library
+
+# Install LLM libraries as needed
+yarn add openai @anthropic-ai/sdk @google/generative-ai
+```
+
+**pnpm**
+
+```bash
+pnpm install @aigne/core
+
+# If you need advanced Agents from Agent Library
+pnpm install @aigne/agent-library
+
+# Install LLM libraries as needed
+pnpm install openai @anthropic-ai/sdk @google/generative-ai
+```
+
+### Using @aigne/core in CommonJS Environment
+
+@aigne/core supports use in both CommonJS and ES Module environments. If your project uses the CommonJS module system, but due to a [third-party lib not supporting ESM](https://github.com/AIGNE-io/aigne-framework/issues/36), you need to add the following configuration to your project's package.json before the issue is fixed:
+
+**npm**
+
+```json
+{
+  "overrides": {
+    "pkce-challenge": "https://github.com/AIGNE-io/pkce-challenge#dist"
+  }
+}
+```
+
+**yarn or pnpm**
+
+```json
+{
+  "resolutions": {
+    "pkce-challenge": "https://github.com/AIGNE-io/pkce-challenge#dist"
+  }
+}
+```
+
 ## Core Concepts
 
 ### Chat Model
@@ -49,7 +118,9 @@ ChatModel can be used directly, but it's generally recommended to use it through
 **Example**:
 
 ```typescript
-import { OpenAIChatModel, ClaudeChatModel, XAIChatModel } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
+import { XAIChatModel } from "@aigne/core/models/xai-chat-model.js";
 
 // Initialize OpenAI model
 const openaiModel = new OpenAIChatModel({
@@ -117,7 +188,8 @@ const engine = new ExecutionEngine({ model });
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { AIAgent, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
 // Create JavaScript sandbox
@@ -163,7 +235,8 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Concept extractor Agent
 const conceptExtractor = AIAgent.from({
@@ -232,7 +305,8 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core";
+import { AIAgent, ExecutionEngine, parallel } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Feature extraction Agent
 const featureExtractor = AIAgent.from({
@@ -280,11 +354,11 @@ console.log(result);
 ```typescript
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
 // Coder Agent
@@ -361,7 +435,8 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Function to transfer to Agent B
 function transfer_to_b() {
@@ -410,7 +485,8 @@ console.log(result2);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Product support Agent
 const productSupport = AIAgent.from({
@@ -487,7 +563,8 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
+import { AIAgent, ExecutionEngine, MCPAgent } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Create specialized Agents
 const puppeteer = await MCPAgent.from({
@@ -594,10 +671,10 @@ The Puppeteer MCP server allows AIGNE Framework to access and manipulate web con
 ```typescript
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Create Puppeteer MCP Agent
 const puppeteerMCPAgent = await MCPAgent.from({
@@ -649,10 +726,10 @@ The SQLite MCP server allows AIGNE Framework to interact with SQLite databases.
 import { join } from "node:path";
 import {
   AIAgent,
-  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // Create SQLite MCP Agent
 const sqlite = await MCPAgent.from({

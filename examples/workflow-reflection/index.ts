@@ -1,15 +1,9 @@
 #!/usr/bin/env npx -y bun
 
 import assert from "node:assert";
-import {
-  AIAgent,
-  ExecutionEngine,
-  OpenAIChatModel,
-  UserAgent,
-  UserInputTopic,
-  UserOutputTopic,
-  runChatLoopInTerminal,
-} from "@aigne/core";
+import { AIAgent, ExecutionEngine, UserAgent, UserInputTopic, UserOutputTopic } from "@aigne/core";
+import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { runChatLoopInTerminal } from "@aigne/core/utils/run-chat-loop.js";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;
@@ -80,7 +74,7 @@ Please review the code. If previous feedback was provided, see if it was address
 const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
 
 const userAgent = UserAgent.from({
-  context: engine,
+  context: engine.newContext(),
   publishTopic: UserInputTopic,
   subscribeTopic: UserOutputTopic,
 });

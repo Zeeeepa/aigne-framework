@@ -117,11 +117,11 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * - subscribe to memory topic if memory is enabled
    * @param context Context to attach
    */
-  attach(context: Context) {
+  attach(context: Pick<Context, "subscribe">) {
     this.memory?.attach(context);
 
     for (const topic of orArrayToArray(this.subscribeTopic).concat(this.topic)) {
-      context.subscribe(topic, async ({ message }) => {
+      context.subscribe(topic, async ({ message, context }) => {
         try {
           await context.call(this, message);
         } catch (error) {
@@ -139,25 +139,39 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     return !!this.process;
   }
 
+  private checkContextStatus(context: Context) {
+    if (context) {
+      const { status } = context;
+      if (status === "timeout") {
+        throw new Error(`ExecutionEngine for agent ${this.name} has timed out`);
+      }
+    }
+  }
+
+  private async newDefaultContext() {
+    return import("../execution-engine/context.js").then((m) => new m.ExecutionContext());
+  }
+
   async call(input: I | string, context?: Context): Promise<O> {
+    const ctx = context ?? (await this.newDefaultContext());
+
     const _input = typeof input === "string" ? createMessage(input) : input;
 
     const parsedInput = this.inputSchema.parse(_input) as I;
 
     logger.debug("Call agent %s start with input: %O", this.name, input);
 
-    const result = this.process(parsedInput, context)
+    this.preprocess(parsedInput, ctx);
+
+    this.checkContextStatus(ctx);
+
+    const result = this.process(parsedInput, ctx)
       .then((output) => {
         const parsedOutput = this.outputSchema.parse(output) as O;
         return this.includeInputInOutput ? { ...parsedInput, ...parsedOutput } : parsedOutput;
       })
       .then((output) => {
-        this.memory?.addMemory({ role: "user", content: _input });
-        this.memory?.addMemory({
-          role: "agent",
-          content: replaceTransferAgentToName(output),
-          source: this.name,
-        });
+        this.postprocess(parsedInput, output, ctx);
         return output;
       });
 
@@ -174,7 +188,31 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     );
   }
 
-  abstract process(input: I, context?: Context): Promise<O | TransferAgentOutput>;
+  protected preprocess(_: I, context: Context) {
+    this.checkContextStatus(context);
+
+    if (context) {
+      const { limits, usage } = context;
+      if (limits?.maxAgentCalls && usage.agentCalls >= limits.maxAgentCalls) {
+        throw new Error(`Exceeded max agent calls ${usage.agentCalls}/${limits.maxAgentCalls}`);
+      }
+
+      usage.agentCalls++;
+    }
+  }
+
+  protected postprocess(input: I, output: O, context: Context) {
+    this.checkContextStatus(context);
+
+    this.memory?.addMemory({ role: "user", content: input });
+    this.memory?.addMemory({
+      role: "agent",
+      content: replaceTransferAgentToName(output),
+      source: this.name,
+    });
+  }
+
+  abstract process(input: I, context: Context): Promise<O | TransferAgentOutput>;
 
   async shutdown() {
     this.memory?.detach();
@@ -226,7 +264,7 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
 
   fn: FunctionAgentFn<I, O>;
 
-  async process(input: I, context?: Context) {
+  async process(input: I, context: Context) {
     const result = await this.fn(input, context);
 
     if (result instanceof Agent) {
@@ -239,7 +277,7 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
 
 export type FunctionAgentFn<I extends Message = Message, O extends Message = Message> = (
   input: I,
-  context?: Context,
+  context: Context,
 ) => O | Promise<O> | Agent | Promise<Agent>;
 
 function functionToAgent<I extends Message, O extends Message>(

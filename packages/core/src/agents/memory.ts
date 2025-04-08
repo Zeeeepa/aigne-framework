@@ -1,6 +1,7 @@
+import { type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context.js";
 import type { Unsubscribe } from "../execution-engine/message-queue.js";
-import { orArrayToArray } from "../utils/type-utils.js";
+import { checkArguments, orArrayToArray } from "../utils/type-utils.js";
 import type { Message } from "./agent.js";
 
 export interface AgentMemoryOptions {
@@ -22,6 +23,8 @@ export interface Memory {
 
 export class AgentMemory {
   constructor(options: AgentMemoryOptions) {
+    checkArguments("AgentMemory", agentMemoryOptionsSchema, options);
+
     this.enabled = options.enabled ?? true;
     this.subscribeTopic = options.subscribeTopic;
     this.maxMemoriesInChat = options.maxMemoriesInChat;
@@ -44,7 +47,7 @@ export class AgentMemory {
     this.memories.push(memory);
   }
 
-  attach(context: Context) {
+  attach(context: Pick<Context, "subscribe">) {
     for (const topic of orArrayToArray(this.subscribeTopic)) {
       const sub = context.subscribe(topic, ({ role, message, source }) => {
         this.addMemory({ role, source, content: message });
@@ -61,3 +64,9 @@ export class AgentMemory {
     this.subscriptions = [];
   }
 }
+
+const agentMemoryOptionsSchema: ZodType<AgentMemoryOptions> = z.object({
+  enabled: z.boolean().optional(),
+  subscribeTopic: z.union([z.string(), z.array(z.string())]).optional(),
+  maxMemoriesInChat: z.number().optional(),
+});
