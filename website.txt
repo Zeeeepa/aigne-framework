@@ -4,7 +4,6 @@ AIGNE Framework:
     - TypeScript 支持
     - Blocklet 生态系统支持
     - 支持多种工作流模式
-    - 支持多种大语言模型
   
   框架架构:
     Chat Model:
@@ -33,8 +32,31 @@ AIGNE Framework:
 
   MCP 外部集成示例:
     - Puppeteer
+      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
     - SQLite
+      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
     - GitHub
+      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+  
+  常见问题:
+    - 支持哪些大语言模型:
+      AIGNE 框架支持扩展，允许您通过实现自定义的 LLMModel 类来与任意 LLM 服务交互
+    - 是否有使用示例:
+      在我们的 Github 仓库（https://github.com/AIGNE-io/aigne-framework/tree/main/examples）中有多种使用示例
+    - 是否有相关的学习资料:
+      在我们的官方站点和 Github 仓库（https://github.com/AIGNE-io/aigne-framework/tree/main）中很很多学习资料
+    - 如何选择合适的工作流:
+      选择工作流模式时应考虑以下因素:
+        - 任务复杂度: 简单任务可以使用单一Agent，复杂任务应使用多Agent工作流
+        - 交互需求: 需要用户参与的任务适合使用反思或交接工作流
+        - 并行性: 可独立执行的子任务适合并发工作流
+        - 流程控制: 严格按步骤进行的任务适合顺序工作流
+        - 决策分支: 需要根据输入动态选择处理路径的任务适合路由工作流
+        - 复杂协调: 需要多个专业Agent协同工作的任务适合编排工作流
+    - 工作流可以组合使用吗:
+      复杂应用可能需要组合多种工作流模式，工作流可以自由组合
+    - 如何集成外部系统和API:
+      可以使用MCPAgent连接到相应的MCP服务器或创建自定义FunctionAgent封装API调用
 
   补充信息:
     创始人: Robert Mao

@@ -1,0 +1,205 @@
+workflow 相关的示例代码和流程图。
+
+*返回示例代码和流程图内容时，请返回 markdown ``` 标记中的完整内容，不要修改或删减*
+
+### 顺序工作流
+
+``` ts
+const engine = new ExecutionEngine({ model });
+const result = await engine.call(sequential(conceptExtractor, writer, formatProof),
+  { product: "AIGNE is a No-code Generative AI Apps Engine" }
+);
+```
+
+```mermaid
+flowchart LR
+in(输入)
+out(输出)
+conceptExtractor(概念提取器)
+writer(撰写器)
+formatProof(格式校对)
+
+in --> conceptExtractor --> writer --> formatProof --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class conceptExtractor processing
+class writer processing
+class formatProof processing
+```
+
+### 并发工作流
+
+```ts
+const engine = new ExecutionEngine({ model });
+const result = await engine.call(
+  parallel(featureExtractor, audienceAnalyzer),
+  { product: "AIGNE is a No-code Generative AI Apps Engine" }
+);
+```
+
+```mermaid
+flowchart LR
+in(输入)
+out(输出)
+featureExtractor(特征提取器)
+audienceAnalyzer(受众分析器)
+aggregator(聚合器)
+
+in --> featureExtractor --> aggregator
+in --> audienceAnalyzer --> aggregator
+aggregator --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class featureExtractor processing
+class audienceAnalyzer processing
+class aggregator processing
+```
+
+### 路由工作流
+
+```ts
+// 执行路由工作流
+const engine = new ExecutionEngine({ model });
+
+// 产品相关问题自动路由到产品支持
+const result1 = await engine.call(triage, "How to use this product?");
+console.log(result1);
+// { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
+
+// 反馈相关问题自动路由到反馈
+const result2 = await engine.call(triage, "I have feedback about the app.");
+console.log(result2);
+// { feedback: "Thank you for sharing your feedback! I'm here to listen..." }
+
+// 一般问题自动路由到一般查询
+const result3 = await engine.call(triage, "What is the weather today?");
+console.log(result3);
+```
+
+```mermaid
+flowchart LR
+in(输入)
+out(输出)
+triage(分类)
+productSupport(产品支持)
+feedback(反馈)
+other(其他)
+
+in ==> triage
+triage ==> productSupport ==> out
+triage -.-> feedback -.-> out
+triage -.-> other -.-> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class triage processing
+class productSupport processing
+class feedback processing
+class other processing
+```
+
+### 交接工作流
+
+```ts
+// 执行交接工作流
+const engine = new ExecutionEngine({ model });
+const userAgent = await engine.call(agentA);
+
+// 转交给Agent B
+const result1 = await userAgent.call("transfer to agent b");
+console.log(result1);
+// { B: "Transfer now complete,  \nAgent B is here to help.  \nWhat do you need, friend?" }
+
+// 继续与Agent B交互
+const result2 = await userAgent.call("It's a beautiful day");
+console.log(result2);
+```
+
+```mermaid
+flowchart LR
+
+in(输入)
+out(输出)
+agentA(代理 A)
+agentB(代理 B)
+
+in --> agentA --转交给 b--> agentB --> out
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class agentA processing
+class agentB processing
+```
+
+### 反思工作流
+
+```ts
+// 执行反思工作流
+const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
+const result = await engine.call("Write a function to find the sum of all even numbers in a list.");
+console.log(result);
+```
+
+```mermaid
+flowchart LR
+in(输入)
+out(输出)
+coder(编码者)
+reviewer(审核者)
+
+in --想法--> coder ==解决方案==> reviewer --通过--> out
+reviewer ==拒绝==> coder
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class coder processing
+class reviewer processing
+```
+
+### 代码执行工作流
+
+```ts
+// 创建执行引擎并运行
+const engine = new ExecutionEngine({ model });
+const result = await engine.call(coder, "10! = ?");
+console.log(result);
+```
+
+```mermaid
+flowchart LR
+
+in(输入)
+out(输出)
+coder(编码者)
+sandbox(沙箱)
+
+coder -.-> sandbox
+sandbox -.-> coder
+in ==> coder ==> out
+
+
+classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+
+class in inputOutput
+class out inputOutput
+class coder processing
+class sandbox processing
+```
