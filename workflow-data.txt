@@ -21,8 +21,9 @@ formatProof(格式校对)
 
 in --> conceptExtractor --> writer --> formatProof --> out
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput
@@ -53,8 +54,9 @@ in --> featureExtractor --> aggregator
 in --> audienceAnalyzer --> aggregator
 aggregator --> out
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput
@@ -98,8 +100,9 @@ triage ==> productSupport ==> out
 triage -.-> feedback -.-> out
 triage -.-> other -.-> out
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput
@@ -136,8 +139,9 @@ agentB(代理 B)
 
 in --> agentA --转交给 b--> agentB --> out
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput
@@ -164,8 +168,9 @@ reviewer(审核者)
 in --想法--> coder ==解决方案==> reviewer --通过--> out
 reviewer ==拒绝==> coder
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput
@@ -195,8 +200,9 @@ sandbox -.-> coder
 in ==> coder ==> out
 
 
-classDef inputOutput fill:#f9f0ed,stroke:#debbae,stroke-width:2px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#F0F4EB,stroke:#C2D7A7,stroke-width:2px,color:#6B8F3C,font-weight:bolder;
+classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
+classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
+linkStyle default stroke: #F2FF00,stroke-width:1px;
 
 class in inputOutput
 class out inputOutput

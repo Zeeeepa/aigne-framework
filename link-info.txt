@@ -1,0 +1,7 @@
+官方仓库/开始使用: https://github.com/AIGNE-io/aigne-framework/tree/main
+代码例子/Workflow: https://github.com/AIGNE-io/aigne-framework/tree/main/examples
+cookbook: https://github.com/AIGNE-io/aigne-framework/blob/main/docs/cookbook.md
+Agent开发指南: https://github.com/AIGNE-io/aigne-framework/blob/main/docs/agent-development.md
+cli使用指南: https://github.com/AIGNE-io/aigne-framework/blob/main/docs/cli.md
+api文档:https://github.com/AIGNE-io/aigne-framework/tree/main/docs/apis
+官方文档:https://www.arcblock.io/docs/aigne-framework/zh/BSApBieXqNW7JkKRUqwV_Syi

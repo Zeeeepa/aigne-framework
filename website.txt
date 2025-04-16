@@ -32,11 +32,18 @@ AIGNE Framework:
 
   MCP 外部集成示例:
     - Puppeteer
-      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
+      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
     - SQLite
-      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
+      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
     - GitHub
-      image: https://bbqawfllzdt3pahkdsrsone6p3wpxcwp62vlabtawfu.did.abtnet.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+  支持的大语言模型:
+    - OpenAI
+      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/0438941ae00f3248fdceb95c14360b83.svg
+      link: https://openai.com/
+    - Claude
+      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/c3cbb2a92025f2b5c81c675ddf15a6ad.svg
+      link: https://claude.ai/
   
   常见问题:
     - 支持哪些大语言模型:
