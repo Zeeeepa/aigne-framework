@@ -2,8 +2,13 @@ AIGNE Framework:
   描述: AIGNE Framework 是一个功能型 AI 应用开发框架，旨在简化和加速现代应用程序的构建过程。它结合了函数式编程特性、强大的人工智能能力和模块化设计原则，帮助开发者轻松创建可扩展的解决方案。AIGNE Framework 还深度集成了 Blocklet 生态系统，为开发者提供丰富的工具和资源。
   核心特性:
     - TypeScript 支持
+      image: https://www.aigne.io/image-bin/uploads/f8ff9eed909e2928b526d55d1b38d75e.svg
     - Blocklet 生态系统支持
+      image: https://www.aigne.io/image-bin/uploads/46c62204d7da8c74788732a1008f9432.svg
     - 支持多种工作流模式
+      image: https://www.aigne.io/image-bin/uploads/8c74170916b1bc7fcae7a4ef72477554.svg
+    - AIGNE CLI 从命令行运行和测试您的 AIGNE 代理
+    - MCP 集成
   
   框架架构:
     Chat Model:
@@ -32,17 +37,22 @@ AIGNE Framework:
 
   MCP 外部集成示例:
     - Puppeteer
-      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
+      image: https://www.aigne.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
     - SQLite
-      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
+      image: https://www.aigne.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
     - GitHub
-      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+      image: https://www.aigne.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+  AIGNE CLI:
+    - run 运行 Agent
+    - serve 运行 MCP Server
+    - create 从模板创建 Agent
+    - test 测试 Agent
   支持的大语言模型:
     - OpenAI
-      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/0438941ae00f3248fdceb95c14360b83.svg
+      image: https://www.aigne.io/image-bin/uploads/0438941ae00f3248fdceb95c14360b83.svg
       link: https://openai.com/
     - Claude
-      image: https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/c3cbb2a92025f2b5c81c675ddf15a6ad.svg
+      image: https://www.aigne.io/image-bin/uploads/c3cbb2a92025f2b5c81c675ddf15a6ad.svg
       link: https://claude.ai/
   
   常见问题:
