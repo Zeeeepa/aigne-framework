@@ -26,7 +26,7 @@ AIGNE Framework:
         AI Agent: 与大语言模型交互的 Agent
         Function Agent: 封装代码逻辑为 Agent
         MCP Agent: 通过 CMP 协议连接外部服务
-      image: https://www.aigne.io/image-bin/uploads/319e40773a7d52af0e31f396e287d6b4.png
+      image: https://www.aigne.io/image-bin/uploads/fdab7b6e40b9c7c4d96c31f800efa67b.png
     
     Workflow:
       - 顺序工作流
@@ -39,15 +39,15 @@ AIGNE Framework:
     
     Execution Engine:
       - 调度 Agent
-      image: https://www.aigne.io/image-bin/uploads/d27e8250538278f6ee1c7f37c8f2b430.png
+      image: https://www.aigne.io/image-bin/uploads/f6a256bdd6541ee2a2eb7fc39cf8df84.png
 
   MCP 外部集成示例:
     - Puppeteer
-      image: https://www.aigne.io/image-bin/uploads/7b9ac6a631d4bc3c0e29c418a89d40fd.png
+      image: https://www.aigne.io/image-bin/uploads/f860e55ff4a3eeebb24c8b2b87a9827b.png
     - SQLite
-      image: https://www.aigne.io/image-bin/uploads/222cae847e2b80bd6d463a89af4a4ceb.png
+      image: https://www.aigne.io/image-bin/uploads/5c930623a95e1f2940bd17413824ce96.png
     - GitHub
-      image: https://www.aigne.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
+      image: https://www.aigne.io/image-bin/uploads/dd261eab102ce9b328d04904ec938702.png
   AIGNE CLI:
     - run 运行 Agent
     - serve 运行 MCP Server

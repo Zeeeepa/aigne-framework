@@ -11,26 +11,7 @@ const result = await engine.call(sequential(conceptExtractor, writer, formatProo
 );
 ```
 
-```mermaid
-flowchart LR
-in(输入)
-out(输出)
-conceptExtractor(概念提取器)
-writer(撰写器)
-formatProof(格式校对)
-
-in --> conceptExtractor --> writer --> formatProof --> out
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class conceptExtractor processing
-class writer processing
-class formatProof processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/76290aa30b6e0c117de0ef8bd9c8d165.png
 
 ### 并发工作流
 
@@ -42,28 +23,7 @@ const result = await engine.call(
 );
 ```
 
-```mermaid
-flowchart LR
-in(输入)
-out(输出)
-featureExtractor(特征提取器)
-audienceAnalyzer(受众分析器)
-aggregator(聚合器)
-
-in --> featureExtractor --> aggregator
-in --> audienceAnalyzer --> aggregator
-aggregator --> out
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class featureExtractor processing
-class audienceAnalyzer processing
-class aggregator processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/80a333a2d565e47d29858eb01255a7a2.png
 
 ### 路由工作流
 
@@ -77,31 +37,7 @@ console.log(result1);
 // { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
 ```
 
-```mermaid
-flowchart LR
-in(输入)
-out(输出)
-triage(分类)
-productSupport(产品支持)
-feedback(反馈)
-other(其他)
-
-in ==> triage
-triage ==> productSupport ==> out
-triage -.-> feedback -.-> out
-triage -.-> other -.-> out
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class triage processing
-class productSupport processing
-class feedback processing
-class other processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/734695ee55abbbf3e92e60f78b70009d.png
 
 ### 交接工作流
 
@@ -120,25 +56,7 @@ const result2 = await userAgent.call("It's a beautiful day");
 console.log(result2);
 ```
 
-```mermaid
-flowchart LR
-
-in(输入)
-out(输出)
-agentA(代理 A)
-agentB(代理 B)
-
-in --> agentA --转交给 b--> agentB --> out
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class agentA processing
-class agentB processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/8feb8301e439d83810de2e03fbe39d87.png
 
 ### 反思工作流
 
@@ -149,25 +67,7 @@ const result = await engine.call("Write a function to find the sum of all even n
 console.log(result);
 ```
 
-```mermaid
-flowchart LR
-in(输入)
-out(输出)
-coder(编码者)
-reviewer(审核者)
-
-in --想法--> coder ==解决方案==> reviewer --通过--> out
-reviewer ==拒绝==> coder
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class coder processing
-class reviewer processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/18f0374a8b4c037a77afcecf3fcfde22.png
 
 ### 代码执行工作流
 
@@ -178,25 +78,4 @@ const result = await engine.call(coder, "10! = ?");
 console.log(result);
 ```
 
-```mermaid
-flowchart LR
-
-in(输入)
-out(输出)
-coder(编码者)
-sandbox(沙箱)
-
-coder -.-> sandbox
-sandbox -.-> coder
-in ==> coder ==> out
-
-
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class coder processing
-class sandbox processing
-```
+流程图: https://www.aigne.io/image-bin/uploads/f13d63bf4c7555e247ced53adeb06873.png
