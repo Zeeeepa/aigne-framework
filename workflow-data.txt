@@ -75,15 +75,6 @@ const engine = new ExecutionEngine({ model });
 const result1 = await engine.call(triage, "How to use this product?");
 console.log(result1);
 // { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
-
-// 反馈相关问题自动路由到反馈
-const result2 = await engine.call(triage, "I have feedback about the app.");
-console.log(result2);
-// { feedback: "Thank you for sharing your feedback! I'm here to listen..." }
-
-// 一般问题自动路由到一般查询
-const result3 = await engine.call(triage, "What is the weather today?");
-console.log(result3);
 ```
 
 ```mermaid

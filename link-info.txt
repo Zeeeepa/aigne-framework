@@ -5,3 +5,6 @@ Agent开发指南: https://github.com/AIGNE-io/aigne-framework/blob/main/docs/ag
 cli使用指南: https://github.com/AIGNE-io/aigne-framework/blob/main/docs/cli.md
 api文档:https://github.com/AIGNE-io/aigne-framework/tree/main/docs/apis
 官方文档:https://www.arcblock.io/docs/aigne-framework/zh/BSApBieXqNW7JkKRUqwV_Syi
+用户社区:https://community.arcblock.io/discussions/boards/aigne
+
+如果生成的按钮是跳往 github 地址，为按钮 startIcon 设置值为：https://www.aigne.io/image-bin/uploads/ca174555b11d808f2ab0cedc2b6b304f.svg
