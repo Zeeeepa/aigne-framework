@@ -13,23 +13,28 @@ const result = await engine.call(sequential(conceptExtractor, writer, formatProo
 
 ```mermaid
 flowchart LR
-in(输入)
-out(输出)
-conceptExtractor(概念提取器)
-writer(撰写器)
-formatProof(格式校对)
+in(In)
+out(Out)
+conceptExtractor(Concept Extractor)
+writer(Writer)
+formatProof(Format Proof)
 
 in --> conceptExtractor --> writer --> formatProof --> out
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
-class in inputOutput
-class out inputOutput
-class conceptExtractor processing
-class writer processing
-class formatProof processing
+
+class in input
+class out output
+class conceptExtractor processing1
+class writer processing2
+class formatProof processing3
 ```
 
 ### 并发工作流
@@ -44,129 +49,139 @@ const result = await engine.call(
 
 ```mermaid
 flowchart LR
-in(输入)
-out(输出)
-featureExtractor(特征提取器)
-audienceAnalyzer(受众分析器)
-aggregator(聚合器)
+in(In)
+out(Out)
+featureExtractor(Feature Extractor)
+audienceAnalyzer(Audience Analyzer)
+aggregator(Aggregator)
 
 in --> featureExtractor --> aggregator
 in --> audienceAnalyzer --> aggregator
 aggregator --> out
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
-class in inputOutput
-class out inputOutput
-class featureExtractor processing
-class audienceAnalyzer processing
-class aggregator processing
+class in input
+class out output
+class featureExtractor processing1
+class audienceAnalyzer processing2
+class aggregator processing3
 ```
 
 ### 路由工作流
 
 ```ts
-// 执行路由工作流
+// Execute router workflow
 const engine = new ExecutionEngine({ model });
 
-// 产品相关问题自动路由到产品支持
+// Product related questions are automatically routed to product support
 const result1 = await engine.call(triage, "How to use this product?");
-console.log(result1);
-// { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
 ```
 
 ```mermaid
 flowchart LR
-in(输入)
-out(输出)
-triage(分类)
-productSupport(产品支持)
-feedback(反馈)
-other(其他)
+in(In)
+out(Out)
+triage(Triage)
+productSupport(Product Support)
+feedback(Feedback)
+other(Other)
 
 in ==> triage
 triage ==> productSupport ==> out
 triage -.-> feedback -.-> out
 triage -.-> other -.-> out
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
+classDef processing4 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
-class in inputOutput
-class out inputOutput
-class triage processing
-class productSupport processing
-class feedback processing
-class other processing
+class in input
+class out output
+class triage processing1
+class productSupport processing2
+class feedback processing3
+class other processing4
 ```
 
 ### 交接工作流
 
 ```ts
-// 执行交接工作流
+// Execute handoff workflow
 const engine = new ExecutionEngine({ model });
 const userAgent = await engine.call(agentA);
 
-// 转交给Agent B
+// Transfer to Agent B
 const result1 = await userAgent.call("transfer to agent b");
-console.log(result1);
-// { B: "Transfer now complete,  \nAgent B is here to help.  \nWhat do you need, friend?" }
 
-// 继续与Agent B交互
+// Continue interacting with Agent B
 const result2 = await userAgent.call("It's a beautiful day");
-console.log(result2);
 ```
 
 ```mermaid
 flowchart LR
 
-in(输入)
-out(输出)
-agentA(代理 A)
-agentB(代理 B)
+in(In)
+out(Out)
+agentA(Agent A)
+agentB(Agent B)
 
-in --> agentA --转交给 b--> agentB --> out
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
+in --> agentA --transfer to b--> agentB --> out
 
-class in inputOutput
-class out inputOutput
-class agentA processing
-class agentB processing
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
+
+class in input
+class out output
+class agentA processing1
+class agentB processing2
 ```
 
 ### 反思工作流
 
 ```ts
-// 执行反思工作流
+// Execute reflection workflow
 const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
 const result = await engine.call("Write a function to find the sum of all even numbers in a list.");
-console.log(result);
 ```
 
 ```mermaid
 flowchart LR
-in(输入)
-out(输出)
-coder(编码者)
-reviewer(审核者)
+in(In)
+out(Out)
+coder(Coder)
+reviewer(Reviewer)
 
-in --想法--> coder ==解决方案==> reviewer --通过--> out
-reviewer ==拒绝==> coder
+in --Ideas--> coder ==Solution==> reviewer --Approved--> out
+reviewer ==Rejected==> coder
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
-class in inputOutput
-class out inputOutput
-class coder processing
-class reviewer processing
+class in input
+class out output
+class coder processing1
+class reviewer processing2
 ```
 
 ### 代码执行工作流
@@ -175,28 +190,29 @@ class reviewer processing
 // 创建执行引擎并运行
 const engine = new ExecutionEngine({ model });
 const result = await engine.call(coder, "10! = ?");
-console.log(result);
 ```
 
 ```mermaid
 flowchart LR
 
-in(输入)
-out(输出)
-coder(编码者)
-sandbox(沙箱)
+in(In)
+out(Out)
+coder(Coder)
+sandbox(Sandbox)
 
 coder -.-> sandbox
 sandbox -.-> coder
 in ==> coder ==> out
 
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
-classDef inputOutput fill:#2F2F2F,stroke:#debbae,stroke-width:1px,color:#b35b39,font-weight:bolder;
-classDef processing fill:#2F2F2F,stroke:#C2D7A7,stroke-width:1px,color:#6B8F3C,font-weight:bolder;
-linkStyle default stroke: #F2FF00,stroke-width:1px;
-
-class in inputOutput
-class out inputOutput
-class coder processing
-class sandbox processing
+class in input
+class out output
+class coder processing1
+class sandbox processing2
 ```

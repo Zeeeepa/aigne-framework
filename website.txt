@@ -16,7 +16,7 @@ AIGNE Framework:
     Chat Model:
       - 大语言模型抽象的类类
       - 快速支持多种大语言模型
-      image: https://www.aigne.io/image-bin/uploads/3fb6261908474d6983b6d71f1fe46f58.png
+      image: https://www.aigne.io/image-bin/uploads/adeb1f764c07c96e6f7d73ff99fb4541.png
     
     Agent:
       - 每个 Agent 执行提供特定的能力
@@ -26,7 +26,7 @@ AIGNE Framework:
         AI Agent: 与大语言模型交互的 Agent
         Function Agent: 封装代码逻辑为 Agent
         MCP Agent: 通过 CMP 协议连接外部服务
-      image: https://www.aigne.io/image-bin/uploads/062bb55bc3eafc9b25ebf3fdd1e8ce36.png
+      image: https://www.aigne.io/image-bin/uploads/64919054f3046cb649031d6ab62af2d2.png
     
     Workflow:
       - 顺序工作流
@@ -35,11 +35,11 @@ AIGNE Framework:
       - 反思工作流
       - 代码执行工作流
       - 编辑工作流
-      image: https://www.aigne.io/image-bin/uploads/e31163a07d6e936acda738b7466af44d.png
+      image: https://www.aigne.io/image-bin/uploads/22428d795320d88bca004dd29e4d8415.png
     
     Execution Engine:
       - 调度 Agent
-      image: https://www.aigne.io/image-bin/uploads/558efcb0952eb23d53c0cdb6f89bb805.png
+      image: https://www.aigne.io/image-bin/uploads/c4d81a20d5d4fbb3f8f46ca51fd3cbc7.png
 
   MCP 外部集成示例:
     - Puppeteer
