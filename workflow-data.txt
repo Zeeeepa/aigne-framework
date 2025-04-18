@@ -21,12 +21,12 @@ formatProof(Format Proof)
 
 in --> conceptExtractor --> writer --> formatProof --> out
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
-classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 
@@ -59,12 +59,12 @@ in --> featureExtractor --> aggregator
 in --> audienceAnalyzer --> aggregator
 aggregator --> out
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
-classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
@@ -98,13 +98,13 @@ triage ==> productSupport ==> out
 triage -.-> feedback -.-> out
 triage -.-> other -.-> out
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
-classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9,font-weight:bolder;
-classDef processing4 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9;
+classDef processing4 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
@@ -140,11 +140,11 @@ agentB(Agent B)
 
 in --> agentA --transfer to b--> agentB --> out
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
@@ -171,11 +171,11 @@ reviewer(Reviewer)
 in --Ideas--> coder ==Solution==> reviewer --Approved--> out
 reviewer ==Rejected==> coder
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
@@ -204,11 +204,11 @@ coder -.-> sandbox
 sandbox -.-> coder
 in ==> coder ==> out
 
-classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px,font-weight:bolder;
-classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00,font-weight:bolder;
-classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844,font-weight:bolder;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF,font-weight:bolder;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF,font-weight:bolder;
+classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
+classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
+classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
