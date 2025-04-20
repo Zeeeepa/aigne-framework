@@ -18,6 +18,7 @@
     "examples/workflow-reflection": {},
     "examples/workflow-router": {},
     "examples/workflow-sequential": {},
-    "examples/chat-bot": {}
+    "examples/chat-bot": {},
+    "examples/memory": {}
   }
 }
