@@ -8,6 +8,7 @@ import { logger } from "../utils/logger.js";
 import {
   type Nullish,
   type PromiseOrValue,
+  checkArguments,
   createAccessorArray,
   orArrayToArray,
 } from "../utils/type-utils.js";
@@ -183,7 +184,11 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     if (!this.disableEvents) ctx.emit("agentStarted", { agent: this, input: message });
 
     try {
-      const parsedInput = this.inputSchema.parse(message) as I;
+      const parsedInput = checkArguments(
+        `Agent ${this.name} input`,
+        this.inputSchema,
+        message,
+      ) as I;
 
       this.preprocess(parsedInput, ctx);
 
@@ -191,7 +196,11 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
       const output = await this.process(parsedInput, ctx)
         .then((output) => {
-          const parsedOutput = this.outputSchema.parse(output) as O;
+          const parsedOutput = checkArguments(
+            `Agent ${this.name} output`,
+            this.outputSchema,
+            output,
+          ) as O;
           return this.includeInputInOutput ? { ...parsedInput, ...parsedOutput } : parsedOutput;
         })
         .then((output) => {

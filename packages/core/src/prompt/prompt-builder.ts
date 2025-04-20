@@ -13,6 +13,7 @@ import type {
   ChatModelInputResponseFormat,
   ChatModelInputTool,
   ChatModelInputToolChoice,
+  ChatModelOptions,
 } from "../models/chat-model.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
 import { isNil, orArrayToArray } from "../utils/type-utils.js";
@@ -188,7 +189,7 @@ export class PromptBuilder {
 
   private buildTools(
     options: PromptBuilderBuildOptions,
-  ): Pick<ChatModelInput, "tools" | "toolChoice"> & { toolAgents?: Agent[] } {
+  ): Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] } {
     const toolAgents = (options.context?.tools ?? [])
       .concat(options.agent?.tools ?? [])
       .concat(options.agent?.memoryAgentsAsTools ? options.agent.memories : [])
@@ -207,6 +208,7 @@ export class PromptBuilder {
     }));
 
     let toolChoice: ChatModelInputToolChoice | undefined;
+    const modelOptions: ChatModelOptions = {};
 
     // use manual choice if configured in the agent
     const manualChoice = options.agent?.toolChoice;
@@ -221,6 +223,7 @@ export class PromptBuilder {
         };
       } else if (manualChoice === "router") {
         toolChoice = "required";
+        modelOptions.parallelToolCalls = false;
       } else {
         toolChoice = manualChoice;
       }
@@ -234,6 +237,7 @@ export class PromptBuilder {
       toolAgents: toolAgents.length ? toolAgents : undefined,
       tools: tools.length ? tools : undefined,
       toolChoice,
+      modelOptions: Object.keys(modelOptions).length ? modelOptions : undefined,
     };
   }
 }

@@ -1,6 +1,6 @@
 import { beforeEach, expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { OpenRouterChatModel } from "@aigne/core/models/open-router-chat-model.js";
 import { createMockEventStream } from "../_utils/event-stream.js";
 import {
   COMMON_RESPONSE_FORMAT,
@@ -10,19 +10,19 @@ import {
   createWeatherToolMessages,
 } from "../_utils/openai-like-utils.js";
 
-let model: OpenAIChatModel;
+let model: OpenRouterChatModel;
 
 beforeEach(() => {
-  model = new OpenAIChatModel({
+  model = new OpenRouterChatModel({
     apiKey: "YOUR_API_KEY",
-    model: "gpt-4o-mini",
+    model: "openai/gpt-4o",
   });
 });
 
-test("OpenAIChatModel.call should return the correct tool", async () => {
+test("OpenRouterChatModel.call should return the correct tool", async () => {
   spyOn(model.client.chat.completions, "create").mockReturnValue(
     createMockEventStream({
-      path: join(import.meta.dirname, "openai-streaming-response-1.txt"),
+      path: join(import.meta.dirname, "open-router-streaming-response-1.txt"),
     }),
   );
 
@@ -34,10 +34,10 @@ test("OpenAIChatModel.call should return the correct tool", async () => {
   expect(result).toEqual(createWeatherToolExpected());
 });
 
-test("OpenAIChatModel.call", async () => {
+test("OpenRouterChatModel.call", async () => {
   spyOn(model.client.chat.completions, "create").mockReturnValue(
     createMockEventStream({
-      path: join(import.meta.dirname, "openai-streaming-response-2.txt"),
+      path: join(import.meta.dirname, "open-router-streaming-response-2.txt"),
     }),
   );
 
@@ -54,7 +54,6 @@ test("OpenAIChatModel.call", async () => {
         inputTokens: 100,
         outputTokens: 20,
       },
-      model: expect.any(String),
     }),
   );
 });

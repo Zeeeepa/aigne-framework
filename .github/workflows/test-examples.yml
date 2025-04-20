@@ -15,28 +15,34 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - provider: openai
+          - provider: OpenAI
             model: gpt-4.1-mini
-          - provider: openai
+          - provider: OpenAI
             model: gpt-4o-mini
-          - provider: openai
+          - provider: OpenAI
             model: o3-mini
-          - provider: openai
+          - provider: OpenAI
             model: o1-mini
-          - provider: claude
+          - provider: Claude
             model: claude-3-7-sonnet-latest
-          - provider: claude
+          - provider: Claude
             model: claude-3-5-haiku-latest
-          - provider: xai
+          - provider: XAI
             model: grok-3-mini
-          - provider: xai
+          - provider: XAI
             model: grok-2-latest
-          # - provider: gemini
-          #   model: gemini-2.0-flash
-          # - provider: deepseek
-          #   model: deepseek-chat
-          # - provider: open-router
-          #   model: openai/gpt-4o
+          - provider: Gemini
+            model: gemini-2.0-flash
+          - provider: Gemini
+            model: gemini-1.5-flash
+          - provider: DeepSeek
+            model: deepseek-chat
+          - provider: OpenRouter
+            model: openai/gpt-4o
+          - provider: Ollama
+            model: llama3.2
+          - provider: Ollama
+            model: qwen2.5-coder
 
     steps:
       - name: Checkout repo
@@ -49,7 +55,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Get puppeteer version from @modelcontextprotocol/server-puppeteer
@@ -86,9 +92,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Chmod examples/chat-bot aigne
+        run: chmod +x examples/chat-bot/node_modules/@aigne/cli/dist/cli.js
+
       - name: Run examples
         env:
-          INITIAL_CALL: "Hi, this is an initial test. Show your main function by performing a basic task you’re designed for."
+          INITIAL_CALL: "Hi, this is an initial test. Show your main function by performing a basic task you're designed for."
           SKIP_LOOP: "true"
           PUPPETEER_LAUNCH_OPTIONS: '{"headless": true, "args": ["--no-sandbox", "--disable-setuid-sandbox"]}'
           ALLOW_DANGEROUS: "true"
@@ -98,6 +107,11 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPEN_ROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_BASE_URL: ${{ secrets.OLLAMA_BASE_URL }}
         run: |
           EXCLUDE_PATTERN="mcp-blocklet\|workflow-group-chat"
 
