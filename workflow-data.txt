@@ -6,7 +6,8 @@ workflow 相关的示例代码和流程图。
 
 ``` ts
 const engine = new ExecutionEngine({ model });
-const result = await engine.call(sequential(conceptExtractor, writer, formatProof),
+const result = await engine.call(
+  sequential(conceptExtractor, writer, formatProof),
   { product: "AIGNE is a No-code Generative AI Apps Engine" }
 );
 ```
@@ -77,11 +78,14 @@ class aggregator processing3
 ### 路由工作流
 
 ```ts
-// Execute router workflow
 const engine = new ExecutionEngine({ model });
 
-// Product related questions are automatically routed to product support
-const result1 = await engine.call(triage, "How to use this product?");
+// Product related questions are automatically 
+// routed to product support
+const result1 = await engine.call(
+  triage, 
+  "How to use this product?"
+);
 ```
 
 ```mermaid
@@ -118,7 +122,6 @@ class other processing4
 ### 交接工作流
 
 ```ts
-// Execute handoff workflow
 const engine = new ExecutionEngine({ model });
 const userAgent = await engine.call(agentA);
 
@@ -156,9 +159,13 @@ class agentB processing2
 ### 反思工作流
 
 ```ts
-// Execute reflection workflow
-const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
-const result = await engine.call("Write a function to find the sum of all even numbers in a list.");
+const engine = new ExecutionEngine({ 
+  model, 
+  agents: [coder, reviewer]
+});
+const result = await engine.call(
+  "Write a function to find the sum of all even numbers in a list."
+);
 ```
 
 ```mermaid
@@ -187,7 +194,7 @@ class reviewer processing2
 ### 代码执行工作流
 
 ```ts
-// 创建执行引擎并运行
+// Create execution engine and run
 const engine = new ExecutionEngine({ model });
 const result = await engine.call(coder, "10! = ?");
 ```
@@ -215,4 +222,12 @@ class in input
 class out output
 class coder processing1
 class sandbox processing2
+```
+
+
+```d2
+hello
+w: world
+
+hello -> w: there
 ```
