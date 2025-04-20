@@ -1,0 +1,9 @@
+import { expect, test } from "bun:test";
+import { AgentMemory } from "@aigne/core/memory/memory.js";
+
+test("should add a new memory if it is not the same as the last one", async () => {
+  const agentMemory = new AgentMemory({});
+
+  expect(agentMemory.isCallable).toBe(false);
+  expect(agentMemory.call("hello")).rejects.toThrow("not implemented");
+});
