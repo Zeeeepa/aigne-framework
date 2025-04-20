@@ -1,14 +1,16 @@
-import { z } from "zod";
+import { type ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context.js";
+import { DefaultMemory, type DefaultMemoryOptions } from "../memory/default-memory.js";
+import { AgentMemory } from "../memory/memory.js";
 import { ChatModel } from "../models/chat-model.js";
 import type { ChatModelInputMessage, ChatModelOutputToolCall } from "../models/chat-model.js";
 import { MESSAGE_KEY, PromptBuilder } from "../prompt/prompt-builder.js";
 import { AgentMessageTemplate, ToolMessageTemplate } from "../prompt/template.js";
-import { Agent, type AgentOptions, type Message } from "./agent.js";
+import { Agent, type AgentOptions, type Message, agentOptionsSchema } from "./agent.js";
 import { isTransferAgentOutput } from "./types.js";
 
 export interface AIAgentOptions<I extends Message = Message, O extends Message = Message>
-  extends AgentOptions<I, O> {
+  extends Omit<AgentOptions<I, O>, "memory"> {
   model?: ChatModel;
 
   instructions?: string | PromptBuilder;
@@ -16,6 +18,12 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
   outputKey?: string;
 
   toolChoice?: AIAgentToolChoice;
+
+  memoryAgentsAsTools?: boolean;
+
+  memoryPromptTemplate?: string;
+
+  memory?: AgentOptions<I, O>["memory"] | DefaultMemoryOptions | true;
 }
 
 export type AIAgentToolChoice = "auto" | "none" | "required" | "router" | Agent;
@@ -31,21 +39,15 @@ export const aiAgentToolChoiceSchema = z.union(
   { message: "aiAgentToolChoice must be 'auto', 'none', 'required', 'router', or an Agent" },
 );
 
-export const aiAgentOptionsSchema = z.object({
+export const aiAgentOptionsSchema: ZodObject<{
+  [key in keyof AIAgentOptions]: ZodType<AIAgentOptions[key]>;
+}> = agentOptionsSchema.extend({
   model: z.instanceof(ChatModel).optional(),
   instructions: z.union([z.string(), z.instanceof(PromptBuilder)]).optional(),
   outputKey: z.string().optional(),
   toolChoice: aiAgentToolChoiceSchema.optional(),
-  enableHistory: z.boolean().optional(),
-  maxHistoryMessages: z.number().optional(),
-  includeInputInOutput: z.boolean().optional(),
-  subscribeTopic: z.union([z.string(), z.array(z.string())]).optional(),
-  publishTopic: z.union([z.string(), z.array(z.string()), z.function()]).optional(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  tools: z.array(z.union([z.instanceof(Agent), z.function()])).optional(),
-  disableLogging: z.boolean().optional(),
-  memory: z.union([z.boolean(), z.any(), z.any()]).optional(),
+  memoryAgentsAsTools: z.boolean().optional(),
+  memoryPromptTemplate: z.string().optional(),
 });
 
 export class AIAgent<I extends Message = Message, O extends Message = Message> extends Agent<I, O> {
@@ -55,7 +57,14 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
 
   constructor(options: AIAgentOptions<I, O>) {
     aiAgentOptionsSchema.parse(options);
-    super(options);
+    super({
+      ...options,
+      memory: !options.memory
+        ? undefined
+        : Array.isArray(options.memory) || options.memory instanceof AgentMemory
+          ? options.memory
+          : new DefaultMemory(options.memory === true ? {} : options.memory),
+    });
 
     this.model = options.model;
     this.instructions =
@@ -64,6 +73,8 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
         : (options.instructions ?? new PromptBuilder());
     this.outputKey = options.outputKey;
     this.toolChoice = options.toolChoice;
+    this.memoryAgentsAsTools = options.memoryAgentsAsTools ?? true;
+    this.memoryPromptTemplate = options.memoryPromptTemplate;
   }
 
   model?: ChatModel;
@@ -73,6 +84,10 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
   outputKey?: string;
 
   toolChoice?: AIAgentToolChoice;
+
+  memoryAgentsAsTools?: boolean;
+
+  memoryPromptTemplate?: string;
 
   async process(input: I, context: Context) {
     const model = context.model ?? this.model;
@@ -109,7 +124,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
           // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
           const output = await context.call(
             tool,
-            { ...call.function.arguments, ...input },
+            { ...input, ...call.function.arguments },
             { disableTransfer: true },
           );
 

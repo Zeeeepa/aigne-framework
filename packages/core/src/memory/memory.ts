@@ -1,0 +1,103 @@
+import { v7 } from "uuid";
+import { type ZodType, z } from "zod";
+import { Agent, type AgentOptions, type Message } from "../agents/agent.js";
+import type { Context } from "../execution-engine/context.js";
+import type { MessagePayload } from "../execution-engine/message-queue.js";
+import { checkArguments, remove } from "../utils/type-utils.js";
+import type { MemoryRecorder, MemoryRecorderInput, MemoryRecorderOutput } from "./recorder.js";
+import type { MemoryRetriever, MemoryRetrieverInput, MemoryRetrieverOutput } from "./retriever.js";
+
+export interface Memory {
+  id: string;
+  content: unknown;
+  createdAt: string;
+}
+
+export const newMemoryId = () => v7();
+
+export interface AgentMemoryOptions
+  extends Partial<Pick<AgentMemory, "recorder" | "retriever" | "autoUpdate">>,
+    Pick<AgentOptions, "subscribeTopic" | "tools"> {}
+
+export class AgentMemory extends Agent {
+  constructor(options: AgentMemoryOptions) {
+    checkArguments("AgentMemory", agentMemoryOptionsSchema, options);
+    super({
+      subscribeTopic: options.subscribeTopic,
+      tools: options.tools,
+    });
+
+    this.subscribeTopic = options.subscribeTopic;
+    this.recorder = options.recorder;
+    this.retriever = options.retriever;
+    this.autoUpdate = options.autoUpdate;
+  }
+
+  subscribeTopic?: string | string[];
+
+  private _retriever?: MemoryRetriever;
+
+  /**
+   * Agent used for retrieving memories
+   */
+  get retriever(): MemoryRetriever | undefined {
+    return this._retriever;
+  }
+
+  set retriever(value: MemoryRetriever | undefined) {
+    if (this._retriever) remove(this.tools, [this._retriever]);
+
+    this._retriever = value;
+    if (value) this.tools.push(value);
+  }
+
+  private _recorder?: MemoryRecorder;
+
+  /**
+   * Agent used for recording new memories
+   */
+  get recorder(): MemoryRecorder | undefined {
+    return this._recorder;
+  }
+
+  set recorder(value: MemoryRecorder | undefined) {
+    if (this._recorder) remove(this.tools, [this._recorder]);
+
+    this._recorder = value;
+    if (value) this.tools.push(value);
+  }
+
+  /**
+   * Whether to automatically update the memory when agent call completes
+   */
+  autoUpdate?: boolean;
+
+  get isCallable(): boolean {
+    return false;
+  }
+
+  async process(_input: Message, _context: Context): Promise<Message> {
+    throw new Error("Method not implemented.");
+  }
+
+  async retrieve(input: MemoryRetrieverInput, context: Context): Promise<MemoryRetrieverOutput> {
+    if (!this.retriever) throw new Error("AgentMemory retriever no initialized");
+    return context.call(this.retriever, input);
+  }
+
+  async record(input: MemoryRecorderInput, context: Context): Promise<MemoryRecorderOutput> {
+    if (!this.recorder) throw new Error("AgentMemory recorder no initialized");
+    return context.call(this.recorder, input);
+  }
+
+  override async onMessage({ role, source, message, context }: MessagePayload): Promise<void> {
+    this.record({ content: [{ role, source, content: message }] }, context);
+  }
+}
+
+const agentMemoryOptionsSchema: ZodType<AgentMemoryOptions> = z.object({
+  subscribeTopic: z.union([z.string(), z.array(z.string())]).optional(),
+  retriever: z.custom<MemoryRetriever>(),
+  recorder: z.custom<MemoryRecorder>(),
+  autoUpdate: z.boolean().optional(),
+});

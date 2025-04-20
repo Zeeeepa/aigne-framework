@@ -3,12 +3,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AIAgent,
-  AgentMemory,
+  ExecutionEngine,
   FunctionAgent,
   MESSAGE_KEY,
   PromptBuilder,
   createMessage,
 } from "@aigne/core";
+import { DefaultMemory } from "@aigne/core/memory/default-memory.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
@@ -19,30 +20,35 @@ test("userInput function should return correct object", () => {
 });
 
 test("PromptBuilder should build messages correctly", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const builder = PromptBuilder.from("Test instructions");
 
-  const memory = new AgentMemory({ enabled: true });
-  memory.addMemory({
-    role: "agent",
-    content: createMessage("Hello, How can I help you?"),
-    source: "TestAgent",
-  });
+  const memory = new DefaultMemory({});
+  await memory.record(
+    {
+      role: "agent",
+      content: [createMessage("Hello, How can I help you?")],
+      source: "TestAgent",
+    },
+
+    context,
+  );
 
   const prompt1 = await builder.build({
     memory,
     input: createMessage("Hello"),
+    context,
   });
 
-  expect(memory.enabled).toBe(true);
   expect(prompt1.messages).toEqual([
     {
       role: "system",
       content: "Test instructions",
     },
     {
-      role: "agent",
-      content: "Hello, How can I help you?",
-      name: "TestAgent",
+      role: "system",
+      content: expect.stringContaining("Hello, How can I help you?"),
     },
     {
       role: "user",
@@ -50,7 +56,10 @@ test("PromptBuilder should build messages correctly", async () => {
     },
   ]);
 
-  const prompt2 = await builder.build({ input: createMessage({ name: "foo" }) });
+  const prompt2 = await builder.build({
+    input: createMessage({ name: "foo" }),
+    context,
+  });
   expect(prompt2.messages).toEqual([
     {
       role: "system",
@@ -60,6 +69,8 @@ test("PromptBuilder should build messages correctly", async () => {
 });
 
 test("PromptBuilder should build response format correctly", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const agent = AIAgent.from({
     name: "TestAgent",
     instructions: "Test instructions",
@@ -69,7 +80,7 @@ test("PromptBuilder should build response format correctly", async () => {
     }),
   });
 
-  const prompt = await agent.instructions.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent, context });
 
   expect(prompt.responseFormat).toEqual({
     type: "json_schema",
@@ -90,6 +101,8 @@ test("PromptBuilder should build response format correctly", async () => {
 });
 
 test("PromptBuilder should build tools correctly", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const tool = FunctionAgent.from({
     name: "TestTool",
     description: "Test tool description",
@@ -107,7 +120,7 @@ test("PromptBuilder should build tools correctly", async () => {
     toolChoice: tool,
   });
 
-  const prompt = await agent.instructions.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent, context });
 
   expect(prompt.tools).toEqual([
     {
@@ -138,6 +151,8 @@ test("PromptBuilder should build tools correctly", async () => {
 });
 
 test("PromptBuilder should build toolChoice with router mode correctly", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const tool = FunctionAgent.from({
     name: "TestTool",
     description: "Test tool description",
@@ -151,15 +166,17 @@ test("PromptBuilder should build toolChoice with router mode correctly", async (
     toolChoice: "router",
   });
 
-  const prompt = await agent.instructions.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent, context });
 
   expect(prompt.toolChoice).toEqual("required");
 });
 
 test("PromptBuilder from string", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const builder = PromptBuilder.from("Hello, {{agentName}}!");
 
-  const prompt = await builder.build({ input: { agentName: "Alice" } });
+  const prompt = await builder.build({ input: { agentName: "Alice" }, context });
 
   expect(prompt).toEqual({
     messages: [
@@ -172,6 +189,8 @@ test("PromptBuilder from string", async () => {
 });
 
 test("PromptBuilder from MCP prompt result", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const prompt: GetPromptResult = {
     description: "Test prompt",
     messages: [
@@ -223,7 +242,7 @@ test("PromptBuilder from MCP prompt result", async () => {
   };
 
   const promptBuilder = PromptBuilder.from(prompt);
-  expect(await promptBuilder.build({})).toEqual(
+  expect(await promptBuilder.build({ context })).toEqual(
     expect.objectContaining({
       messages: [
         {
@@ -254,12 +273,14 @@ test("PromptBuilder from MCP prompt result", async () => {
 });
 
 test("PromptBuilder from file", async () => {
+  const context = new ExecutionEngine().newContext();
+
   const path = join(import.meta.dirname, "test-prompt.txt");
   const content = await readFile(path, "utf-8");
 
   const builder = await PromptBuilder.from({ path });
 
-  const prompt = await builder.build({ input: { agentName: "Alice" } });
+  const prompt = await builder.build({ input: { agentName: "Alice" }, context });
 
   expect(prompt).toEqual({
     messages: [

@@ -1,6 +1,8 @@
 import { inspect } from "node:util";
 import { ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context.js";
+import type { MessagePayload, Unsubscribe } from "../execution-engine/message-queue.js";
+import type { AgentMemory } from "../memory/memory.js";
 import { createMessage } from "../prompt/prompt-builder.js";
 import { logger } from "../utils/logger.js";
 import {
@@ -9,7 +11,6 @@ import {
   createAccessorArray,
   orArrayToArray,
 } from "../utils/type-utils.js";
-import { AgentMemory, type AgentMemoryOptions } from "./memory.js";
 import {
   type TransferAgentOutput,
   replaceTransferAgentToName,
@@ -44,8 +45,25 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
 
   disableEvents?: boolean;
 
-  memory?: AgentMemory | AgentMemoryOptions | true;
+  memory?: AgentMemory | AgentMemory[];
 }
+
+export const agentOptionsSchema: ZodObject<{
+  [key in keyof AgentOptions]: ZodType<AgentOptions[key]>;
+}> = z.object({
+  subscribeTopic: z.union([z.string(), z.array(z.string())]).optional(),
+  publishTopic: z
+    .union([z.string(), z.array(z.string()), z.custom<PublishTopic<Message>>()])
+    .optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  inputSchema: z.custom<AgentInputOutputSchema>().optional(),
+  outputSchema: z.custom<AgentInputOutputSchema>().optional(),
+  includeInputInOutput: z.boolean().optional(),
+  tools: z.array(z.union([z.custom<Agent>(), z.custom<FunctionAgentFn>()])).optional(),
+  disableEvents: z.boolean().optional(),
+  memory: z.union([z.custom<AgentMemory>(), z.array(z.custom<AgentMemory>())]).optional(),
+});
 
 export abstract class Agent<I extends Message = Message, O extends Message = Message> {
   constructor({ inputSchema, outputSchema, ...options }: AgentOptions<I, O>) {
@@ -61,17 +79,15 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     this.publishTopic = options.publishTopic as PublishTopic<Message>;
     if (options.tools?.length) this.tools.push(...options.tools.map(functionToAgent));
     this.disableEvents = options.disableEvents;
-    if (options.memory) {
-      this.memory =
-        options.memory instanceof AgentMemory
-          ? options.memory
-          : typeof options.memory === "boolean"
-            ? new AgentMemory({ enabled: options.memory })
-            : new AgentMemory(options.memory);
+
+    if (Array.isArray(options.memory)) {
+      this.memories.push(...options.memory);
+    } else if (options.memory) {
+      this.memories.push(options.memory);
     }
   }
 
-  readonly memory?: AgentMemory;
+  readonly memories: AgentMemory[] = [];
 
   readonly name: string;
 
@@ -112,6 +128,8 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
   private disableEvents?: boolean;
 
+  private subscriptions: Unsubscribe[] = [];
+
   /**
    * Attach agent to context:
    * - subscribe to topic and call process method when message received
@@ -119,16 +137,20 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * @param context Context to attach
    */
   attach(context: Pick<Context, "subscribe">) {
-    this.memory?.attach(context);
+    for (const memory of this.memories) {
+      memory.attach(context);
+    }
 
     for (const topic of orArrayToArray(this.subscribeTopic).concat(this.topic)) {
-      context.subscribe(topic, async ({ message, context }) => {
-        try {
-          await context.call(this, message);
-        } catch (error) {
-          context.emit("agentFailed", { agent: this, error });
-        }
-      });
+      this.subscriptions.push(context.subscribe(topic, (payload) => this.onMessage(payload)));
+    }
+  }
+
+  async onMessage({ message, context }: MessagePayload) {
+    try {
+      await context.call(this, message);
+    } catch (error) {
+      context.emit("agentFailed", { agent: this, error });
     }
   }
 
@@ -205,18 +227,32 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
   protected postprocess(input: I, output: O, context: Context) {
     this.checkContextStatus(context);
 
-    this.memory?.addMemory({ role: "user", content: input });
-    this.memory?.addMemory({
-      role: "agent",
-      content: replaceTransferAgentToName(output),
-      source: this.name,
-    });
+    for (const memory of this.memories) {
+      if (memory.autoUpdate) {
+        memory.record(
+          {
+            content: [
+              { role: "user", content: input },
+              { role: "agent", content: replaceTransferAgentToName(output), source: this.name },
+            ],
+          },
+          context,
+        );
+      }
+    }
   }
 
   abstract process(input: I, context: Context): Promise<O | TransferAgentOutput>;
 
   async shutdown() {
-    this.memory?.detach();
+    for (const sub of this.subscriptions) {
+      sub();
+    }
+    this.subscriptions = [];
+
+    for (const m of this.memories) {
+      m.shutdown();
+    }
   }
 
   [inspect.custom]() {
