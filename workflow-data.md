@@ -14,11 +14,16 @@ const result = await engine.call(
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-conceptExtractor(Concept Extractor)
-writer(Writer)
-formatProof(Format Proof)
+
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+conceptExtractor(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/64d42ae585af89c128b28981f4eee155.svg' width='16px' height='16px' style="width:16px; height:16px; margin-right: 12px;" />Concept Extractor</div>)
+
+writer(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/257c8d0e5c1ff8b782058ac43026b7c2.svg' style="width:16px; height:16px; margin-right: 12px;" />Writer</div>)
+
+formatProof(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/352a54b2215b130ccafd1864954d7aff.png' style="width:16px; height:16px; margin-right: 12px;" />Format Proof</div>)
 
 in --> conceptExtractor --> writer --> formatProof --> out
 
@@ -50,11 +55,15 @@ const result = await engine.call(
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-featureExtractor(Feature Extractor)
-audienceAnalyzer(Audience Analyzer)
-aggregator(Aggregator)
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+featureExtractor(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/64d42ae585af89c128b28981f4eee155.svg' style="width:16px; height:16px; margin-right: 12px;" />Feature Extractor</div>)
+
+audienceAnalyzer(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/5eddc17e9ce75bdbcadc58a78fc1beb1.svg' style="width:16px; height:16px; margin-right: 12px;" />Audience Analyzer</div>)
+
+aggregator(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/fca520cd2acd1d733a51f4e60012dd80.svg' style="width:16px; height:16px; margin-right: 12px;" />Aggregator</div>)
 
 in --> featureExtractor --> aggregator
 in --> audienceAnalyzer --> aggregator
@@ -64,7 +73,7 @@ classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
 classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
 classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
 classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
 classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
@@ -90,12 +99,17 @@ const result1 = await engine.call(
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-triage(Triage)
-productSupport(Product Support)
-feedback(Feedback)
-other(Other)
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+triage(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/64d42ae585af89c128b28981f4eee155.svg' style="width:16px; height:16px; margin-right: 12px;" />Triage</div>)
+
+productSupport(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/aab8a461fe0cecd1fc2f439f47ec19e8.svg' style="width:16px; height:16px; margin-right: 12px;" />Product Support</div>)
+
+feedback(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/aeb6b3a5b7429976c2d32b1be18c9692.svg' style="width:16px; height:16px; margin-right: 12px;" />Feedback</div>)
+
+other(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/43887b04f1ba57e91a82953f726d4bea.svg' style="width:16px; height:16px; margin-right: 12px;" />Other</div>)
 
 in ==> triage
 triage ==> productSupport ==> out
@@ -108,7 +122,7 @@ classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
 classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
 classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 classDef processing3 fill:#19191B,stroke:#444444,stroke-width:1px,color:#C792E9;
-classDef processing4 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing4 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
@@ -135,10 +149,13 @@ const result2 = await userAgent.call("It's a beautiful day");
 ```mermaid
 flowchart LR
 
-in(In)
-out(Out)
-agentA(Agent A)
-agentB(Agent B)
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+agentA(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/985975c4321f2d66094b876d3a7dad90.svg' style="width:16px; height:16px; margin-right: 12px;" />Agent A</div>)
+
+agentB(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/18a1cf2b08d4f6cb0c68f4bc54edfa41.svg' style="width:16px; height:16px; margin-right: 12px;" />Agent B</div>)
 
 
 in --> agentA --transfer to b--> agentB --> out
@@ -170,10 +187,13 @@ const result = await engine.call(
 
 ```mermaid
 flowchart LR
-in(In)
-out(Out)
-coder(Coder)
-reviewer(Reviewer)
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+coder(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/54fd7161ac32e7241e858daa4da7bd8a.svg' style="width:16px; height:16px; margin-right: 12px;" />Coder</div>)
+
+reviewer(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/949e513cd5a950ae9a5fc4afb7e33841.svg' style="width:16px; height:16px; margin-right: 12px;" />Reviewer</div>)
 
 in --Ideas--> coder ==Solution==> reviewer --Approved--> out
 reviewer ==Rejected==> coder
@@ -181,7 +201,7 @@ reviewer ==Rejected==> coder
 classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
 classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
 classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
@@ -202,10 +222,13 @@ const result = await engine.call(coder, "10! = ?");
 ```mermaid
 flowchart LR
 
-in(In)
-out(Out)
-coder(Coder)
-sandbox(Sandbox)
+in(<div style="display: flex; align-items: center;"><img src='https://bbqa5koxxgfrmnxthvqcjsidwh3xv2qiip4el34s44q.did.abtnet.io/image-bin/uploads/91b390044d314aa09449bd96cdad0c14.svg' style="width:16px; height:16px; margin-right: 12px;" />In</div>)
+
+out(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/c2600ef3dc2693cb59500c66ef9e01fc.svg' style="width:16px; height:16px; margin-right: 12px;" />Out</div>)
+
+coder(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/54fd7161ac32e7241e858daa4da7bd8a.svg' style="width:16px; height:16px; margin-right: 12px;" />Coder</div>)
+
+sandbox(<div style="display: flex; align-items: center;"><img src='https://www.aigne.io/image-bin/uploads/64d42ae585af89c128b28981f4eee155.svg' style="width:16px; height:16px; margin-right: 12px;" />Sandbox</div>)
 
 coder -.-> sandbox
 sandbox -.-> coder
@@ -214,20 +237,12 @@ in ==> coder ==> out
 classDef inputOutput fill:#19191B,stroke:#444444,stroke-width:1px;
 classDef input fill:#19191B,stroke:#444444,stroke-width:1px,color:#F1FF00;
 classDef output fill:#19191B,stroke:#444444,stroke-width:1px,color:#A5E844;
-classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
-classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing1 fill:#19191B,stroke:#444444,stroke-width:1px,color:#767BFF;
+classDef processing2 fill:#19191B,stroke:#444444,stroke-width:1px,color:#67D4FF;
 linkStyle default stroke:#444444,stroke-width:1px,stroke-dasharray: 3 3;
 
 class in input
 class out output
 class coder processing1
 class sandbox processing2
-```
-
-
-```d2
-hello
-w: world
-
-hello -> w: there
 ```
