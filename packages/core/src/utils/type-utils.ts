@@ -4,6 +4,11 @@ export type PromiseOrValue<T> = T | Promise<T>;
 
 export type Nullish<T> = T | null | undefined;
 
+export type OmitPropertiesFromArrayFirstElement<
+  T extends unknown[],
+  K extends string | number | symbol,
+> = T extends [infer U, ...infer Rest] ? [Omit<U, K>, ...Rest] : never;
+
 export function isNil(value: unknown): value is null | undefined {
   return value === null || value === undefined;
 }
@@ -51,9 +56,9 @@ export function createAccessorArray<T>(
   }) as T[] & { [key: string]: T };
 }
 
-export function checkArguments<T>(prefix: string, schema: ZodType<T>, args: T) {
+export function checkArguments<T>(prefix: string, schema: ZodType<T>, args: T): T {
   try {
-    schema.parse(args, {
+    return schema.parse(args, {
       errorMap: (issue, ctx) => {
         if (issue.code === "invalid_union") {
           // handle all issues that are not invalid_type

@@ -5,15 +5,17 @@ import { z } from "zod";
 import { type Agent, FunctionAgent } from "../agents/agent.js";
 import { AIAgent } from "../agents/ai-agent.js";
 import { MCPAgent } from "../agents/mcp-agent.js";
-import type { ChatModel } from "../models/chat-model.js";
+import type { ChatModel, ChatModelOptions } from "../models/chat-model.js";
 import { ClaudeChatModel } from "../models/claude-chat-model.js";
+import { DeepSeekChatModel } from "../models/deepseek-chat-model.js";
+import { GeminiChatModel } from "../models/gemini-chat-model.js";
+import { OllamaChatModel } from "../models/ollama-chat-model.js";
+import { OpenRouterChatModel } from "../models/open-router-chat-model.js";
 import { OpenAIChatModel } from "../models/openai-chat-model.js";
 import { XAIChatModel } from "../models/xai-chat-model.js";
 import { tryOrThrow } from "../utils/type-utils.js";
 import { loadAgentFromJsFile } from "./agent-js.js";
 import { loadAgentFromYamlFile } from "./agent-yaml.js";
-
-const DEFAULT_MODEL_PROVIDER = "openai";
 
 const AIGNE_FILE_NAME = ["aigne.yaml", "aigne.yml"];
 
@@ -69,6 +71,7 @@ export async function loadAgent(path: string): Promise<Agent> {
         tools: await Promise.all(
           (agent.tools ?? []).map((filename) => loadAgent(join(dirname(path), filename))),
         ),
+        toolChoice: agent.tool_choice,
       });
     }
     if (agent.type === "mcp") {
@@ -90,25 +93,38 @@ export async function loadAgent(path: string): Promise<Agent> {
   throw new Error(`Unsupported agent file type: ${path}`);
 }
 
-async function loadModel(
-  model: z.infer<typeof aigneFileSchema>["chat_model"],
-): Promise<ChatModel | undefined> {
-  if (!model?.name) return undefined;
+const { MODEL_PROVIDER, MODEL_NAME } = process.env;
+const DEFAULT_MODEL_PROVIDER = "openai";
+const DEFAULT_MODEL_NAME = "gpt-4o-mini";
 
+export async function loadModel(
+  model?: z.infer<typeof aigneFileSchema>["chat_model"],
+  modelOptions?: ChatModelOptions,
+): Promise<ChatModel | undefined> {
   const params = {
-    model: model.name,
-    temperature: model.temperature ?? undefined,
-    topP: model.top_p ?? undefined,
-    frequencyPenalty: model.frequent_penalty ?? undefined,
-    presencePenalty: model.presence_penalty ?? undefined,
+    model: MODEL_NAME ?? model?.name ?? DEFAULT_MODEL_NAME,
+    temperature: model?.temperature ?? undefined,
+    topP: model?.top_p ?? undefined,
+    frequencyPenalty: model?.frequent_penalty ?? undefined,
+    presencePenalty: model?.presence_penalty ?? undefined,
   };
 
-  const availableModels = [OpenAIChatModel, ClaudeChatModel, XAIChatModel];
+  const availableModels = [
+    OpenAIChatModel,
+    ClaudeChatModel,
+    XAIChatModel,
+    GeminiChatModel,
+    DeepSeekChatModel,
+    OpenRouterChatModel,
+    OllamaChatModel,
+  ];
   const M = availableModels.find((m) =>
-    m.name.toLowerCase().includes(model.provider || DEFAULT_MODEL_PROVIDER),
+    m.name
+      .toLowerCase()
+      .includes((MODEL_PROVIDER ?? model?.provider ?? DEFAULT_MODEL_PROVIDER).toLowerCase()),
   );
-  if (!M) throw new Error(`Unsupported model: ${model.provider} ${model.name}`);
-  return new M(params);
+  if (!M) throw new Error(`Unsupported model: ${model?.provider} ${model?.name}`);
+  return new M({ model: params.model, modelOptions: { ...params, ...modelOptions } });
 }
 
 const aigneFileSchema = z.object({

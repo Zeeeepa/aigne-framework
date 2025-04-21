@@ -1,81 +1,60 @@
-import { expect, spyOn, test } from "bun:test";
+import { beforeEach, expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import {
-  AgentMessageTemplate,
-  ChatMessagesTemplate,
-  SystemMessageTemplate,
-  ToolMessageTemplate,
-  UserMessageTemplate,
-} from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { createMockEventStream } from "../_utils/event-stream.js";
+import {
+  COMMON_RESPONSE_FORMAT,
+  COMMON_TOOLS,
+  createWeatherToolCallMessages,
+  createWeatherToolExpected,
+  createWeatherToolMessages,
+} from "../_utils/openai-like-utils.js";
 
-test("OpenAIChatModel.call", async () => {
-  const model = new OpenAIChatModel({
+let model: OpenAIChatModel;
+
+beforeEach(() => {
+  model = new OpenAIChatModel({
     apiKey: "YOUR_API_KEY",
     model: "gpt-4o-mini",
   });
+});
 
+test("OpenAIChatModel.call should return the correct tool", async () => {
   spyOn(model.client.chat.completions, "create").mockReturnValue(
     createMockEventStream({
-      path: join(import.meta.dirname, "openai-streaming-response.txt"),
+      path: join(import.meta.dirname, "openai-streaming-response-1.txt"),
     }),
   );
 
   const result = await model.call({
-    messages: ChatMessagesTemplate.from([
-      SystemMessageTemplate.from("You are a chatbot"),
-      UserMessageTemplate.from([{ type: "text", text: "What is the weather in New York?" }]),
-      AgentMessageTemplate.from(undefined, [
-        {
-          id: "get_weather",
-          type: "function",
-          function: { name: "get_weather", arguments: { city: "New York" } },
-        },
-      ]),
-      ToolMessageTemplate.from({ temperature: 20 }, "get_weather"),
-    ]).format(),
-    tools: [
-      {
-        type: "function",
-        function: {
-          name: "get_weather",
-          parameters: {
-            type: "object",
-            properties: {
-              city: {
-                type: "string",
-              },
-            },
-            required: ["city"],
-          },
-        },
-      },
-    ],
-    responseFormat: {
-      type: "json_schema",
-      jsonSchema: {
-        name: "output",
-        schema: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-            },
-          },
-          required: ["text"],
-          additionalProperties: false,
-        },
-        strict: true,
-      },
-    },
+    messages: createWeatherToolMessages(),
+    tools: COMMON_TOOLS,
   });
 
-  expect(result).toEqual({
-    json: { text: "The current temperature in New York is 20°C." },
-    usage: {
-      promptTokens: 100,
-      completionTokens: 20,
-    },
+  expect(result).toEqual(createWeatherToolExpected());
+});
+
+test("OpenAIChatModel.call", async () => {
+  spyOn(model.client.chat.completions, "create").mockReturnValue(
+    createMockEventStream({
+      path: join(import.meta.dirname, "openai-streaming-response-2.txt"),
+    }),
+  );
+
+  const result = await model.call({
+    messages: createWeatherToolCallMessages(),
+    tools: COMMON_TOOLS,
+    responseFormat: COMMON_RESPONSE_FORMAT,
   });
+
+  expect(result).toEqual(
+    expect.objectContaining({
+      json: { text: "The current temperature in New York is 20°C." },
+      usage: {
+        inputTokens: 100,
+        outputTokens: 20,
+      },
+      model: expect.any(String),
+    }),
+  );
 });
