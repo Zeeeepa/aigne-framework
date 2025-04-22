@@ -55,11 +55,27 @@ AIGNE Framework:
     - test 测试 Agent
   支持的大语言模型:
     - OpenAI
-      image: https://www.aigne.io/image-bin/uploads/0438941ae00f3248fdceb95c14360b83.svg
+      image: https://www.aigne.io/image-bin/uploads/dd3f59cc0274ebe326d943faad894b9d.svg
       link: https://openai.com/
     - Claude
-      image: https://www.aigne.io/image-bin/uploads/c3cbb2a92025f2b5c81c675ddf15a6ad.svg
+      image: https://www.aigne.io/image-bin/uploads/9f5e8d1f0b630c0e359611aa1652c08a.svg
       link: https://claude.ai/
+    - XAI
+      image: https://www.aigne.io/image-bin/uploads/d44f3be3ab56a9f34ba0763164d65c13.svg
+      link: https://x.ai/
+    - DeepSeek
+      image: https://www.aigne.io/image-bin/uploads/4e82ef13a71b4d08aeb0c1f80b1a7fe6.svg
+      link: https://www.deepseek.com/
+    - Gemini
+      image: https://www.aigne.io/image-bin/uploads/5560ec6e41038ba9b64dad0ceed20f7d.svg
+      link: https://gemini.google.com/
+    - Ollama
+      image: https://www.aigne.io/image-bin/uploads/c06685c87c72888626eb57c7819226f8.svg
+      link: https://ollama.com/
+    - OpenRouter
+      image: https://www.aigne.io/image-bin/uploads/bd1589158048ea849f6f2c1794e7bc88.svg
+      link: https://openrouter.ai/
+
     
   Blocklet 生态集成:
     - AI Kit
