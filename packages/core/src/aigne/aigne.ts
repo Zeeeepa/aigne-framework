@@ -7,25 +7,65 @@ import { AIGNEContext, type Context } from "./context.js";
 import { MessageQueue } from "./message-queue.js";
 import type { ContextLimits } from "./usage.js";
 
+/**
+ * Options for the AIGNE class.
+ */
 export interface AIGNEOptions {
+  /**
+   * The name of the AIGNE instance.
+   */
   name?: string;
+
+  /**
+   * The description of the AIGNE instance.
+   */
   description?: string;
+
+  /**
+   * Global model to use for all agents not specifying a model.
+   */
   model?: ChatModel;
+
+  /**
+   * Skills to use for the AIGNE instance.
+   */
   skills?: Agent[];
+
+  /**
+   * Agents to use for the AIGNE instance.
+   */
   agents?: Agent[];
+
+  /**
+   * Limits for the AIGNE instance, such as timeout, max tokens, max invocations, etc.
+   */
   limits?: ContextLimits;
 }
 
+/**
+ * AIGNE is a class that represents multiple agents that can be used to build complex applications.
+ *
+ * @example
+ * Here's a simple example of how to use AIGNE:
+ *
+ * {@includeCode ./aigne.test.ts#example-simple}
+ */
 export class AIGNE {
-  static async load({ path, ...options }: { path: string } & AIGNEOptions): Promise<AIGNE> {
+  /**
+   * Load AIGNE instance from a directory, which contains a aigne.yaml and some agent definitions.
+   * @param path Path to the directory containing the aigne.yaml file.
+   * @param options Options to override the loaded configuration.
+   * @returns AIGNE instance.
+   */
+  static async load(path: string, options?: AIGNEOptions): Promise<AIGNE> {
     const { model, agents, skills, ...aigne } = await load({ path });
     return new AIGNE({
       ...options,
-      model: options.model || model,
-      name: options.name || aigne.name || undefined,
-      description: options.description || aigne.description || undefined,
-      agents: agents.concat(options.agents ?? []),
-      skills: skills.concat(options.skills ?? []),
+      model: options?.model || model,
+      name: options?.name || aigne.name || undefined,
+      description: options?.description || aigne.description || undefined,
+      agents: agents.concat(options?.agents ?? []),
+      skills: skills.concat(options?.skills ?? []),
     });
   }
 
@@ -46,15 +86,15 @@ export class AIGNE {
 
   description?: string;
 
-  readonly messageQueue = new MessageQueue();
-
   model?: ChatModel;
+
+  limits?: ContextLimits;
+
+  readonly messageQueue = new MessageQueue();
 
   readonly skills = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
 
   readonly agents = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
-
-  limits?: ContextLimits;
 
   addAgent(...agents: Agent[]) {
     checkArguments("AIGNE.addAgent", aigneAddAgentArgsSchema, agents);
@@ -70,13 +110,13 @@ export class AIGNE {
     return new AIGNEContext(this);
   }
 
-  publish = ((...args) => {
-    return new AIGNEContext(this).publish(...args);
-  }) as Context["publish"];
-
   invoke = ((...args: Parameters<Context["invoke"]>) => {
     return new AIGNEContext(this).invoke(...args);
   }) as Context["invoke"];
+
+  publish = ((...args) => {
+    return new AIGNEContext(this).publish(...args);
+  }) as Context["publish"];
 
   subscribe = ((...args) => {
     return this.messageQueue.subscribe(...args);

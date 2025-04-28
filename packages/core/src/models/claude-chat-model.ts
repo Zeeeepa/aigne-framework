@@ -9,12 +9,7 @@ import type {
   ToolUseBlockParam,
 } from "@anthropic-ai/sdk/resources/index.js";
 import { z } from "zod";
-import type {
-  AgentInvokeOptions,
-  AgentResponse,
-  AgentResponseChunk,
-  Message,
-} from "../agents/agent.js";
+import type { AgentResponse, AgentResponseChunk, Message } from "../agents/agent.js";
 import type { Context } from "../aigne/context.js";
 import { parseJSON } from "../utils/json-schema.js";
 import { mergeUsage } from "../utils/model-utils.js";
@@ -73,11 +68,7 @@ export class ClaudeChatModel extends ChatModel {
     return this.options?.modelOptions;
   }
 
-  async process(
-    input: ChatModelInput,
-    _context: Context,
-    options?: AgentInvokeOptions,
-  ): Promise<AgentResponse<ChatModelOutput>> {
+  async process(input: ChatModelInput, _context: Context): Promise<AgentResponse<ChatModelOutput>> {
     const model = this.options?.model || CHAT_MODEL_CLAUDE_DEFAULT_MODEL;
     const disableParallelToolUse =
       input.modelOptions?.parallelToolCalls === false ||
@@ -98,7 +89,7 @@ export class ClaudeChatModel extends ChatModel {
       stream: true,
     });
 
-    if (options?.streaming && input.responseFormat?.type !== "json_schema") {
+    if (input.responseFormat?.type !== "json_schema") {
       return this.extractResultFromClaudeStream(stream, true);
     }
 

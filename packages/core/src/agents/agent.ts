@@ -60,8 +60,18 @@ export interface AgentInvokeOptions {
   streaming?: boolean;
 }
 
+/**
+ * Agent is the base class of all agents.
+ * It provides a way to define the input and output schema, and the process method of the agent.
+ *
+ * @example
+ * Here's a example of how to create a custom agent:
+ * {@includeCode ./agent.test.ts#example-custom-agent}
+ */
 export abstract class Agent<I extends Message = Message, O extends Message = Message> {
-  constructor({ inputSchema, outputSchema, ...options }: AgentOptions<I, O>) {
+  constructor(options: AgentOptions<I, O> = {}) {
+    const { inputSchema, outputSchema } = options;
+
     this.name = options.name || this.constructor.name;
     this.description = options.description;
 
@@ -168,11 +178,35 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     return import("../aigne/context.js").then((m) => new m.AIGNEContext());
   }
 
+  /**
+   * Invoke the agent with input and context, get the streaming response.
+   *
+   * @param input Input message to the agent
+   * @param context Context to use
+   * @param options Options for invoking the agent
+   * @returns The streaming response
+   *
+   * @example
+   * Here is an example of how to invoke an agent with streaming response:
+   * {@includeCode ./agent.test.ts#example-streaming}
+   */
   async invoke(
     input: I | string,
     context: Context | undefined,
-    options: AgentInvokeOptions & { streaming: true },
+    options: { streaming: true },
   ): Promise<AgentResponseStream<O>>;
+  /**
+   * Invoke the agent with input and context, get the final json response.
+   *
+   * @param input Input message to the agent
+   * @param context Context to use
+   * @param options Options for invoking the agent
+   * @returns The final json response
+   *
+   * @example
+   * Here is an example of how to invoke an agent:
+   * {@includeCode ./agent.test.ts#example-simple}
+   */
   async invoke(
     input: I | string,
     context?: Context,
@@ -205,7 +239,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
       this.checkContextStatus(ctx);
 
-      let response = await this.process(parsedInput, ctx, options);
+      let response = await this.process(parsedInput, ctx);
       if (response instanceof Agent) {
         response = transferToAgentOutput(response);
       }
@@ -297,11 +331,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     });
   }
 
-  abstract process(
-    input: I,
-    context: Context,
-    options?: AgentInvokeOptions,
-  ): PromiseOrValue<AgentProcessResult<O>>;
+  abstract process(input: I, context: Context): PromiseOrValue<AgentProcessResult<O>>;
 
   async shutdown() {
     this.memory?.detach();

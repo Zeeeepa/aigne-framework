@@ -1,0 +1,26 @@
+{
+  "plugin": ["typedoc-plugin-markdown", "typedoc-github-wiki-theme", "./typedoc-ignore-spyon.ts"],
+  "readme": "none",
+  "entryPoints": ["src/index.ts"],
+  "sort": ["source-order"],
+  "jsDocCompatibility": {
+    "exampleTag": false
+  },
+  "cleanOutputDir": true,
+  "disableSources": true,
+  "formatWithPrettier": true,
+  "useCodeBlocks": false,
+  "expandObjects": true,
+  "hidePageHeader": true,
+  "indexFormat": "table",
+  "parametersFormat": "table",
+  "interfacePropertiesFormat": "table",
+  "classPropertiesFormat": "table",
+  "typeAliasPropertiesFormat": "table",
+  "enumMembersFormat": "table",
+  "propertyMembersFormat": "table",
+  "typeDeclarationFormat": "table",
+  "tableColumnSettings": {
+    "hideModifiers": true
+  }
+}
