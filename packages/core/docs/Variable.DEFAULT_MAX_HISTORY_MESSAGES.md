@@ -1,0 +1,5 @@
+[@aigne/core](../wiki/Home) / DEFAULT_MAX_HISTORY_MESSAGES
+
+# Variable: DEFAULT_MAX_HISTORY_MESSAGES
+
+> `const` **DEFAULT_MAX_HISTORY_MESSAGES**: `10` = `10`
