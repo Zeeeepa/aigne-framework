@@ -1,6 +1,13 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
-import { AIAgent, AIGNE, MESSAGE_KEY, type Message, createMessage } from "@aigne/core";
+import {
+  AIAgent,
+  AIAgentToolChoice,
+  AIGNE,
+  MESSAGE_KEY,
+  type Message,
+  createMessage,
+} from "@aigne/core";
 import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import {
@@ -107,7 +114,7 @@ test.each([true, false])(
 
     const agent = AIAgent.from({
       skills: [sales],
-      toolChoice: "router",
+      toolChoice: AIAgentToolChoice.router,
     });
 
     const salesCall = spyOn(sales, "invoke");

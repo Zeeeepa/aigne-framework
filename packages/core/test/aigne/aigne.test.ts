@@ -29,13 +29,13 @@ test("AIGNE.invoke with reflection", async () => {
   const plusOne = FunctionAgent.from({
     subscribeTopic: [UserInputTopic, "revise"],
     publishTopic: "review_request",
-    fn: (input: { num: number }) => ({ num: input.num + 1 }),
+    process: (input: { num: number }) => ({ num: input.num + 1 }),
   });
 
   const reviewer = FunctionAgent.from({
     subscribeTopic: "review_request",
     publishTopic: (output) => (output.num > 10 ? UserOutputTopic : "revise"),
-    fn: ({ num }: { num: number }) => {
+    process: ({ num }: { num: number }) => {
       return {
         num,
         approval: num > 10 ? "approve" : "revise",

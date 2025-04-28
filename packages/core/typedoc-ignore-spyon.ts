@@ -12,7 +12,7 @@ import {
   isCallExpression,
 } from "typescript";
 
-const IGNORE_EXPRESSIONS = ["spyOn"];
+const IGNORE_EXPRESSIONS = ["spyOn", "expect"];
 
 export function load(app: Application) {
   // @ts-ignore can not resolve `on` method of `converter` in `typedoc`

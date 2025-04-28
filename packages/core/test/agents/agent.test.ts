@@ -19,7 +19,7 @@ test("Agent should check input and output schema", async () => {
     outputSchema: z.object({
       sum: z.number(),
     }),
-    fn: async (input) => {
+    process: async (input) => {
       return {
         sum: input.a + input.b,
       };
@@ -32,7 +32,9 @@ test("Agent should check input and output schema", async () => {
     "Agent test-agent-plus input check arguments error: a: Expected number, received string, b: Expected number, received string",
   );
 
-  spyOn(plus, "fn").mockReturnValueOnce({ sum: "3" as unknown as number });
+  spyOn(plus, "_process").mockReturnValueOnce({
+    sum: "3" as unknown as number,
+  });
   expect(plus.invoke({ a: 1, b: 2 })).rejects.toThrow(
     "Agent test-agent-plus output check arguments error: sum: Expected number, received string",
   );

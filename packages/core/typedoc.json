@@ -1,13 +1,19 @@
 {
-  "plugin": ["typedoc-plugin-markdown", "typedoc-github-wiki-theme", "./typedoc-ignore-spyon.ts"],
+  "plugin": [
+    "typedoc-plugin-no-inherit",
+    "typedoc-plugin-markdown",
+    "typedoc-github-wiki-theme",
+    "./typedoc-ignore-spyon.ts"
+  ],
   "readme": "none",
   "entryPoints": ["src/index.ts"],
-  "sort": ["source-order"],
+  "sort": ["source-order", "static-first"],
   "jsDocCompatibility": {
     "exampleTag": false
   },
   "cleanOutputDir": true,
   "disableSources": true,
+  "inheritNone": true,
   "formatWithPrettier": true,
   "useCodeBlocks": false,
   "expandObjects": true,
