@@ -15,13 +15,13 @@ export interface Memory {
 
 export const newMemoryId = () => v7();
 
-export interface AgentMemoryOptions
-  extends Partial<Pick<AgentMemory, "recorder" | "retriever" | "autoUpdate">>,
+export interface MemoryAgentOptions
+  extends Partial<Pick<MemoryAgent, "recorder" | "retriever" | "autoUpdate">>,
     Pick<AgentOptions, "subscribeTopic" | "skills"> {}
 
-export class AgentMemory extends Agent {
-  constructor(options: AgentMemoryOptions) {
-    checkArguments("AgentMemory", agentMemoryOptionsSchema, options);
+export class MemoryAgent extends Agent {
+  constructor(options: MemoryAgentOptions) {
+    checkArguments("AgentMemory", memoryAgentOptionsSchema, options);
     super({
       subscribeTopic: options.subscribeTopic,
       skills: options.skills,
@@ -95,7 +95,7 @@ export class AgentMemory extends Agent {
   }
 }
 
-const agentMemoryOptionsSchema: ZodType<AgentMemoryOptions> = z.object({
+const memoryAgentOptionsSchema: ZodType<MemoryAgentOptions> = z.object({
   subscribeTopic: z.union([z.string(), z.array(z.string())]).optional(),
   retriever: z.custom<MemoryRetriever>(),
   recorder: z.custom<MemoryRecorder>(),

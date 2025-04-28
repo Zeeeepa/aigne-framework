@@ -2,7 +2,7 @@ import { inspect } from "node:util";
 import { ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
-import type { AgentMemory } from "../memory/memory.js";
+import type { MemoryAgent } from "../memory/memory.js";
 import { createMessage } from "../prompt/prompt-builder.js";
 import { logger } from "../utils/logger.js";
 import {
@@ -54,7 +54,7 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
 
   disableEvents?: boolean;
 
-  memory?: AgentMemory | AgentMemory[];
+  memory?: MemoryAgent | MemoryAgent[];
 }
 
 export const agentOptionsSchema: ZodObject<{
@@ -71,7 +71,7 @@ export const agentOptionsSchema: ZodObject<{
   includeInputInOutput: z.boolean().optional(),
   skills: z.array(z.union([z.custom<Agent>(), z.custom<FunctionAgentFn>()])).optional(),
   disableEvents: z.boolean().optional(),
-  memory: z.union([z.custom<AgentMemory>(), z.array(z.custom<AgentMemory>())]).optional(),
+  memory: z.union([z.custom<MemoryAgent>(), z.array(z.custom<MemoryAgent>())]).optional(),
 });
 
 export interface AgentInvokeOptions {
@@ -100,7 +100,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     }
   }
 
-  readonly memories: AgentMemory[] = [];
+  readonly memories: MemoryAgent[] = [];
 
   readonly name: string;
 

@@ -1,5 +1,5 @@
 import equal from "fast-deep-equal";
-import { AgentMemory, type AgentMemoryOptions, type Memory, newMemoryId } from "./memory.js";
+import { type Memory, MemoryAgent, type MemoryAgentOptions, newMemoryId } from "./memory.js";
 import { MemoryRecorder, type MemoryRecorderInput, type MemoryRecorderOutput } from "./recorder.js";
 import {
   MemoryRetriever,
@@ -9,9 +9,9 @@ import {
 
 export const DEFAULT_MAX_HISTORY_MESSAGES = 10;
 
-export interface DefaultMemoryOptions extends Partial<AgentMemoryOptions> {}
+export interface DefaultMemoryOptions extends Partial<MemoryAgentOptions> {}
 
-export class DefaultMemory extends AgentMemory {
+export class DefaultMemory extends MemoryAgent {
   constructor(options: DefaultMemoryOptions = {}) {
     super({
       ...options,

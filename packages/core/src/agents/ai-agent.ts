@@ -1,7 +1,7 @@
 import { type ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../aigne/context.js";
 import { DefaultMemory, type DefaultMemoryOptions } from "../memory/default-memory.js";
-import { AgentMemory } from "../memory/memory.js";
+import { MemoryAgent } from "../memory/memory.js";
 import { ChatModel } from "../models/chat-model.js";
 import type {
   ChatModelInput,
@@ -74,7 +74,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
       ...options,
       memory: !options.memory
         ? undefined
-        : Array.isArray(options.memory) || options.memory instanceof AgentMemory
+        : Array.isArray(options.memory) || options.memory instanceof MemoryAgent
           ? options.memory
           : new DefaultMemory(options.memory === true ? {} : options.memory),
     });

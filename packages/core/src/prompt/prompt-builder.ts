@@ -5,7 +5,7 @@ import { ZodObject, type ZodType } from "zod";
 import { Agent, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
 import type { Context } from "../aigne/context.js";
-import type { AgentMemory, Memory } from "../memory/memory.js";
+import type { Memory, MemoryAgent } from "../memory/memory.js";
 import type {
   ChatModel,
   ChatModelInput,
@@ -46,7 +46,7 @@ export interface PromptBuilderOptions {
 }
 
 export interface PromptBuilderBuildOptions {
-  memory?: AgentMemory | AgentMemory[];
+  memory?: MemoryAgent | MemoryAgent[];
   context: Context;
   agent?: AIAgent;
   input?: Message;

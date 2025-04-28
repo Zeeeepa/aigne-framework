@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Agent, type AgentOptions, FunctionAgent, type Message } from "../agents/agent.js";
 import { AIAgent, type AIAgentOptions } from "../agents/ai-agent.js";
 import type { Context } from "../aigne/context.js";
-import { AgentMemory, type AgentMemoryOptions, type Memory } from "./memory.js";
+import { type Memory, MemoryAgent, type MemoryAgentOptions } from "./memory.js";
 import { MemoryRecorder, type MemoryRecorderInput, type MemoryRecorderOutput } from "./recorder.js";
 import {
   MemoryRetriever,
@@ -14,13 +14,13 @@ import {
   type MemoryRetrieverOutput,
 } from "./retriever.js";
 
-export interface AINotebookOptions extends Partial<AgentMemoryOptions> {
+export interface AINotebookOptions extends Partial<MemoryAgentOptions> {
   rootDir: string;
   retrieverOptions?: AINotebookRetrieverOptions;
   recorderOptions?: AINotebookRecorderOptions;
 }
 
-export class AINotebook extends AgentMemory {
+export class AINotebook extends MemoryAgent {
   constructor(options: AINotebookOptions) {
     let rootDir = normalize(expandHome(options.rootDir));
     rootDir = isAbsolute(rootDir) ? rootDir : resolve(process.cwd(), rootDir);
