@@ -1,18 +1,13 @@
 import { expect, mock, spyOn, test } from "bun:test";
-import {
-  AIAgent,
-  ExecutionEngine,
-  UserAgent,
-  createMessage,
-  createPublishMessage,
-} from "@aigne/core";
+import { AIAgent, AIGNE, UserAgent, createMessage, createPublishMessage } from "@aigne/core";
+import { arrayToAgentProcessAsyncGenerator } from "@aigne/core/utils/stream-utils.js";
 
 test("UserAgent.stream", async () => {
-  const engine = new ExecutionEngine({});
+  const aigne = new AIGNE({});
 
   const userAgent = UserAgent.from({
     name: "user_agent",
-    context: engine.newContext(),
+    context: aigne.newContext(),
     subscribeTopic: "test_topic",
   });
 
@@ -32,51 +27,55 @@ test("UserAgent.stream", async () => {
   reader.cancel();
 });
 
-test("UserAgent.call should call process correctly", async () => {
-  const engine = new ExecutionEngine({});
+test("UserAgent.invoke should invoke process correctly", async () => {
+  const aigne = new AIGNE({});
 
   const userAgent = UserAgent.from({
     name: "user_agent",
-    context: engine.newContext(),
+    context: aigne.newContext(),
     process: (input) => input,
   });
 
-  const result = await engine.call(userAgent, "hello");
+  const result = await aigne.invoke(userAgent, "hello");
   expect(result).toEqual(createMessage("hello"));
 });
 
-test("UserAgent.call should call activeAgent correctly", async () => {
-  const engine = new ExecutionEngine({});
+test("UserAgent.invoke should invoke activeAgent correctly", async () => {
+  const aigne = new AIGNE({});
 
   const testAgent = AIAgent.from({});
 
   const userAgent = UserAgent.from({
     name: "user_agent",
-    context: engine.newContext(),
+    context: aigne.newContext(),
     activeAgent: testAgent,
   });
 
-  const testAgentCall = spyOn(testAgent, "call").mockReturnValue(
-    Promise.resolve(createMessage("world")),
+  const testAgentCall = spyOn(testAgent, "process").mockReturnValueOnce(
+    arrayToAgentProcessAsyncGenerator([{ delta: { json: createMessage("world") } }]),
   );
 
-  const result = await engine.call(userAgent, "hello");
+  const result = await aigne.invoke(userAgent, "hello");
   expect(result).toEqual(createMessage("world"));
-  expect(testAgentCall).toHaveBeenLastCalledWith(createMessage("hello"), expect.anything());
+  expect(testAgentCall).toHaveBeenLastCalledWith(
+    createMessage("hello"),
+    expect.anything(),
+    expect.anything(),
+  );
 });
 
-test("UserAgent.call should publish topic correctly", async () => {
-  const engine = new ExecutionEngine({});
+test("UserAgent.invoke should publish topic correctly", async () => {
+  const aigne = new AIGNE({});
 
   const userAgent = UserAgent.from({
     name: "user_agent",
-    context: engine.newContext(),
+    context: aigne.newContext(),
     publishTopic: "test_publish_topic",
   });
 
-  const sub = engine.subscribe("test_publish_topic");
+  const sub = aigne.subscribe("test_publish_topic");
 
-  await engine.call(userAgent, "hello");
+  await aigne.invoke(userAgent, "hello");
 
   expect(sub).resolves.toEqual(
     expect.objectContaining({
@@ -86,11 +85,11 @@ test("UserAgent.call should publish topic correctly", async () => {
 });
 
 test("UserAgent pub/sub should work correctly", async () => {
-  const engine = new ExecutionEngine({});
+  const aigne = new AIGNE({});
 
   const userAgent = UserAgent.from({
     name: "user_agent",
-    context: engine.newContext(),
+    context: aigne.newContext(),
     publishTopic: "test_publish_topic",
   });
 

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AIAgent,
-  ExecutionEngine,
+  AIGNE,
   FunctionAgent,
   MESSAGE_KEY,
   PromptBuilder,
@@ -20,7 +20,7 @@ test("userInput function should return correct object", () => {
 });
 
 test("PromptBuilder should build messages correctly", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
   const builder = PromptBuilder.from("Test instructions");
 
@@ -69,7 +69,7 @@ test("PromptBuilder should build messages correctly", async () => {
 });
 
 test("PromptBuilder should build response format correctly", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
   const agent = AIAgent.from({
     name: "TestAgent",
@@ -100,12 +100,12 @@ test("PromptBuilder should build response format correctly", async () => {
   });
 });
 
-test("PromptBuilder should build tools correctly", async () => {
-  const context = new ExecutionEngine().newContext();
+test("PromptBuilder should build skills correctly", async () => {
+  const context = new AIGNE().newContext();
 
-  const tool = FunctionAgent.from({
-    name: "TestTool",
-    description: "Test tool description",
+  const skill = FunctionAgent.from({
+    name: "TestSkill",
+    description: "Test skill description",
     fn: () => ({}),
     inputSchema: z.object({
       name: z.string(),
@@ -116,8 +116,8 @@ test("PromptBuilder should build tools correctly", async () => {
   const agent = AIAgent.from({
     name: "TestAgent",
     instructions: "Test instructions",
-    tools: [tool],
-    toolChoice: tool,
+    skills: [skill],
+    toolChoice: skill,
   });
 
   const prompt = await agent.instructions.build({ input: {}, agent, context });
@@ -126,8 +126,8 @@ test("PromptBuilder should build tools correctly", async () => {
     {
       type: "function",
       function: {
-        name: "TestTool",
-        description: "Test tool description",
+        name: "TestSkill",
+        description: "Test skill description",
         parameters: expect.objectContaining({
           type: "object",
           properties: {
@@ -144,25 +144,25 @@ test("PromptBuilder should build tools correctly", async () => {
   expect(prompt.toolChoice).toEqual({
     type: "function",
     function: {
-      name: tool.name,
-      description: tool.description,
+      name: skill.name,
+      description: skill.description,
     },
   });
 });
 
 test("PromptBuilder should build toolChoice with router mode correctly", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
-  const tool = FunctionAgent.from({
-    name: "TestTool",
-    description: "Test tool description",
+  const skill = FunctionAgent.from({
+    name: "TestSkill",
+    description: "Test skill description",
     fn: () => ({}),
   });
 
   const agent = AIAgent.from({
     name: "TestAgent",
     instructions: "Test instructions",
-    tools: [tool],
+    skills: [skill],
     toolChoice: "router",
   });
 
@@ -172,7 +172,7 @@ test("PromptBuilder should build toolChoice with router mode correctly", async (
 });
 
 test("PromptBuilder from string", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
   const builder = PromptBuilder.from("Hello, {{agentName}}!");
 
@@ -189,7 +189,7 @@ test("PromptBuilder from string", async () => {
 });
 
 test("PromptBuilder from MCP prompt result", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
   const prompt: GetPromptResult = {
     description: "Test prompt",
@@ -273,7 +273,7 @@ test("PromptBuilder from MCP prompt result", async () => {
 });
 
 test("PromptBuilder from file", async () => {
-  const context = new ExecutionEngine().newContext();
+  const context = new AIGNE().newContext();
 
   const path = join(import.meta.dirname, "test-prompt.txt");
   const content = await readFile(path, "utf-8");

@@ -45,6 +45,7 @@ aigne run [路径] [选项]
 - `--download-dir <目录>`：下载包的目录（使用URL时），默认为 `~/.aigne/xxx`
 - `--model-provider <提供商>`：要使用的模型提供商，可用提供商：openai、claude、xai（默认为aigne.yaml定义或openai）
 - `--model-name <模型>`：要使用的模型名称，可用模型取决于提供商（默认为aigne.yaml定义或gpt-4o-mini）
+- `--verbose`：启用详细输出模式，显示更多调试信息
 - `--help`：显示命令帮助
 
 #### 示例
@@ -170,7 +171,9 @@ aigne serve [路径] [选项]
 #### 选项
 
 - `--mcp`：将代理作为 MCP 服务器提供（目前为必需选项）
-- `--port <端口>`：运行 MCP 服务器的端口（默认为 3000）
+- `--host <主机>`：运行 MCP 服务器的主机地址（默认为"localhost"），使用"0.0.0.0"可以公开暴露服务器
+- `--port <端口>`：运行 MCP 服务器的端口（如果设置了环境变量PORT则使用其值，否则默认为3000）
+- `--pathname <路径名>`：MCP 服务器端点的 URL 路径（默认为"/mcp"）
 - `--help`：显示命令帮助
 
 #### 示例
@@ -185,6 +188,12 @@ aigne serve --mcp
 
 ```bash
 aigne serve ./my-agents --mcp --port 8080
+```
+
+公开暴露 MCP 服务器并使用自定义端点：
+
+```bash
+aigne serve --mcp --host 0.0.0.0 --pathname /api/agents
 ```
 
 ## 使用示例

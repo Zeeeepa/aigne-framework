@@ -45,6 +45,7 @@ aigne run [path] [options]
 - `--download-dir <dir>`: Directory to download the package to (when using a URL), defaults to `~/.aigne/xxx`
 - `--model-provider <provider>`: Model provider to use, available providers: openai, claude, xai (defaults to the aigne.yaml definition or openai)
 - `--model-name <model>`: Model name to use, available models depend on the provider (defaults to the aigne.yaml definition or gpt-4o-mini)
+- `--verbose`: Enable verbose output mode for additional debugging information
 - `--help`: Display help for the command
 
 #### Examples
@@ -170,7 +171,9 @@ aigne serve [path] [options]
 #### Options
 
 - `--mcp`: Serve the agents as a MCP server (required at this time)
-- `--port <port>`: Port to run the MCP server on (defaults to 3000)
+- `--host <host>`: Host to run the MCP server on (defaults to "localhost"), use "0.0.0.0" to publicly expose the server
+- `--port <port>`: Port to run the MCP server on (defaults to the PORT environment variable if set, or 3000)
+- `--pathname <pathname>`: URL pathname for the MCP server endpoint (defaults to "/mcp")
 - `--help`: Display help for the command
 
 #### Examples
@@ -185,6 +188,12 @@ Serve agents in a specific directory with a custom port:
 
 ```bash
 aigne serve ./my-agents --mcp --port 8080
+```
+
+Expose the MCP server publicly with a custom endpoint:
+
+```bash
+aigne serve --mcp --host 0.0.0.0 --pathname /api/agents
 ```
 
 ## Usage Examples

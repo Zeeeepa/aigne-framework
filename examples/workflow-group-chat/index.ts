@@ -1,10 +1,10 @@
-#!/usr/bin/env npx -y bun
+#!/usr/bin/env bunwrapper
 
 import assert from "node:assert";
 import { randomUUID } from "node:crypto";
 import {
   AIAgent,
-  ExecutionEngine,
+  AIGNE,
   FunctionAgent,
   PromptTemplate,
   UserAgent,
@@ -23,7 +23,7 @@ const model = new OpenAIChatModel({
   model: "gpt-4o",
 });
 
-const engine = new ExecutionEngine({
+const aigne = new AIGNE({
   model,
 });
 
@@ -70,7 +70,7 @@ const illustrator = AIAgent.from({
   instructions: `\
 You are an Illustrator. You use the generate_image tool to create images given user's requirement.
 Make sure the images have consistent characters and style.`,
-  tools: [generateImage],
+  skills: [generateImage],
   toolChoice: "auto",
   outputSchema: z.object({
     images: z
@@ -86,7 +86,7 @@ Make sure the images have consistent characters and style.`,
 let isFirstQuestion = true;
 
 const user = UserAgent.from({
-  context: engine.newContext(),
+  context: aigne.newContext(),
   name: "user",
   description: "User for providing final approval",
   publishTopic: DEFAULT_TOPIC,
@@ -137,9 +137,9 @@ const manager = AIAgent.from({
   }),
 });
 
-engine.addAgent(user, writer, editor, illustrator, manager);
+aigne.addAgent(user, writer, editor, illustrator, manager);
 
-engine.subscribe(DEFAULT_TOPIC, (message) => {
+aigne.subscribe(DEFAULT_TOPIC, (message) => {
   console.log(
     "------------- Received message -------------\n",
     `${message.source}:`,
@@ -148,7 +148,7 @@ engine.subscribe(DEFAULT_TOPIC, (message) => {
   );
 });
 
-await engine.call(user, {});
+await aigne.invoke(user, {});
 
 function assertZodUnionArray<T extends z.ZodType>(union: T[]): [T, T, ...T[]] {
   if (!(union.length >= 2)) throw new Error("Union must have at least 2 items");

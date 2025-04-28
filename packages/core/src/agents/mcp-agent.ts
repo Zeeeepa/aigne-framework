@@ -8,6 +8,10 @@ import {
   type StdioServerParameters,
   getDefaultEnvironment,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
+import {
+  StreamableHTTPClientTransport,
+  type StreamableHTTPClientTransportOptions,
+} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { UriTemplate } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
@@ -20,7 +24,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import pRetry from "p-retry";
 import { type ZodType, z } from "zod";
-import type { Context } from "../execution-engine/context.js";
+import type { Context } from "../aigne/context.js";
 import { logger } from "../utils/logger.js";
 import {
   promptFromMCPPrompt,
@@ -30,8 +34,8 @@ import {
 import { type PromiseOrValue, checkArguments, createAccessorArray } from "../utils/type-utils.js";
 import { Agent, type AgentOptions, type Message } from "./agent.js";
 
-const MCP_AGENT_CLIENT_NAME = "MCPAgent";
-const MCP_AGENT_CLIENT_VERSION = "0.0.1";
+const MCP_AGENT_CLIENT_NAME = "AIGNE/MCPAgent";
+const MCP_AGENT_CLIENT_VERSION = "1.10.0"; // This should match the version in package.json
 const DEFAULT_MAX_RECONNECTS = 10;
 const DEFAULT_TIMEOUT = () =>
   z.coerce
@@ -52,10 +56,17 @@ export type MCPServerOptions = SSEServerParameters | StdioServerParameters;
 
 export type SSEServerParameters = {
   url: string;
+
   /**
-   * Additional options to pass to the SSEClientTransport.
+   * Whether to use the StreamableHTTPClientTransport instead of the SSEClientTransport.
+   * @default "sse"
    */
-  opts?: SSEClientTransportOptions;
+  transport?: "sse" | "streamableHttp";
+
+  /**
+   * Additional options to pass to the SSEClientTransport or StreamableHTTPClientTransport.
+   */
+  opts?: SSEClientTransportOptions | StreamableHTTPClientTransportOptions;
   /**
    * The timeout for requests to the server, in milliseconds.
    * @default 60000
@@ -104,7 +115,13 @@ export class MCPAgent extends Agent {
     checkArguments("MCPAgent.from", mcpAgentOptionsSchema, options);
 
     if (isSSEServerParameters(options)) {
-      const transport = () => new SSEClientTransport(new URL(options.url), options.opts);
+      const transport = () => {
+        if (options.transport === "streamableHttp") {
+          return new StreamableHTTPClientTransport(new URL(options.url), options.opts);
+        }
+        return new SSEClientTransport(new URL(options.url), options.opts);
+      };
+
       return MCPAgent.fromTransport(transport, options);
     }
 
@@ -151,7 +168,7 @@ export class MCPAgent extends Agent {
     } = client.getServerCapabilities() ?? {};
 
     logger.mcp(`Listing tools from ${mcpServer}`);
-    const tools = isToolsAvailable
+    const skills = isToolsAvailable
       ? await client.listTools().then(({ tools }) => {
           logger.mcp(
             `Listing tools from ${mcpServer} completed %O`,
@@ -194,7 +211,7 @@ export class MCPAgent extends Agent {
     return new MCPAgent({
       name: client.getServerVersion()?.name,
       client,
-      tools,
+      skills,
       prompts,
       resources,
     });
@@ -218,7 +235,7 @@ export class MCPAgent extends Agent {
     arr.find((i) => i.name === name),
   );
 
-  get isCallable(): boolean {
+  get isInvokable(): boolean {
     return false;
   }
 

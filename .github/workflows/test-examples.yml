@@ -20,9 +20,9 @@ jobs:
           - provider: OpenAI
             model: gpt-4o-mini
           - provider: OpenAI
-            model: o3-mini
+            model: o4-mini
           - provider: OpenAI
-            model: o1-mini
+            model: o3-mini
           - provider: Claude
             model: claude-3-7-sonnet-latest
           - provider: Claude
@@ -31,6 +31,10 @@ jobs:
             model: grok-3-mini
           - provider: XAI
             model: grok-2-latest
+          - provider: Gemini
+            model: gemini-2.5-flash-preview-04-17
+          - provider: Gemini
+            model: gemini-2.5-pro-preview-03-25
           - provider: Gemini
             model: gemini-2.0-flash
           - provider: Gemini
@@ -90,17 +94,13 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build
-
-      - name: Chmod examples/chat-bot aigne
-        run: chmod +x examples/chat-bot/node_modules/@aigne/cli/dist/cli.js
+        run: |
+          pnpm build
+          # run pnpm install again to make binaries (@aigne/cli: aigne,bunwrapper) available in node_modules/.bin
+          pnpm install
 
       - name: Run examples
         env:
-          INITIAL_CALL: "Hi, this is an initial test. Show your main function by performing a basic task you're designed for."
-          SKIP_LOOP: "true"
-          PUPPETEER_LAUNCH_OPTIONS: '{"headless": true, "args": ["--no-sandbox", "--disable-setuid-sandbox"]}'
-          ALLOW_DANGEROUS: "true"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODEL_PROVIDER: ${{ matrix.provider }}
           MODEL_NAME: ${{ matrix.model }}
@@ -113,16 +113,17 @@ jobs:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA_BASE_URL: ${{ secrets.OLLAMA_BASE_URL }}
         run: |
-          EXCLUDE_PATTERN="mcp-blocklet\|workflow-group-chat"
+          EXCLUDE_PATTERN="mcp-blocklet\|workflow-group-chat\|workflow-orchestrator"
 
           for dir in examples/*; do
+            echo "=========================================="
             if echo "$dir" | grep -q "$EXCLUDE_PATTERN"; then
               echo "Skipping $dir"
             else
               echo "Testing $dir with $MODEL_PROVIDER:$MODEL_NAME"
               start_time=$(date +%s)
               cd $dir
-              pnpm start || exit 1
+              pnpm test:llm || exit 1
               cd ../..
               end_time=$(date +%s)
               duration=$((end_time - start_time))

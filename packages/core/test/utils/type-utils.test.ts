@@ -7,6 +7,8 @@ import {
   isEmpty,
   isNil,
   isNonNullable,
+  isRecord,
+  omitBy,
   orArrayToArray,
   remove,
   tryOrThrow,
@@ -19,6 +21,17 @@ test("type-utils.isNonNullable", async () => {
 
 test("type-utils.isNil", async () => {
   expect([null, undefined, 0].filter((value) => !isNil(value))).toEqual([0]);
+});
+
+test("type-utils.isRecord", async () => {
+  expect(isRecord({})).toBe(true);
+  expect(isRecord({ foo: "bar" })).toBe(true);
+  expect(isRecord([])).toBe(false);
+  expect(isRecord("")).toBe(false);
+  expect(isRecord(null)).toBe(false);
+  expect(isRecord(undefined)).toBe(false);
+  expect(isRecord(1)).toBe(false);
+  expect(isRecord(true)).toBe(false);
 });
 
 test("types-utils.isEmpty", async () => {
@@ -54,6 +67,12 @@ test("test-utils.remove", async () => {
   const array2 = [1, 2, 3, 4, 5];
   expect(remove(array2, (item) => item > 3)).toEqual([4, 5]);
   expect(array2).toEqual([1, 2, 3]);
+});
+
+test("type-utils.omitBy", async () => {
+  expect(omitBy({ foo: 1, bar: 2 }, (value) => value === 1)).toEqual({ bar: 2 });
+
+  expect(omitBy({ foo: 1, bar: 2 }, (_, key) => key === "foo")).toEqual({ bar: 2 });
 });
 
 test("type-utils.orArrayToArray", async () => {

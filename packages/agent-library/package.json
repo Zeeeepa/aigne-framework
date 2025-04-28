@@ -1,13 +1,13 @@
 {
   "name": "@aigne/agent-library",
-  "version": "1.5.0",
+  "version": "1.7.0",
   "description": "Collection of agent libraries for AIGNE framework",
   "publishConfig": {
     "access": "public"
   },
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
   "homepage": "https://github.com/AIGNE-io/aigne-framework/tree/main/packages/agent-library",
-  "license": "ISC",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"

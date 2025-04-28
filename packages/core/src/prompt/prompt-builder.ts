@@ -4,7 +4,7 @@ import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
 import { Agent, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
-import type { Context } from "../execution-engine/context.js";
+import type { Context } from "../aigne/context.js";
 import type { AgentMemory, Memory } from "../memory/memory.js";
 import type {
   ChatModel,
@@ -190,11 +190,11 @@ export class PromptBuilder {
   private buildTools(
     options: PromptBuilderBuildOptions,
   ): Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] } {
-    const toolAgents = (options.context?.tools ?? [])
-      .concat(options.agent?.tools ?? [])
+    const toolAgents = (options.context?.skills ?? [])
+      .concat(options.agent?.skills ?? [])
       .concat(options.agent?.memoryAgentsAsTools ? options.agent.memories : [])
       // TODO: support nested tools?
-      .flatMap((i) => (i.isCallable ? i.tools.concat(i) : i.tools));
+      .flatMap((i) => (i.isInvokable ? i.skills.concat(i) : i.skills));
 
     const tools: ChatModelInputTool[] = toolAgents.map((i) => ({
       type: "function",

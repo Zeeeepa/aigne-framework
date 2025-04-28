@@ -11,7 +11,7 @@ classDiagram
 
     class Prompt {
         +List~object~ messages
-        +List~Agent~ tools
+        +List~Agent~ skills
         +object toolChoice
         +object responseFormat
     }
@@ -23,7 +23,7 @@ classDiagram
     }
 
     class Model {
-        +call(Prompt input) object*
+        +invoke(Prompt input) object*
     }
 
     ChatModel --|> Model: inheritance
@@ -42,10 +42,10 @@ classDiagram
         +object outputSchema
         +List~string~ inputTopic
         +List~string~ nextTopic
-        +List~Agent~ tools
+        +List~Agent~ skills
 
-        +call(string input, Context context) object
-        +call(object input, Context context) object
+        +invoke(string input, Context context) object
+        +invoke(object input, Context context) object
 
         +process(object input, Context context) object*
         -verifyInput() void
@@ -114,7 +114,7 @@ classDiagram
     class Context {
         +ChatModel model
         +ImageModel imageModel
-        +List~Agent~ tools
+        +List~Agent~ skills
 
         +getHistories(string agentId, int limit) List~History~
         +addHistory(History history) void
@@ -132,19 +132,13 @@ classDiagram
     class UserAgent {
     }
 
-    class ExecutionEngineRunOptions {
-        +boolean concurrency
-    }
 
-    ExecutionEngine --|> Context: inheritance
-    ExecutionEngine --|> EventEmitter: inheritance
-    ExecutionEngine ..> UserAgent: dependency
-    ExecutionEngine ..> ExecutionEngineRunOptions: dependency
-    class ExecutionEngine {
-        +run(Agent agent) UserAgent
-        +run(string input) object
-        +run(object input) object
-        +run(object input, Agent ...agents) object
-        +run(object input, ExecutionEngineRunOptions options, Agent ...agents) object
+    AIGNE --|> Context: inheritance
+    AIGNE --|> EventEmitter: inheritance
+    AIGNE ..> UserAgent: dependency
+    class AIGNE {
+        +invoke(Agent agent) UserAgent
+        +invoke(Agent agent, string input) object
+        +invoke(Agent agent, object input) object
     }
 ```

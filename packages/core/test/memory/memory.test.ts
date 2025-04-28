@@ -5,5 +5,5 @@ test("should add a new memory if it is not the same as the last one", async () =
   const agentMemory = new AgentMemory({});
 
   expect(agentMemory.isCallable).toBe(false);
-  expect(agentMemory.call("hello")).rejects.toThrow("not implemented");
+  expect(agentMemory.invoke("hello")).rejects.toThrow("not implemented");
 });

@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, normalize, relative, resolve } from "node:pa
 import { z } from "zod";
 import { Agent, type AgentOptions, FunctionAgent, type Message } from "../agents/agent.js";
 import { AIAgent, type AIAgentOptions } from "../agents/ai-agent.js";
-import type { Context } from "../execution-engine/context.js";
+import type { Context } from "../aigne/context.js";
 import { AgentMemory, type AgentMemoryOptions, type Memory } from "./memory.js";
 import { MemoryRecorder, type MemoryRecorderInput, type MemoryRecorderOutput } from "./recorder.js";
 import {
@@ -26,11 +26,11 @@ export class AINotebook extends AgentMemory {
     rootDir = isAbsolute(rootDir) ? rootDir : resolve(process.cwd(), rootDir);
     mkdirSync(rootDir, { recursive: true });
 
-    const tools = [...new FilesystemAgent({ rootDir }).tools, ...(options.tools ?? [])];
+    const skills = [...new FilesystemAgent({ rootDir }).skills, ...(options.skills ?? [])];
 
     super({
       ...options,
-      tools,
+      skills,
       autoUpdate: options.autoUpdate ?? true,
     });
 
@@ -38,13 +38,13 @@ export class AINotebook extends AgentMemory {
       options.recorder ??
       new AINotebookRecorder({
         ...options.recorderOptions,
-        tools: [...tools, ...(options.recorderOptions?.tools ?? [])],
+        skills: [...skills, ...(options.recorderOptions?.skills ?? [])],
       });
     this.retriever =
       options.retriever ??
       new AINotebookRetriever({
         ...options.retrieverOptions,
-        tools: [...tools, ...(options.retrieverOptions?.tools ?? [])],
+        skills: [...skills, ...(options.retrieverOptions?.skills ?? [])],
       });
   }
 }
@@ -85,7 +85,7 @@ class AINotebookRetriever extends MemoryRetriever {
   agent: AIAgent<AINotebookRetrieverAgentInput, AINotebookRetrieverAgentOutput>;
 
   async process(input: MemoryRetrieverInput, context: Context): Promise<MemoryRetrieverOutput> {
-    const { memories } = await context.call(this.agent, input);
+    const { memories } = await context.invoke(this.agent, input);
     const result: Memory[] = memories.map((memory) => ({
       id: memory.filename,
       content: memory.content,
@@ -131,7 +131,7 @@ class AINotebookRecorder extends MemoryRecorder {
   agent: AIAgent<AINotebookRecorderAgentInput, AINotebookRecorderAgentOutput>;
 
   async process(input: MemoryRecorderInput, context: Context): Promise<MemoryRecorderOutput> {
-    const { memories } = await context.call(this.agent, input);
+    const { memories } = await context.invoke(this.agent, input);
 
     return {
       memories: memories.map((i) => ({
@@ -237,8 +237,8 @@ export class FilesystemAgent extends Agent {
   constructor({ rootDir, ...options }: FilesystemAgentOptions) {
     super({
       ...options,
-      tools: [
-        ...(options.tools ?? []),
+      skills: [
+        ...(options.skills ?? []),
         FunctionAgent.from({
           name: "readDir",
           description: "Read a directory and return the list of files",

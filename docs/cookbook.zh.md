@@ -114,7 +114,7 @@ pnpm install openai @anthropic-ai/sdk @google/generative-ai
 - **ClaudeChatModel**: 用于与Anthropic的Claude系列模型进行通信
 - **XAIChatModel**: 用于与X.AI的Grok系列模型进行通信
 
-ChatModel可以直接使用，但通常建议通过ExecutionEngine来使用，以获得更高级的功能如工具集成、错误处理和状态管理。
+ChatModel可以直接使用，但通常建议通过 AIGNE 来使用，以获得更高级的功能如工具集成、错误处理和状态管理。
 
 **示例**:
 
@@ -141,8 +141,8 @@ const xaiModel = new XAIChatModel({
   model: "grok-2-latest", // 可选，默认为"grok-2-latest"
 });
 
-// 使用ExecutionEngine
-const engine = new ExecutionEngine({ model: openaiModel });
+// 创建 AIGNE
+const aigne = new AIGNE({ model: openaiModel });
 ```
 
 更多信息请参考[ChatModel API文档](./apis/chat-model.zh.md)。
@@ -166,12 +166,12 @@ AIGNE Framework支持多种工作流模式，每种模式适用于不同的场�
 - **路由工作流**: 根据输入动态选择Agent
 - **编排工作流**: 组织多个Agents协同工作
 
-### 执行引擎
+### AIGNE
 
-ExecutionEngine是工作流的运行时环境，负责协调Agents之间的通信和执行流程。
+AIGNE 是工作流的运行时环境，负责协调 Agents 之间的通信和执行流程。
 
 ```typescript
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 ```
 
 ## 工作流模式
@@ -189,7 +189,7 @@ const engine = new ExecutionEngine({ model });
 **示例**:
 
 ```typescript
-import { AIAgent, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { AIAgent, AIGNE, FunctionAgent } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
@@ -214,12 +214,12 @@ const coder = AIAgent.from({
 You are a proficient coder. You write code to solve problems.
 Work with the sandbox to execute your code.
 `,
-  tools: [sandbox],
+  skills: [sandbox],
 });
 
 // 创建执行引擎并运行
-const engine = new ExecutionEngine({ model });
-const result = await engine.call(coder, "10! = ?");
+const aigne = new AIGNE({ model });
+const result = await aigne.invoke(coder, "10! = ?");
 console.log(result);
 // 输出: { text: "The value of \\(10!\\) (10 factorial) is 3,628,800." }
 ```
@@ -236,7 +236,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { AIAgent, AIGNE, TeamAgent, ProcessMode } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 概念提取Agent
@@ -285,8 +285,12 @@ Draft copy:
 });
 
 // 按顺序执行三个Agent
-const engine = new ExecutionEngine({ model });
-const result = await engine.call(sequential(conceptExtractor, writer, formatProof),
+const aigne = new AIGNE({ model });
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [conceptExtractor, writer, formatProof],
+    mode: ProcessMode.sequential,
+  }),
   { product: "AIGNE is a No-code Generative AI Apps Engine" }
 );
 
@@ -306,7 +310,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ExecutionEngine, parallel } from "@aigne/core";
+import { AIAgent, AIGNE, TeamAgent, ProcessMode } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 功能提取Agent
@@ -330,9 +334,12 @@ Product description:
 });
 
 // 并行执行两个Agent
-const engine = new ExecutionEngine({ model });
-const result = await engine.call(
-  parallel(featureExtractor, audienceAnalyzer),
+const aigne = new AIGNE({ model });
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [featureExtractor, audienceAnalyzer],
+    mode: ProcessMode.parallel,
+  }),
   { product: "AIGNE is a No-code Generative AI Apps Engine" }
 );
 
@@ -355,7 +362,7 @@ console.log(result);
 ```typescript
 import {
   AIAgent,
-  ExecutionEngine,
+  AIGNE,
   UserInputTopic,
   UserOutputTopic,
 } from "@aigne/core";
@@ -418,8 +425,8 @@ Please review the code. If previous feedback was provided, see if it was address
 });
 
 // 执行反思工作流
-const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
-const result = await engine.call("Write a function to find the sum of all even numbers in a list.");
+const aigne = new AIGNE({ model, agents: [coder, reviewer] });
+const result = await aigne.invoke("Write a function to find the sum of all even numbers in a list.");
 console.log(result);
 // 输出包含通过审查的代码及反馈
 ```
@@ -436,7 +443,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 转交给Agent B的函数
@@ -449,7 +456,7 @@ const agentA = AIAgent.from({
   name: "AgentA",
   instructions: "You are a helpful agent.",
   outputKey: "A",
-  tools: [transfer_to_b],
+  skills: [transfer_to_b],
 });
 
 // Agent B
@@ -460,16 +467,16 @@ const agentB = AIAgent.from({
 });
 
 // 执行交接工作流
-const engine = new ExecutionEngine({ model });
-const userAgent = await engine.call(agentA);
+const aigne = new AIGNE({ model });
+const userAgent = aigne.invoke(agentA);
 
 // 转交给Agent B
-const result1 = await userAgent.call("transfer to agent b");
+const result1 = await userAgent.invoke("transfer to agent b");
 console.log(result1);
 // { B: "Transfer now complete,  \nAgent B is here to help.  \nWhat do you need, friend?" }
 
 // 继续与Agent B交互
-const result2 = await userAgent.call("It's a beautiful day");
+const result2 = await userAgent.invoke("It's a beautiful day");
 console.log(result2);
 // { B: "Sunshine warms the earth,  \nGentle breeze whispers softly,  \nNature sings with joy." }
 ```
@@ -486,7 +493,7 @@ console.log(result2);
 **示例**:
 
 ```typescript
-import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 产品支持Agent
@@ -528,25 +535,25 @@ const triage = AIAgent.from({
   instructions: `You are an agent capable of routing questions to the appropriate agent.
   Your goal is to understand the user's query and direct them to the agent best suited to assist them.
   Be efficient, clear, and ensure the user is connected to the right resource quickly.`,
-  tools: [productSupport, feedback, other],
+  skills: [productSupport, feedback, other],
   toolChoice: "router", // 设置为路由模式
 });
 
 // 执行路由工作流
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
 // 产品相关问题自动路由到产品支持
-const result1 = await engine.call(triage, "How to use this product?");
+const result1 = await aigne.invoke(triage, "How to use this product?");
 console.log(result1);
 // { product_support: "I'd be happy to help you with that! However, I need to know which specific product you're referring to..." }
 
 // 反馈相关问题自动路由到反馈
-const result2 = await engine.call(triage, "I have feedback about the app.");
+const result2 = await aigne.invoke(triage, "I have feedback about the app.");
 console.log(result2);
 // { feedback: "Thank you for sharing your feedback! I'm here to listen..." }
 
 // 一般问题自动路由到一般查询
-const result3 = await engine.call(triage, "What is the weather today?");
+const result3 = await aigne.invoke(triage, "What is the weather today?");
 console.log(result3);
 // { other: "I can't provide real-time weather updates. However, you can check a reliable weather website..." }
 ```
@@ -564,7 +571,7 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, ExecutionEngine, MCPAgent } from "@aigne/core";
+import { AIAgent, AIGNE, MCPAgent } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 // 创建各专业Agent
@@ -586,13 +593,13 @@ const finder = AIAgent.from({
   - if you want a url to some page, you should get all link and it's title of current(home) page,
   then you can use the title to search the url of the page you want to visit.
   `,
-  tools: [puppeteer],
+  skills: [puppeteer],
 });
 
 const enhancedFinder = OrchestratorAgent.from({
   name: "enhanced_finder",
-  description: "Enhanced finder with more tools",
-  tools: [finder],
+  description: "Enhanced finder with more skills",
+  skills: [finder],
 });
 
 const filesystem = await MCPAgent.from({
@@ -606,7 +613,7 @@ const writer = AIAgent.from({
   instructions: `You are an agent that can write to the filesystem.
   You are tasked with taking the user's input, addressing it, and
   writing the result to disk in the appropriate location.`,
-  tools: [filesystem],
+  skills: [filesystem],
 });
 
 // 各种审查Agent
@@ -616,7 +623,7 @@ const proofreader = AIAgent.from({
   instructions: `Review the short story for grammar, spelling, and punctuation errors.
   Identify any awkward phrasing or structural issues that could improve clarity.
   Provide detailed feedback on corrections.`,
-  tools: [],
+  skills: [],
 });
 
 const fact_checker = AIAgent.from({
@@ -625,7 +632,7 @@ const fact_checker = AIAgent.from({
   instructions: `Verify the factual consistency within the story. Identify any contradictions,
   logical inconsistencies, or inaccuracies in the plot, character actions, or setting.
   Highlight potential issues with reasoning or coherence.`,
-  tools: [],
+  skills: [],
 });
 
 const style_enforcer = AIAgent.from({
@@ -634,17 +641,17 @@ const style_enforcer = AIAgent.from({
   instructions: `Analyze the story for adherence to style guidelines.
   Evaluate the narrative flow, clarity of expression, and tone. Suggest improvements to
   enhance storytelling, readability, and engagement.`,
-  tools: [],
+  skills: [],
 });
 
 // 创建编排Agent
 const agent = OrchestratorAgent.from({
-  tools: [enhancedFinder, writer, proofreader, fact_checker, style_enforcer],
+  skills: [enhancedFinder, writer, proofreader, fact_checker, style_enforcer],
 });
 
 // 执行编排工作流
-const engine = new ExecutionEngine({ model });
-const result = await engine.call(
+const aigne = new AIGNE({ model });
+const result = await aigne.invoke(
   agent,
   `Conduct an in-depth research on ArcBlock using only the official website\
 (avoid search engines or third-party sources) and compile a detailed report saved as arcblock.md. \
@@ -672,7 +679,7 @@ Puppeteer MCP服务器允许AIGNE Framework访问和操作网页内容。
 ```typescript
 import {
   AIAgent,
-  ExecutionEngine,
+  AIGNE,
   MCPAgent,
 } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
@@ -684,9 +691,9 @@ const puppeteerMCPAgent = await MCPAgent.from({
 });
 
 // 创建执行引擎
-const engine = new ExecutionEngine({
+const aigne = new AIGNE({
   model,
-  tools: [puppeteerMCPAgent],
+  skills: [puppeteerMCPAgent],
 });
 
 // 创建使用Puppeteer的Agent
@@ -699,7 +706,7 @@ const agent = AIAgent.from({
 });
 
 // 执行内容提取
-const result = await engine.call(
+const result = await aigne.invoke(
   agent,
   "extract content from https://www.arcblock.io"
 );
@@ -707,7 +714,7 @@ const result = await engine.call(
 console.log(result);
 // 输出提取的网页内容
 
-await engine.shutdown();
+await aigne.shutdown();
 ```
 
 ### SQLite MCP服务器
@@ -727,7 +734,7 @@ SQLite MCP服务器允许AIGNE Framework与SQLite数据库交互。
 import { join } from "node:path";
 import {
   AIAgent,
-  ExecutionEngine,
+  AIGNE,
   MCPAgent,
 } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
@@ -744,9 +751,9 @@ const sqlite = await MCPAgent.from({
 });
 
 // 创建执行引擎
-const engine = new ExecutionEngine({
+const aigne = new AIGNE({
   model,
-  tools: [sqlite],
+  skills: [sqlite],
 });
 
 // 创建数据库管理Agent
@@ -756,20 +763,20 @@ const agent = AIAgent.from({
 
 // 创建表
 console.log(
-  await engine.call(
+  await aigne.invoke(
     agent,
     "create a product table with columns name description and createdAt"
   )
 );
 
 // 插入数据
-console.log(await engine.call(agent, "create 10 products for test"));
+console.log(await aigne.invoke(agent, "create 10 products for test"));
 
 // 查询数据
-console.log(await engine.call(agent, "how many products?"));
+console.log(await aigne.invoke(agent, "how many products?"));
 // 输出: { text: "There are 10 products in the database." }
 
-await engine.shutdown();
+await aigne.shutdown();
 ```
 
 ## 使用模式与最佳实践
@@ -803,7 +810,7 @@ await engine.shutdown();
 1. **顺序+并发**: 某些步骤顺序执行，其中一个步骤内部并发执行多个任务
 2. **反思+顺序**: 顺序工作流的输出经过反思工作流改进
 3. **路由+专业Agent**: 使用路由选择合适的专业Agent处理请求
-4. **编排+所有其他**: 编排工作流可以协调使用所有其他工作流模式的Agent
+4. **编排+所有其他**: 编排工作流可以协调使用所有其他工作流模式
 
 ## 常见问题解答
 
@@ -812,7 +819,7 @@ await engine.shutdown();
    - 下一个Agent可以通过`{{key}}`访问这些数据
 
 2. **如何处理Agent失败或错误？**
-   - 使用try/catch包装engine.call调用
+   - 使用try/catch包装aigne.invoke调用
    - 设计工作流时考虑可能的失败路径，添加错误处理Agent
 
 3. **如何限制Agent的输出格式？**

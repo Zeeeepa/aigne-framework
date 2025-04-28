@@ -2,7 +2,7 @@
 
 [中文](./mcp-agent-api.zh.md) | **English**
 
-MCP Agent is an Agent implementation for interacting with servers compliant with the Model Context Protocol (MCP). It can call tools, retrieve prompt templates, and access resources provided by MCP servers.
+MCP Agent is an Agent implementation for interacting with servers compliant with the Model Context Protocol (MCP). It can invoke tools, retrieve prompt templates, and access resources provided by MCP servers.
 
 ## MCPAgent Class
 
@@ -13,7 +13,7 @@ MCP Agent is an Agent implementation for interacting with servers compliant with
 - `client`: `Client` - MCP client instance, used for communicating with the MCP server
 - `prompts`: `MCPPrompt[]` - List of prompt templates provided by the MCP server
 - `resources`: `MCPResource[]` - List of resources provided by the MCP server
-- `isCallable`: `boolean` - Always false, as MCPAgent itself cannot be directly called
+- `isInvokable`: `boolean` - Always false, as MCPAgent itself cannot be directly invoked
 
 ### Constructor
 
@@ -87,7 +87,7 @@ constructor(options: MCPBaseOptions<I, O>)
 
 ## MCPTool Class
 
-`MCPTool` inherits from `MCPBase` and is used for calling tools provided by an MCP server.
+`MCPTool` inherits from `MCPBase` and is used for invoking tools provided by an MCP server.
 
 ## MCPPrompt Class
 
@@ -187,7 +187,7 @@ The following example demonstrates how to use the AIGNE framework and Puppeteer 
 import {
   AIAgent,
   OpenAIChatModel,
-  ExecutionEngine,
+  AIGNE,
   MCPAgent
 } from "@aigne/core";
 
@@ -202,10 +202,10 @@ const puppeteerMCPAgent = await MCPAgent.from({
   args: ["-y", "@modelcontextprotocol/server-puppeteer"]
 });
 
-// Create execution engine and add Puppeteer MCP Agent as a tool
-const engine = new ExecutionEngine({
+// Create AIGNE and add Puppeteer MCP Agent as a skill
+const aigne = new AIGNE({
   model,
-  tools: [puppeteerMCPAgent]
+  skills: [puppeteerMCPAgent]
 });
 
 // Create AI Agent with instructions for extracting website content
@@ -218,7 +218,7 @@ const agent = AIAgent.from({
 });
 
 // Run Agent to extract content from specified website
-const result = await engine.call(
+const result = await aigne.invoke(
   agent,
   "extract content from https://www.arcblock.io"
 );
@@ -229,8 +229,8 @@ console.log(result);
 //   text: "The content extracted from the website [ArcBlock](https://www.arcblock.io) is as follows:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ..."
 // }
 
-// Shut down the execution engine
-await engine.shutdown();
+// Shut down the AIGNE
+await aigne.shutdown();
 ```
 
 ### Using Other MCP Servers
@@ -247,12 +247,12 @@ const sqliteMCPAgent = await MCPAgent.from({
 });
 
 // Get list of available tools
-console.log("Available tools:", sqliteMCPAgent.tools.map(tool => tool.name));
+console.log("Available tools:", sqliteMCPAgent.skills.map(skill => skill.name));
 
-// Use query tool
-const queryTool = sqliteMCPAgent.tools.query;
-if (queryTool) {
-  const result = await queryTool.call({
+// Use query skill
+const querySkill = sqliteMCPAgent.skills.query;
+if (querySkill ) {
+  const result = await querySkill.invoke({
     query: "SELECT * FROM users LIMIT 5"
   });
   console.log("Query results:", result);

@@ -2,7 +2,7 @@ import { type ZodType, z } from "zod";
 
 export type PromiseOrValue<T> = T | Promise<T>;
 
-export type Nullish<T> = T | null | undefined;
+export type Nullish<T> = T | null | undefined | void;
 
 export type OmitPropertiesFromArrayFirstElement<
   T extends unknown[],
@@ -11,6 +11,10 @@ export type OmitPropertiesFromArrayFirstElement<
 
 export function isNil(value: unknown): value is null | undefined {
   return value === null || value === undefined;
+}
+
+export function isRecord<T>(value: unknown): value is Record<string, T> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 export function isEmpty(obj: unknown): boolean {
@@ -60,6 +64,18 @@ export function remove<T>(arr: T[], remove: T[] | ((item: T) => boolean)): T[] {
   return removed;
 }
 
+export function omitBy<T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  predicate: (value: T[K], key: K) => boolean,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => {
+      const k = key as K;
+      return !predicate(value as T[K], k);
+    }),
+  ) as Partial<T>;
+}
+
 export function orArrayToArray<T>(value?: T | T[]): T[] {
   if (isNil(value)) return [];
   return Array.isArray(value) ? value : [value];
@@ -74,7 +90,7 @@ export function createAccessorArray<T>(
   }) as T[] & { [key: string]: T };
 }
 
-export function checkArguments<T>(prefix: string, schema: ZodType<T>, args: T): T {
+export function checkArguments<T>(prefix: string, schema: ZodType<T>, args: T | unknown): T {
   try {
     return schema.parse(args, {
       errorMap: (issue, ctx) => {
@@ -121,7 +137,15 @@ export function checkArguments<T>(prefix: string, schema: ZodType<T>, args: T): 
 export function tryOrThrow<P extends PromiseOrValue<unknown>>(
   fn: () => P,
   error: string | Error | ((error: Error) => Error),
-): P {
+): P;
+export function tryOrThrow<P extends PromiseOrValue<unknown>>(
+  fn: () => P,
+  error?: Nullish<string | Error | ((error: Error) => Nullish<Error>)>,
+): P | undefined;
+export function tryOrThrow<P extends PromiseOrValue<unknown>>(
+  fn: () => P,
+  error?: Nullish<string | Error | ((error: Error) => Nullish<Error>)>,
+): P | undefined {
   const createError = (e: Error) => {
     return typeof error === "function"
       ? error(e)
@@ -135,12 +159,14 @@ export function tryOrThrow<P extends PromiseOrValue<unknown>>(
 
     if (result instanceof Promise) {
       return result.catch((e) => {
-        throw createError(e);
+        const error = createError(e);
+        if (error) throw error;
       }) as P;
     }
 
     return result;
   } catch (e) {
-    throw createError(e);
+    const error = createError(e);
+    if (error) throw error;
   }
 }

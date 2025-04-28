@@ -1,13 +1,13 @@
 {
   "name": "@aigne/cli",
-  "version": "1.4.0",
+  "version": "1.8.0",
   "description": "cli for AIGNE framework",
   "publishConfig": {
     "access": "public"
   },
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
   "homepage": "https://github.com/AIGNE-io/aigne-framework",
-  "license": "ISC",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
@@ -20,7 +20,8 @@
     "templates"
   ],
   "bin": {
-    "aigne": "dist/cli.js"
+    "aigne": "dist/cli.js",
+    "bunwrapper": "dist/bunwrapper.js"
   },
   "type": "module",
   "exports": {
@@ -47,7 +48,8 @@
   },
   "dependencies": {
     "@aigne/core": "workspace:^",
-    "@aigne/listr2": "^1.0.7",
+    "@aigne/listr2": "^1.0.8",
+    "@aigne/marked-terminal": "^7.3.1",
     "@modelcontextprotocol/sdk": "^1.9.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
@@ -55,6 +57,7 @@
     "glob": "^11.0.1",
     "gradient-string": "^3.0.0",
     "inquirer": "^12.5.2",
+    "marked": "^15.0.9",
     "openai": "^4.94.0",
     "prettier": "^3.5.3",
     "pretty-error": "^4.0.0",

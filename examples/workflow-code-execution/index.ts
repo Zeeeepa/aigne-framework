@@ -1,7 +1,7 @@
-#!/usr/bin/env npx -y bun
+#!/usr/bin/env bunwrapper
 
 import { runChatLoopInTerminal } from "@aigne/cli/utils/run-chat-loop.js";
-import { AIAgent, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { AIAgent, AIGNE, FunctionAgent } from "@aigne/core";
 import { loadModel } from "@aigne/core/loader/index.js";
 import { z } from "zod";
 
@@ -27,13 +27,13 @@ const coder = AIAgent.from({
 You are a proficient coder. You write code to solve problems.
 Work with the sandbox to execute your code.
 `,
-  tools: [sandbox],
+  skills: [sandbox],
   memory: true,
 });
 
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
-const user = engine.call(coder);
+const user = aigne.invoke(coder);
 
 await runChatLoopInTerminal(user, {
   welcome:

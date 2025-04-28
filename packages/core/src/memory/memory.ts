@@ -1,8 +1,8 @@
 import { v7 } from "uuid";
 import { type ZodType, z } from "zod";
 import { Agent, type AgentOptions, type Message } from "../agents/agent.js";
-import type { Context } from "../execution-engine/context.js";
-import type { MessagePayload } from "../execution-engine/message-queue.js";
+import type { Context } from "../aigne/context.js";
+import type { MessagePayload } from "../aigne/message-queue.js";
 import { checkArguments, remove } from "../utils/type-utils.js";
 import type { MemoryRecorder, MemoryRecorderInput, MemoryRecorderOutput } from "./recorder.js";
 import type { MemoryRetriever, MemoryRetrieverInput, MemoryRetrieverOutput } from "./retriever.js";
@@ -17,14 +17,14 @@ export const newMemoryId = () => v7();
 
 export interface AgentMemoryOptions
   extends Partial<Pick<AgentMemory, "recorder" | "retriever" | "autoUpdate">>,
-    Pick<AgentOptions, "subscribeTopic" | "tools"> {}
+    Pick<AgentOptions, "subscribeTopic" | "skills"> {}
 
 export class AgentMemory extends Agent {
   constructor(options: AgentMemoryOptions) {
     checkArguments("AgentMemory", agentMemoryOptionsSchema, options);
     super({
       subscribeTopic: options.subscribeTopic,
-      tools: options.tools,
+      skills: options.skills,
     });
 
     this.subscribeTopic = options.subscribeTopic;
@@ -45,10 +45,10 @@ export class AgentMemory extends Agent {
   }
 
   set retriever(value: MemoryRetriever | undefined) {
-    if (this._retriever) remove(this.tools, [this._retriever]);
+    if (this._retriever) remove(this.skills, [this._retriever]);
 
     this._retriever = value;
-    if (value) this.tools.push(value);
+    if (value) this.skills.push(value);
   }
 
   private _recorder?: MemoryRecorder;
@@ -61,10 +61,10 @@ export class AgentMemory extends Agent {
   }
 
   set recorder(value: MemoryRecorder | undefined) {
-    if (this._recorder) remove(this.tools, [this._recorder]);
+    if (this._recorder) remove(this.skills, [this._recorder]);
 
     this._recorder = value;
-    if (value) this.tools.push(value);
+    if (value) this.skills.push(value);
   }
 
   /**
@@ -82,12 +82,12 @@ export class AgentMemory extends Agent {
 
   async retrieve(input: MemoryRetrieverInput, context: Context): Promise<MemoryRetrieverOutput> {
     if (!this.retriever) throw new Error("AgentMemory retriever no initialized");
-    return context.call(this.retriever, input);
+    return context.invoke(this.retriever, input);
   }
 
   async record(input: MemoryRecorderInput, context: Context): Promise<MemoryRecorderOutput> {
     if (!this.recorder) throw new Error("AgentMemory recorder no initialized");
-    return context.call(this.recorder, input);
+    return context.invoke(this.recorder, input);
   }
 
   override async onMessage({ role, source, message, context }: MessagePayload): Promise<void> {

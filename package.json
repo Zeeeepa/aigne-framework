@@ -1,11 +1,11 @@
 {
   "name": "aigne-framework",
-  "version": "1.9.0",
+  "version": "1.13.0",
   "description": "AIGNE framework is a collection of libraries and tools for building AI-powered applications",
   "private": true,
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
   "homepage": "https://github.com/AIGNE-io/aigne-framework",
-  "license": "ISC",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
