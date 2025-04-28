@@ -2,28 +2,37 @@
 
 # Class: MCPAgent
 
-Agent is the base class of all agents.
-It provides a way to define the input and output schema, and the process method of the agent.
+MCPAgent is a specialized agent for interacting with MCP (Model Context Protocol) servers.
+It provides the ability to connect to remote MCP servers using different transport methods,
+and access their tools, prompts, and resources.
+
+MCPAgent serves as a bridge between your application and MCP servers, allowing you to:
+
+- Connect to MCP servers over HTTP/SSE or stdio
+- Access server tools as agent skills
+- Utilize server prompts and resources
+- Manage server connections with automatic reconnection
 
 ## Example
 
-Here's a example of how to create a custom agent:
+Here's an example of creating an MCPAgent with SSE transport:
 
 ```ts
-class MyAgent extends Agent {
-  process(input: Message): Message {
-    console.log(input);
-    return {
-      text: "Hello, How can I assist you today?",
-    };
-  }
-}
+// Create an MCPAgent using a SSE server connection
+await using mcpAgent = await MCPAgent.from({
+  url: `http://localhost:${port}/sse`,
+  transport: "sse",
+});
 
-const agent = new MyAgent();
+console.log(mcpAgent.name); // Output: "example-server"
 
-const result = await agent.invoke("hello");
+const echo = mcpAgent.skills.echo;
 
-console.log(result); // { text: "Hello, How can I assist you today?" }
+if (!echo) throw new Error("Skill not found");
+
+const result = await echo.invoke({ message: "Hello!" });
+
+console.log(result);
 ```
 
 ## Extends
@@ -36,15 +45,41 @@ console.log(result); // { text: "Hello, How can I assist you today?" }
 
 > **new MCPAgent**(`options`): `MCPAgent`
 
+Create an MCPAgent instance directly with a configured client.
+
 #### Parameters
 
-| Parameter | Type                                                   |
-| --------- | ------------------------------------------------------ |
-| `options` | [`MCPAgentOptions`](../wiki/Interface.MCPAgentOptions) |
+| Parameter | Type                                                   | Description                                               |
+| --------- | ------------------------------------------------------ | --------------------------------------------------------- |
+| `options` | [`MCPAgentOptions`](../wiki/Interface.MCPAgentOptions) | MCPAgent configuration options, including client instance |
 
 #### Returns
 
 `MCPAgent`
+
+#### Example
+
+Here's an example of creating an MCPAgent with an existing client:
+
+```ts
+// Create a client instance
+const client = new Client({ name: "test-client", version: "1.0.0" });
+
+const transport = new StdioClientTransport({
+  command: "bun",
+  args: [join(import.meta.dir, "../../test/_mocks/mock-mcp-server.ts")],
+});
+
+await client.connect(transport);
+
+// Create an MCPAgent directly from client instance
+await using mcpAgent = MCPAgent.from({
+  name: client.getServerVersion()?.name,
+  client,
+});
+
+console.log(mcpAgent.name); // Output: "example-server"
+```
 
 #### Overrides
 
@@ -52,76 +87,24 @@ console.log(result); // { text: "Hello, How can I assist you today?" }
 
 ## Properties
 
-| Property                                                  | Type                                                                                                                                                                                                                                                           | Inherited from                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <a id="memory"></a> `memory?`                             | [`AgentMemory`](../wiki/Class.AgentMemory)                                                                                                                                                                                                                     | [`Agent`](../wiki/Class.Agent).[`memory`](../wiki/Class.Agent#memory)                             |
-| <a id="name"></a> `name`                                  | `string`                                                                                                                                                                                                                                                       | [`Agent`](../wiki/Class.Agent).[`name`](../wiki/Class.Agent#name)                                 |
-| <a id="description"></a> `description?`                   | `string`                                                                                                                                                                                                                                                       | [`Agent`](../wiki/Class.Agent).[`description`](../wiki/Class.Agent#description)                   |
-| <a id="includeinputinoutput"></a> `includeInputInOutput?` | `boolean`                                                                                                                                                                                                                                                      | [`Agent`](../wiki/Class.Agent).[`includeInputInOutput`](../wiki/Class.Agent#includeinputinoutput) |
-| <a id="subscribetopic"></a> `subscribeTopic?`             | [`SubscribeTopic`](../wiki/TypeAlias.SubscribeTopic)                                                                                                                                                                                                           | [`Agent`](../wiki/Class.Agent).[`subscribeTopic`](../wiki/Class.Agent#subscribetopic)             |
-| <a id="publishtopic"></a> `publishTopic?`                 | [`PublishTopic`](../wiki/TypeAlias.PublishTopic)\<[`Message`](../wiki/TypeAlias.Message)\>                                                                                                                                                                     | [`Agent`](../wiki/Class.Agent).[`publishTopic`](../wiki/Class.Agent#publishtopic)                 |
-| <a id="skills"></a> `skills`                              | [`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\>[] & \{[`key`: `string`]: [`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\>; \} | [`Agent`](../wiki/Class.Agent).[`skills`](../wiki/Class.Agent#skills)                             |
-| <a id="client"></a> `client`                              | `Client`                                                                                                                                                                                                                                                       | -                                                                                                 |
-| <a id="prompts"></a> `prompts`                            | [`MCPPrompt`](../wiki/Class.MCPPrompt)[] & \{[`key`: `string`]: [`MCPPrompt`](../wiki/Class.MCPPrompt); \}                                                                                                                                                     | -                                                                                                 |
-| <a id="resources"></a> `resources`                        | [`MCPResource`](../wiki/Class.MCPResource)[] & \{[`key`: `string`]: [`MCPResource`](../wiki/Class.MCPResource); \}                                                                                                                                             | -                                                                                                 |
+| Property                           | Type                                                                                                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="client"></a> `client`       | `Client`                                                                                                           | The MCP client instance used for communication with the MCP server. This client manages the connection to the MCP server and provides methods for interacting with server-provided functionality.                                                                                                                                                                                                                                                           |
+| <a id="prompts"></a> `prompts`     | [`MCPPrompt`](../wiki/Class.MCPPrompt)[] & \{[`key`: `string`]: [`MCPPrompt`](../wiki/Class.MCPPrompt); \}         | Array of MCP prompts available from the connected server. Prompts can be accessed by index or by name. **Example** Here's an example of accessing prompts: `await using mcpAgent = await MCPAgent.from({ url: `http://localhost:${port}/mcp`, transport: "streamableHttp", }); const echo = mcpAgent.prompts.echo; if (!echo) throw new Error("Prompt not found"); const result = await echo.invoke({ message: "Hello!" }); console.log(result);`           |
+| <a id="resources"></a> `resources` | [`MCPResource`](../wiki/Class.MCPResource)[] & \{[`key`: `string`]: [`MCPResource`](../wiki/Class.MCPResource); \} | Array of MCP resources available from the connected server. Resources can be accessed by index or by name. **Example** Here's an example of accessing resources: `await using mcpAgent = await MCPAgent.from({ url: `http://localhost:${port}/mcp`, transport: "streamableHttp", }); const echo = mcpAgent.resources.echo; if (!echo) throw new Error("Resource not found"); const result = await echo.invoke({ message: "Hello!" }); console.log(result);` |
 
 ## Accessors
-
-### topic
-
-#### Get Signature
-
-> **get** **topic**(): `string`
-
-Default topic this agent will subscribe to
-
-##### Returns
-
-`string`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`topic`](../wiki/Class.Agent#topic)
-
----
-
-### inputSchema
-
-#### Get Signature
-
-> **get** **inputSchema**(): `ZodType`\<`I`\>
-
-##### Returns
-
-`ZodType`\<`I`\>
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`inputSchema`](../wiki/Class.Agent#inputschema)
-
----
-
-### outputSchema
-
-#### Get Signature
-
-> **get** **outputSchema**(): `ZodType`\<`O`\>
-
-##### Returns
-
-`ZodType`\<`O`\>
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`outputSchema`](../wiki/Class.Agent#outputschema)
-
----
 
 ### isInvokable
 
 #### Get Signature
 
 > **get** **isInvokable**(): `boolean`
+
+Check if the agent is invokable.
+
+MCPAgent itself is not directly invokable as it acts as a container
+for tools, prompts, and resources. Always returns false.
 
 ##### Returns
 
@@ -133,329 +116,135 @@ Default topic this agent will subscribe to
 
 ## Methods
 
-### attach()
-
-> **attach**(`context`): `void`
-
-Attach agent to context:
-
-- subscribe to topic and invoke process method when message received
-- subscribe to memory topic if memory is enabled
-
-#### Parameters
-
-| Parameter | Type                                                            | Description       |
-| --------- | --------------------------------------------------------------- | ----------------- |
-| `context` | `Pick`\<[`Context`](../wiki/Interface.Context), `"subscribe"`\> | Context to attach |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`attach`](../wiki/Class.Agent#attach)
-
----
-
-### addSkill()
-
-> **addSkill**(...`skills`): `void`
-
-#### Parameters
-
-| Parameter   | Type                                                                                                                                                                                           |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ...`skills` | ([`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\> \| [`FunctionAgentFn`](../wiki/TypeAlias.FunctionAgentFn)\<`any`, `any`\>)[] |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`addSkill`](../wiki/Class.Agent#addskill)
-
----
-
-### invoke()
-
-#### Call Signature
-
-> **invoke**(`input`, `context`, `options`): `Promise`\<[`AgentResponseStream`](../wiki/TypeAlias.AgentResponseStream)\<[`Message`](../wiki/TypeAlias.Message)\>\>
-
-Invoke the agent with input and context, get the streaming response.
-
-##### Parameters
-
-| Parameter           | Type                                                  | Description                    |
-| ------------------- | ----------------------------------------------------- | ------------------------------ |
-| `input`             | `string` \| [`Message`](../wiki/TypeAlias.Message)    | Input message to the agent     |
-| `context`           | `undefined` \| [`Context`](../wiki/Interface.Context) | Context to use                 |
-| `options`           | \{ `streaming`: `true`; \}                            | Options for invoking the agent |
-| `options.streaming` | `true`                                                | -                              |
-
-##### Returns
-
-`Promise`\<[`AgentResponseStream`](../wiki/TypeAlias.AgentResponseStream)\<[`Message`](../wiki/TypeAlias.Message)\>\>
-
-The streaming response
-
-##### Example
-
-Here is an example of how to invoke an agent with streaming response:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent with streaming enabled
-const stream = await aigne.invoke(agent, "hello", { streaming: true });
-
-const chunks: string[] = [];
-
-// Read the stream using an async iterator
-for await (const chunk of readableStreamToAsyncIterator(stream)) {
-  const text = chunk.delta.text?.$message;
-  if (text) {
-    chunks.push(text);
-  }
-}
-
-// console.log(chunks);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
-#### Call Signature
-
-> **invoke**(`input`, `context?`, `options?`): `Promise`\<[`Message`](../wiki/TypeAlias.Message)\>
-
-Invoke the agent with input and context, get the final json response.
-
-##### Parameters
-
-| Parameter  | Type                                                                                        | Description                    |
-| ---------- | ------------------------------------------------------------------------------------------- | ------------------------------ |
-| `input`    | `string` \| [`Message`](../wiki/TypeAlias.Message)                                          | Input message to the agent     |
-| `context?` | [`Context`](../wiki/Interface.Context)                                                      | Context to use                 |
-| `options?` | [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions) & \{ `streaming?`: `false`; \} | Options for invoking the agent |
-
-##### Returns
-
-`Promise`\<[`Message`](../wiki/TypeAlias.Message)\>
-
-The final json response
-
-##### Example
-
-Here is an example of how to invoke an agent:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent
-const result = await aigne.invoke(agent, "hello");
-
-// console.log(result);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
-#### Call Signature
-
-> **invoke**(`input`, `context?`, `options?`): `Promise`\<[`AgentResponse`](../wiki/TypeAlias.AgentResponse)\<[`Message`](../wiki/TypeAlias.Message)\>\>
-
-Invoke the agent with input and context, get the streaming response.
-
-##### Parameters
-
-| Parameter  | Type                                                         | Description                    |
-| ---------- | ------------------------------------------------------------ | ------------------------------ |
-| `input`    | `string` \| [`Message`](../wiki/TypeAlias.Message)           | Input message to the agent     |
-| `context?` | [`Context`](../wiki/Interface.Context)                       | Context to use                 |
-| `options?` | [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions) | Options for invoking the agent |
-
-##### Returns
-
-`Promise`\<[`AgentResponse`](../wiki/TypeAlias.AgentResponse)\<[`Message`](../wiki/TypeAlias.Message)\>\>
-
-The streaming response
-
-##### Example
-
-Here is an example of how to invoke an agent with streaming response:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent with streaming enabled
-const stream = await aigne.invoke(agent, "hello", { streaming: true });
-
-const chunks: string[] = [];
-
-// Read the stream using an async iterator
-for await (const chunk of readableStreamToAsyncIterator(stream)) {
-  const text = chunk.delta.text?.$message;
-  if (text) {
-    chunks.push(text);
-  }
-}
-
-// console.log(chunks);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
----
-
-### checkAgentInvokesUsage()
-
-> `protected` **checkAgentInvokesUsage**(`context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`checkAgentInvokesUsage`](../wiki/Class.Agent#checkagentinvokesusage)
-
----
-
-### preprocess()
-
-> `protected` **preprocess**(`_`, `context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `_`       | [`Message`](../wiki/TypeAlias.Message) |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`preprocess`](../wiki/Class.Agent#preprocess)
-
----
-
-### postprocess()
-
-> `protected` **postprocess**(`input`, `output`, `context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `input`   | [`Message`](../wiki/TypeAlias.Message) |
-| `output`  | [`Message`](../wiki/TypeAlias.Message) |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`postprocess`](../wiki/Class.Agent#postprocess)
-
----
-
-### \[custom\]()
-
-> **\[custom\]**(): `string`
-
-#### Returns
-
-`string`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`[custom]`](Class.Agent.md#custom)
-
----
-
 ### from()
 
 #### Call Signature
 
 > `static` **from**(`options`): `Promise`\<`MCPAgent`\>
 
+Create an MCPAgent from a connection to an SSE server.
+
+This overload establishes a Server-Sent Events connection to an MCP server
+and automatically discovers its available tools, prompts, and resources.
+
 ##### Parameters
 
-| Parameter | Type                                                     |
-| --------- | -------------------------------------------------------- |
-| `options` | [`MCPServerOptions`](../wiki/TypeAlias.MCPServerOptions) |
+| Parameter | Type                                                     | Description                      |
+| --------- | -------------------------------------------------------- | -------------------------------- |
+| `options` | [`MCPServerOptions`](../wiki/TypeAlias.MCPServerOptions) | SSE server connection parameters |
 
 ##### Returns
 
 `Promise`\<`MCPAgent`\>
 
+Promise resolving to a new MCPAgent instance
+
+##### Examples
+
+Here's an example of creating an MCPAgent with StreamableHTTP transport:
+
+```ts
+// Create an MCPAgent using a streamable http server connection
+await using mcpAgent = await MCPAgent.from({
+  url: `http://localhost:${port}/mcp`,
+  transport: "streamableHttp",
+});
+
+console.log(mcpAgent.name); // Output: "example-server-streamable-http"
+
+const echo = mcpAgent.skills.echo;
+
+if (!echo) throw new Error("Skill not found");
+
+const result = await echo.invoke({ message: "Hello!" });
+
+console.log(result);
+```
+
+Here's an example of creating an MCPAgent with SSE transport:
+
+```ts
+// Create an MCPAgent using a SSE server connection
+await using mcpAgent = await MCPAgent.from({
+  url: `http://localhost:${port}/sse`,
+  transport: "sse",
+});
+
+console.log(mcpAgent.name); // Output: "example-server"
+
+const echo = mcpAgent.skills.echo;
+
+if (!echo) throw new Error("Skill not found");
+
+const result = await echo.invoke({ message: "Hello!" });
+
+console.log(result);
+```
+
+Here's an example of creating an MCPAgent with Stdio transport:
+
+```ts
+// Create an MCPAgent using a command-line (stdio) server
+await using mcpAgent = await MCPAgent.from({
+  command: "bun",
+  args: [join(import.meta.dir, "../../test/_mocks/mock-mcp-server.ts")],
+});
+
+console.log(mcpAgent.name); // Output: "example-server"
+
+const echo = mcpAgent.skills.echo;
+
+if (!echo) throw new Error("Skill not found");
+
+const result = await echo.invoke({ message: "Hello!" });
+
+console.log(result);
+```
+
 #### Call Signature
 
 > `static` **from**(`options`): `MCPAgent`
 
+Create an MCPAgent from a pre-configured MCP client.
+
+This overload uses an existing MCP client instance and optionally
+pre-defined prompts and resources.
+
 ##### Parameters
 
-| Parameter | Type                                                   |
-| --------- | ------------------------------------------------------ |
-| `options` | [`MCPAgentOptions`](../wiki/Interface.MCPAgentOptions) |
+| Parameter | Type                                                   | Description                                 |
+| --------- | ------------------------------------------------------ | ------------------------------------------- |
+| `options` | [`MCPAgentOptions`](../wiki/Interface.MCPAgentOptions) | MCPAgent configuration with client instance |
 
 ##### Returns
 
 `MCPAgent`
+
+A new MCPAgent instance
+
+##### Example
+
+Here's an example of creating an MCPAgent with a client instance:
+
+```ts
+// Create a client instance
+const client = new Client({ name: "test-client", version: "1.0.0" });
+
+const transport = new StdioClientTransport({
+  command: "bun",
+  args: [join(import.meta.dir, "../../test/_mocks/mock-mcp-server.ts")],
+});
+
+await client.connect(transport);
+
+// Create an MCPAgent directly from client instance
+await using mcpAgent = MCPAgent.from({
+  name: client.getServerVersion()?.name,
+  client,
+});
+
+console.log(mcpAgent.name); // Output: "example-server"
+```
 
 ---
 
@@ -463,16 +252,25 @@ for await (const chunk of readableStreamToAsyncIterator(stream)) {
 
 > **process**(`_input`, `_context?`): `Promise`\<[`Message`](../wiki/TypeAlias.Message)\>
 
+Process method required by Agent interface.
+
+Since MCPAgent itself is not directly invokable, this method
+throws an error if called.
+
 #### Parameters
 
-| Parameter   | Type                                   |
-| ----------- | -------------------------------------- |
-| `_input`    | [`Message`](../wiki/TypeAlias.Message) |
-| `_context?` | [`Context`](../wiki/Interface.Context) |
+| Parameter   | Type                                   | Description                |
+| ----------- | -------------------------------------- | -------------------------- |
+| `_input`    | [`Message`](../wiki/TypeAlias.Message) | Input message (unused)     |
+| `_context?` | [`Context`](../wiki/Interface.Context) | Execution context (unused) |
 
 #### Returns
 
 `Promise`\<[`Message`](../wiki/TypeAlias.Message)\>
+
+#### Throws
+
+Error This method always throws an error since MCPAgent is not directly invokable
 
 #### Overrides
 
@@ -484,9 +282,37 @@ for await (const chunk of readableStreamToAsyncIterator(stream)) {
 
 > **shutdown**(): `Promise`\<`void`\>
 
+Shut down the agent and close the MCP connection.
+
+This method cleans up resources and closes the connection
+to the MCP server.
+
 #### Returns
 
 `Promise`\<`void`\>
+
+#### Examples
+
+Here's an example of shutting down an MCPAgent:
+
+```ts
+const mcpAgent = await MCPAgent.from({
+  url: `http://localhost:${port}/mcp`,
+  transport: "streamableHttp",
+});
+
+await mcpAgent.shutdown();
+```
+
+Here's an example of shutting down an MCPAgent by using statement:
+
+```ts
+// MCP will be shutdown when the variable goes out of scope
+await using _mcpAgent = await MCPAgent.from({
+  url: `http://localhost:${port}/mcp`,
+  transport: "streamableHttp",
+});
+```
 
 #### Overrides
 

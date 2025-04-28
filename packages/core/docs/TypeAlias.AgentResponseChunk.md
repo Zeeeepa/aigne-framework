@@ -4,8 +4,10 @@
 
 > **AgentResponseChunk**\<`T`\> = [`AgentResponseDelta`](../wiki/Interface.AgentResponseDelta)\<`T`\>
 
+Data chunk type for streaming responses
+
 ## Type Parameters
 
-| Type Parameter |
-| -------------- |
-| `T`            |
+| Type Parameter | Description        |
+| -------------- | ------------------ |
+| `T`            | Response data type |

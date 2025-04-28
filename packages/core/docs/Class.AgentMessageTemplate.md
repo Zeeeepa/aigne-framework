@@ -30,12 +30,9 @@
 
 ## Properties
 
-| Property                            | Type                                                                             | Inherited from                                                                                                    |
-| ----------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| <a id="role"></a> `role`            | `"agent"` \| `"user"` \| `"system"` \| `"tool"`                                  | [`ChatMessageTemplate`](../wiki/Class.ChatMessageTemplate).[`role`](../wiki/Class.ChatMessageTemplate#role)       |
-| <a id="content"></a> `content?`     | [`ChatModelInputMessageContent`](../wiki/TypeAlias.ChatModelInputMessageContent) | [`ChatMessageTemplate`](../wiki/Class.ChatMessageTemplate).[`content`](../wiki/Class.ChatMessageTemplate#content) |
-| <a id="name"></a> `name?`           | `string`                                                                         | [`ChatMessageTemplate`](../wiki/Class.ChatMessageTemplate).[`name`](../wiki/Class.ChatMessageTemplate#name)       |
-| <a id="toolcalls"></a> `toolCalls?` | [`ChatModelOutputToolCall`](../wiki/Interface.ChatModelOutputToolCall)[]         | -                                                                                                                 |
+| Property                            | Type                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------ |
+| <a id="toolcalls"></a> `toolCalls?` | [`ChatModelOutputToolCall`](../wiki/Interface.ChatModelOutputToolCall)[] |
 
 ## Methods
 

@@ -165,7 +165,7 @@ new context
 
 #### Implementation of
 
-[`Context`](../wiki/Interface.Context).[`emit`](../wiki/Interface.Context#emit)
+`Context.emit`
 
 ---
 
@@ -192,7 +192,7 @@ new context
 
 #### Implementation of
 
-[`Context`](../wiki/Interface.Context).[`on`](../wiki/Interface.Context#on)
+`Context.on`
 
 ---
 
@@ -219,7 +219,7 @@ new context
 
 #### Implementation of
 
-[`Context`](../wiki/Interface.Context).[`once`](../wiki/Interface.Context#once)
+`Context.once`
 
 ---
 
@@ -246,4 +246,4 @@ new context
 
 #### Implementation of
 
-[`Context`](../wiki/Interface.Context).[`off`](../wiki/Interface.Context#off)
+`Context.off`

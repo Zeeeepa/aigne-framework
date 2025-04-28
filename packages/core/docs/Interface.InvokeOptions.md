@@ -2,14 +2,15 @@
 
 # Interface: InvokeOptions
 
+Options for invoking an agent
+
 ## Extends
 
 - [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions)
 
 ## Properties
 
-| Property                                            | Type      | Inherited from                                                                                                             |
-| --------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| <a id="streaming"></a> `streaming?`                 | `boolean` | [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions).[`streaming`](../wiki/Interface.AgentInvokeOptions#streaming) |
-| <a id="returnactiveagent"></a> `returnActiveAgent?` | `boolean` | -                                                                                                                          |
-| <a id="disabletransfer"></a> `disableTransfer?`     | `boolean` | -                                                                                                                          |
+| Property                                            | Type      |
+| --------------------------------------------------- | --------- |
+| <a id="returnactiveagent"></a> `returnActiveAgent?` | `boolean` |
+| <a id="disabletransfer"></a> `disableTransfer?`     | `boolean` |

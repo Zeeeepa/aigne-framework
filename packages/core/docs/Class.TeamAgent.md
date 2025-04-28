@@ -2,28 +2,54 @@
 
 # Class: TeamAgent\<I, O\>
 
-Agent is the base class of all agents.
-It provides a way to define the input and output schema, and the process method of the agent.
+TeamAgent coordinates a group of agents working together to accomplish tasks.
+
+A TeamAgent manages a collection of agents (its skills) and orchestrates their
+execution according to a specified processing mode. It provides mechanisms for
+agents to work either sequentially (one after another) or in parallel (all at once),
+with appropriate handling of their outputs.
+
+TeamAgent is particularly useful for:
+
+- Creating agent workflows where output from one agent feeds into another
+- Executing multiple agents simultaneously and combining their results
+- Building complex agent systems with specialized components working together
 
 ## Example
 
-Here's a example of how to create a custom agent:
+Here's an example of creating a sequential TeamAgent:
 
 ```ts
-class MyAgent extends Agent {
-  process(input: Message): Message {
-    console.log(input);
-    return {
-      text: "Hello, How can I assist you today?",
-    };
-  }
-}
+// Create individual specialized agents
+const translatorAgent = FunctionAgent.from({
+  name: "translator",
+  process: (input: Message) => ({
+    translation: `${input.text} (translation)`,
+  }),
+});
 
-const agent = new MyAgent();
+const formatterAgent = FunctionAgent.from({
+  name: "formatter",
+  process: (input: Message) => ({
+    formatted: `[formatted] ${input.translation || input.text}`,
+  }),
+});
 
-const result = await agent.invoke("hello");
+// Create a sequential TeamAgent with specialized agents
+const teamAgent = TeamAgent.from({
+  name: "sequential-team",
+  mode: ProcessMode.sequential,
+  skills: [translatorAgent, formatterAgent],
+});
 
-console.log(result); // { text: "Hello, How can I assist you today?" }
+const result = await teamAgent.invoke({ text: "Hello world" });
+
+console.log(result);
+
+// Expected output: {
+//   translation: "Hello world (translation)",
+//   formatted: "[formatted] Hello world (translation)"
+// }
 ```
 
 ## Extends
@@ -43,11 +69,13 @@ console.log(result); // { text: "Hello, How can I assist you today?" }
 
 > **new TeamAgent**\<`I`, `O`\>(`options`): `TeamAgent`\<`I`, `O`\>
 
+Create a new TeamAgent instance.
+
 #### Parameters
 
-| Parameter | Type                                                                 |
-| --------- | -------------------------------------------------------------------- |
-| `options` | [`TeamAgentOptions`](../wiki/Interface.TeamAgentOptions)\<`I`, `O`\> |
+| Parameter | Type                                                                 | Description                             |
+| --------- | -------------------------------------------------------------------- | --------------------------------------- |
+| `options` | [`TeamAgentOptions`](../wiki/Interface.TeamAgentOptions)\<`I`, `O`\> | Configuration options for the TeamAgent |
 
 #### Returns
 
@@ -59,396 +87,17 @@ console.log(result); // { text: "Hello, How can I assist you today?" }
 
 ## Properties
 
-| Property                                                  | Type                                                                                                                                                                                                                                                           | Inherited from                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <a id="memory"></a> `memory?`                             | [`AgentMemory`](../wiki/Class.AgentMemory)                                                                                                                                                                                                                     | [`Agent`](../wiki/Class.Agent).[`memory`](../wiki/Class.Agent#memory)                             |
-| <a id="name"></a> `name`                                  | `string`                                                                                                                                                                                                                                                       | [`Agent`](../wiki/Class.Agent).[`name`](../wiki/Class.Agent#name)                                 |
-| <a id="description"></a> `description?`                   | `string`                                                                                                                                                                                                                                                       | [`Agent`](../wiki/Class.Agent).[`description`](../wiki/Class.Agent#description)                   |
-| <a id="includeinputinoutput"></a> `includeInputInOutput?` | `boolean`                                                                                                                                                                                                                                                      | [`Agent`](../wiki/Class.Agent).[`includeInputInOutput`](../wiki/Class.Agent#includeinputinoutput) |
-| <a id="subscribetopic"></a> `subscribeTopic?`             | [`SubscribeTopic`](../wiki/TypeAlias.SubscribeTopic)                                                                                                                                                                                                           | [`Agent`](../wiki/Class.Agent).[`subscribeTopic`](../wiki/Class.Agent#subscribetopic)             |
-| <a id="publishtopic"></a> `publishTopic?`                 | [`PublishTopic`](../wiki/TypeAlias.PublishTopic)\<[`Message`](../wiki/TypeAlias.Message)\>                                                                                                                                                                     | [`Agent`](../wiki/Class.Agent).[`publishTopic`](../wiki/Class.Agent#publishtopic)                 |
-| <a id="skills"></a> `skills`                              | [`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\>[] & \{[`key`: `string`]: [`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\>; \} | [`Agent`](../wiki/Class.Agent).[`skills`](../wiki/Class.Agent#skills)                             |
-| <a id="mode"></a> `mode`                                  | [`ProcessMode`](../wiki/Enumeration.ProcessMode)                                                                                                                                                                                                               | -                                                                                                 |
-
-## Accessors
-
-### topic
-
-#### Get Signature
-
-> **get** **topic**(): `string`
-
-Default topic this agent will subscribe to
-
-##### Returns
-
-`string`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`topic`](../wiki/Class.Agent#topic)
-
----
-
-### inputSchema
-
-#### Get Signature
-
-> **get** **inputSchema**(): `ZodType`\<`I`\>
-
-##### Returns
-
-`ZodType`\<`I`\>
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`inputSchema`](../wiki/Class.Agent#inputschema)
-
----
-
-### outputSchema
-
-#### Get Signature
-
-> **get** **outputSchema**(): `ZodType`\<`O`\>
-
-##### Returns
-
-`ZodType`\<`O`\>
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`outputSchema`](../wiki/Class.Agent#outputschema)
-
----
-
-### isInvokable
-
-#### Get Signature
-
-> **get** **isInvokable**(): `boolean`
-
-##### Returns
-
-`boolean`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`isInvokable`](../wiki/Class.Agent#isinvokable)
+| Property                 | Type                                             | Description                                                                                                                                           |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="mode"></a> `mode` | [`ProcessMode`](../wiki/Enumeration.ProcessMode) | The processing mode that determines how agents in the team are executed. This can be either sequential (one after another) or parallel (all at once). |
 
 ## Methods
-
-### attach()
-
-> **attach**(`context`): `void`
-
-Attach agent to context:
-
-- subscribe to topic and invoke process method when message received
-- subscribe to memory topic if memory is enabled
-
-#### Parameters
-
-| Parameter | Type                                                            | Description       |
-| --------- | --------------------------------------------------------------- | ----------------- |
-| `context` | `Pick`\<[`Context`](../wiki/Interface.Context), `"subscribe"`\> | Context to attach |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`attach`](../wiki/Class.Agent#attach)
-
----
-
-### addSkill()
-
-> **addSkill**(...`skills`): `void`
-
-#### Parameters
-
-| Parameter   | Type                                                                                                                                                                                           |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ...`skills` | ([`Agent`](../wiki/Class.Agent)\<[`Message`](../wiki/TypeAlias.Message), [`Message`](../wiki/TypeAlias.Message)\> \| [`FunctionAgentFn`](../wiki/TypeAlias.FunctionAgentFn)\<`any`, `any`\>)[] |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`addSkill`](../wiki/Class.Agent#addskill)
-
----
-
-### invoke()
-
-#### Call Signature
-
-> **invoke**(`input`, `context`, `options`): `Promise`\<[`AgentResponseStream`](../wiki/TypeAlias.AgentResponseStream)\<`O`\>\>
-
-Invoke the agent with input and context, get the streaming response.
-
-##### Parameters
-
-| Parameter           | Type                                                  | Description                    |
-| ------------------- | ----------------------------------------------------- | ------------------------------ |
-| `input`             | `string` \| `I`                                       | Input message to the agent     |
-| `context`           | `undefined` \| [`Context`](../wiki/Interface.Context) | Context to use                 |
-| `options`           | \{ `streaming`: `true`; \}                            | Options for invoking the agent |
-| `options.streaming` | `true`                                                | -                              |
-
-##### Returns
-
-`Promise`\<[`AgentResponseStream`](../wiki/TypeAlias.AgentResponseStream)\<`O`\>\>
-
-The streaming response
-
-##### Example
-
-Here is an example of how to invoke an agent with streaming response:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent with streaming enabled
-const stream = await aigne.invoke(agent, "hello", { streaming: true });
-
-const chunks: string[] = [];
-
-// Read the stream using an async iterator
-for await (const chunk of readableStreamToAsyncIterator(stream)) {
-  const text = chunk.delta.text?.$message;
-  if (text) {
-    chunks.push(text);
-  }
-}
-
-// console.log(chunks);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
-#### Call Signature
-
-> **invoke**(`input`, `context?`, `options?`): `Promise`\<`O`\>
-
-Invoke the agent with input and context, get the final json response.
-
-##### Parameters
-
-| Parameter  | Type                                                                                        | Description                    |
-| ---------- | ------------------------------------------------------------------------------------------- | ------------------------------ |
-| `input`    | `string` \| `I`                                                                             | Input message to the agent     |
-| `context?` | [`Context`](../wiki/Interface.Context)                                                      | Context to use                 |
-| `options?` | [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions) & \{ `streaming?`: `false`; \} | Options for invoking the agent |
-
-##### Returns
-
-`Promise`\<`O`\>
-
-The final json response
-
-##### Example
-
-Here is an example of how to invoke an agent:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent
-const result = await aigne.invoke(agent, "hello");
-
-// console.log(result);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
-#### Call Signature
-
-> **invoke**(`input`, `context?`, `options?`): `Promise`\<[`AgentResponse`](../wiki/TypeAlias.AgentResponse)\<`O`\>\>
-
-Invoke the agent with input and context, get the streaming response.
-
-##### Parameters
-
-| Parameter  | Type                                                         | Description                    |
-| ---------- | ------------------------------------------------------------ | ------------------------------ |
-| `input`    | `string` \| `I`                                              | Input message to the agent     |
-| `context?` | [`Context`](../wiki/Interface.Context)                       | Context to use                 |
-| `options?` | [`AgentInvokeOptions`](../wiki/Interface.AgentInvokeOptions) | Options for invoking the agent |
-
-##### Returns
-
-`Promise`\<[`AgentResponse`](../wiki/TypeAlias.AgentResponse)\<`O`\>\>
-
-The streaming response
-
-##### Example
-
-Here is an example of how to invoke an agent with streaming response:
-
-```ts
-// Create a chat model
-const model = new OpenAIChatModel();
-
-// AIGNE: Main execution engine of AIGNE Framework.
-const aigne = new AIGNE({
-  model,
-});
-
-// Create an Agent instance
-const agent = AIAgent.from({
-  name: "chat",
-  description: "A chat agent",
-});
-
-// Invoke the agent with streaming enabled
-const stream = await aigne.invoke(agent, "hello", { streaming: true });
-
-const chunks: string[] = [];
-
-// Read the stream using an async iterator
-for await (const chunk of readableStreamToAsyncIterator(stream)) {
-  const text = chunk.delta.text?.$message;
-  if (text) {
-    chunks.push(text);
-  }
-}
-
-// console.log(chunks);
-```
-
-##### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`invoke`](../wiki/Class.Agent#invoke)
-
----
-
-### checkAgentInvokesUsage()
-
-> `protected` **checkAgentInvokesUsage**(`context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`checkAgentInvokesUsage`](../wiki/Class.Agent#checkagentinvokesusage)
-
----
-
-### preprocess()
-
-> `protected` **preprocess**(`_`, `context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `_`       | `I`                                    |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`preprocess`](../wiki/Class.Agent#preprocess)
-
----
-
-### postprocess()
-
-> `protected` **postprocess**(`input`, `output`, `context`): `void`
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `input`   | `I`                                    |
-| `output`  | `O`                                    |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`postprocess`](../wiki/Class.Agent#postprocess)
-
----
-
-### shutdown()
-
-> **shutdown**(): `Promise`\<`void`\>
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`shutdown`](../wiki/Class.Agent#shutdown)
-
----
-
-### \[custom\]()
-
-> **\[custom\]**(): `string`
-
-#### Returns
-
-`string`
-
-#### Inherited from
-
-[`Agent`](../wiki/Class.Agent).[`[custom]`](Class.Agent.md#custom)
-
----
 
 ### from()
 
 > `static` **from**\<`I`, `O`\>(`options`): `TeamAgent`\<`I`, `O`\>
+
+Create a TeamAgent from the provided options.
 
 #### Type Parameters
 
@@ -459,13 +108,85 @@ for await (const chunk of readableStreamToAsyncIterator(stream)) {
 
 #### Parameters
 
-| Parameter | Type                                                                 |
-| --------- | -------------------------------------------------------------------- |
-| `options` | [`TeamAgentOptions`](../wiki/Interface.TeamAgentOptions)\<`I`, `O`\> |
+| Parameter | Type                                                                 | Description                             |
+| --------- | -------------------------------------------------------------------- | --------------------------------------- |
+| `options` | [`TeamAgentOptions`](../wiki/Interface.TeamAgentOptions)\<`I`, `O`\> | Configuration options for the TeamAgent |
 
 #### Returns
 
 `TeamAgent`\<`I`, `O`\>
+
+A new TeamAgent instance
+
+#### Examples
+
+Here's an example of creating a sequential TeamAgent:
+
+```ts
+// Create individual specialized agents
+const translatorAgent = FunctionAgent.from({
+  name: "translator",
+  process: (input: Message) => ({
+    translation: `${input.text} (translation)`,
+  }),
+});
+
+const formatterAgent = FunctionAgent.from({
+  name: "formatter",
+  process: (input: Message) => ({
+    formatted: `[formatted] ${input.translation || input.text}`,
+  }),
+});
+
+// Create a sequential TeamAgent with specialized agents
+const teamAgent = TeamAgent.from({
+  name: "sequential-team",
+  mode: ProcessMode.sequential,
+  skills: [translatorAgent, formatterAgent],
+});
+
+const result = await teamAgent.invoke({ text: "Hello world" });
+
+console.log(result);
+
+// Expected output: {
+//   translation: "Hello world (translation)",
+//   formatted: "[formatted] Hello world (translation)"
+// }
+```
+
+Here's an example of creating a parallel TeamAgent:
+
+```ts
+const googleSearch = FunctionAgent.from({
+  name: "google-search",
+  process: (input: Message) => ({
+    googleResults: `Google search results for ${input.query}`,
+  }),
+});
+
+const braveSearch = FunctionAgent.from({
+  name: "brave-search",
+  process: (input: Message) => ({
+    braveResults: `Brave search results for ${input.query}`,
+  }),
+});
+
+const teamAgent = TeamAgent.from({
+  name: "parallel-team",
+  mode: ProcessMode.parallel,
+  skills: [googleSearch, braveSearch],
+});
+
+const result = await teamAgent.invoke({ query: "AI news" });
+
+console.log(result);
+
+// Expected output: {
+//   googleResults: "Google search results for AI news",
+//   braveResults: "Brave search results for AI news"
+// }
+```
 
 ---
 
@@ -473,51 +194,27 @@ for await (const chunk of readableStreamToAsyncIterator(stream)) {
 
 > **process**(`input`, `context`): `PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>
 
+Process an input message by routing it through the team's agents.
+
+Depending on the team's processing mode, this will either:
+
+- In sequential mode: Pass input through each agent in sequence, with each agent
+  receiving the combined output from previous agents
+- In parallel mode: Process input through all agents simultaneously and combine their outputs
+
 #### Parameters
 
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `input`   | `I`                                    |
-| `context` | [`Context`](../wiki/Interface.Context) |
+| Parameter | Type                                   | Description            |
+| --------- | -------------------------------------- | ---------------------- |
+| `input`   | `I`                                    | The message to process |
+| `context` | [`Context`](../wiki/Interface.Context) | The execution context  |
 
 #### Returns
 
 `PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>
+
+A stream of message chunks that collectively form the response
 
 #### Overrides
 
 [`Agent`](../wiki/Class.Agent).[`process`](../wiki/Class.Agent#process)
-
----
-
-### \_processSequential()
-
-> **\_processSequential**(`input`, `context`): `PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `input`   | `I`                                    |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>
-
----
-
-### \_processParallel()
-
-> **\_processParallel**(`input`, `context`): `PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>
-
-#### Parameters
-
-| Parameter | Type                                   |
-| --------- | -------------------------------------- |
-| `input`   | `I`                                    |
-| `context` | [`Context`](../wiki/Interface.Context) |
-
-#### Returns
-
-`PromiseOrValue`\<[`AgentProcessResult`](../wiki/TypeAlias.AgentProcessResult)\<`O`\>\>

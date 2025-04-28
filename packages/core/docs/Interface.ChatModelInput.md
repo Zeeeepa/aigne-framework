@@ -2,6 +2,8 @@
 
 # Interface: ChatModelInput
 
+Basic message type that can contain any key-value pairs
+
 ## Extends
 
 - [`Message`](../wiki/TypeAlias.Message)

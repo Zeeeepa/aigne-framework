@@ -4,8 +4,10 @@
 
 > **AgentResponseStream**\<`T`\> = `ReadableStream`\<[`AgentResponseChunk`](../wiki/TypeAlias.AgentResponseChunk)\<`T`\>\>
 
+Streaming response type for an agent
+
 ## Type Parameters
 
-| Type Parameter |
-| -------------- |
-| `T`            |
+| Type Parameter | Description        |
+| -------------- | ------------------ |
+| `T`            | Response data type |

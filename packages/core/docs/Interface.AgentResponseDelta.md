@@ -2,11 +2,15 @@
 
 # Interface: AgentResponseDelta\<T\>
 
+Incremental data structure for agent responses
+
+Used to represent a single incremental update in a streaming response
+
 ## Type Parameters
 
-| Type Parameter |
-| -------------- |
-| `T`            |
+| Type Parameter | Description        |
+| -------------- | ------------------ |
+| `T`            | Response data type |
 
 ## Properties
 

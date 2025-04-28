@@ -2,6 +2,7 @@
 
 ### Enumerations
 
+- [AIAgentToolChoice](../wiki/Enumeration.AIAgentToolChoice)
 - [ProcessMode](../wiki/Enumeration.ProcessMode)
 
 ### Classes
@@ -77,7 +78,6 @@
 - [AgentProcessResult](../wiki/TypeAlias.AgentProcessResult)
 - [AgentInputOutputSchema](../wiki/TypeAlias.AgentInputOutputSchema)
 - [FunctionAgentFn](../wiki/TypeAlias.FunctionAgentFn)
-- [AIAgentToolChoice](../wiki/TypeAlias.AIAgentToolChoice)
 - [MCPServerOptions](../wiki/TypeAlias.MCPServerOptions)
 - [SSEServerParameters](../wiki/TypeAlias.SSEServerParameters)
 - [ContextEmitEventMap](../wiki/TypeAlias.ContextEmitEventMap)
@@ -92,6 +92,7 @@
 
 ### Variables
 
+- [agentOptionsSchema](../wiki/Variable.agentOptionsSchema)
 - [aiAgentToolChoiceSchema](../wiki/Variable.aiAgentToolChoiceSchema)
 - [aiAgentOptionsSchema](../wiki/Variable.aiAgentOptionsSchema)
 - [transferAgentOutputKey](../wiki/Variable.transferAgentOutputKey)
@@ -103,6 +104,8 @@
 ### Functions
 
 - [isEmptyChunk](../wiki/Function.isEmptyChunk)
+- [textDelta](../wiki/Function.textDelta)
+- [jsonDelta](../wiki/Function.jsonDelta)
 - [transferToAgentOutput](../wiki/Function.transferToAgentOutput)
 - [isTransferAgentOutput](../wiki/Function.isTransferAgentOutput)
 - [replaceTransferAgentToName](../wiki/Function.replaceTransferAgentToName)
