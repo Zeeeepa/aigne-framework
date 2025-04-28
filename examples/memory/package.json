@@ -17,12 +17,17 @@
   ],
   "scripts": {
     "start": "bun run index.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:llm": "bun test index.test.ts"
   },
   "dependencies": {
     "@aigne/cli": "workspace:^",
     "@aigne/core": "workspace:^",
     "openai": "^4.94.0",
     "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@aigne/test-utils": "workspace:^",
+    "@types/bun": "^1.2.9"
   }
 }
