@@ -11,7 +11,6 @@ import type {
 } from "../models/chat-model.js";
 import { MESSAGE_KEY, PromptBuilder } from "../prompt/prompt-builder.js";
 import { AgentMessageTemplate, ToolMessageTemplate } from "../prompt/template.js";
-import { readableStreamToAsyncIterator } from "../utils/stream-utils.js";
 import { checkArguments, isEmpty } from "../utils/type-utils.js";
 import {
   Agent,
@@ -20,6 +19,7 @@ import {
   type Message,
   agentOptionsSchema,
 } from "./agent.js";
+import type { GuideRailAgentOutput } from "./guide-rail-agent.js";
 import { isTransferAgentOutput } from "./types.js";
 
 /**
@@ -323,7 +323,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
         { streaming: true },
       );
 
-      for await (const value of readableStreamToAsyncIterator(stream)) {
+      for await (const value of stream) {
         if (value.delta.text?.text) {
           yield { delta: { text: { [outputKey]: value.delta.text.text } } };
         }
@@ -347,20 +347,22 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
           if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
 
           // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
-          const output = await context
-            .invoke(tool, { ...input, ...call.function.arguments }, { disableTransfer: true })
-            .catch((error) => {
-              if (!this.catchToolsError) {
-                return Promise.reject(error);
-              }
+          const output = await this.invokeSkill(
+            tool,
+            { ...input, ...call.function.arguments },
+            context,
+          ).catch((error) => {
+            if (!this.catchToolsError) {
+              return Promise.reject(error);
+            }
 
-              return {
-                isError: true,
-                error: {
-                  message: error.message,
-                },
-              };
-            });
+            return {
+              isError: true,
+              error: {
+                message: error.message,
+              },
+            };
+          });
 
           // NOTE: Return transfer output immediately
           if (isTransferAgentOutput(output)) {
@@ -388,7 +390,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
 
       const result = {} as O;
 
-      if (modelInput.responseFormat?.type === "json_schema") {
+      if (json) {
         Object.assign(result, json);
       } else if (text) {
         Object.assign(result, { [outputKey]: text });
@@ -399,6 +401,15 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
       }
       return;
     }
+  }
+
+  protected override async onGuideRailError(
+    error: GuideRailAgentOutput,
+  ): Promise<O | GuideRailAgentOutput> {
+    const outputKey = this.outputKey || MESSAGE_KEY;
+    return {
+      [outputKey]: error.reason,
+    };
   }
 
   /**
@@ -430,9 +441,9 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     const stream = await context.invoke(
       tool,
       { ...call.function.arguments, ...input },
-      { streaming: true },
+      { streaming: true, sourceAgent: this },
     );
 
-    yield* readableStreamToAsyncIterator(stream);
+    yield* stream;
   }
 }
