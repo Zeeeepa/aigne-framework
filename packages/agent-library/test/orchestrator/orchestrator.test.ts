@@ -5,7 +5,7 @@ import {
   getFullPlanSchema,
 } from "@aigne/agent-library/orchestrator/index.js";
 import { AIAgent, AIGNE, MESSAGE_KEY, createMessage } from "@aigne/core";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { OpenAIChatModel } from "../_mocks_/mock-models.js";
 
 test("AIAgent.invoke", async () => {
   const model = new OpenAIChatModel();
@@ -85,11 +85,9 @@ test("AIAgent.invoke", async () => {
   expect(finderCall).toHaveBeenLastCalledWith(
     { [MESSAGE_KEY]: expect.stringContaining("Find the closest match to a user's request") },
     expect.anything(),
-    expect.anything(),
   );
   expect(writerCall).toHaveBeenLastCalledWith(
     { [MESSAGE_KEY]: expect.stringContaining("Write to the filesystem") },
-    expect.anything(),
     expect.anything(),
   );
 });

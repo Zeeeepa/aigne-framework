@@ -1,6 +1,37 @@
-## [1.2.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.1.0...agent-library-v1.2.0) (2025-03-18)
+## [1.11.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.10.0...agent-library-v1.11.0) (2025-05-27)
 
-- chore: release 1.2.0
+
+### Features
+
+* add schema transform ([#35](https://github.com/AIGNE-io/aigne-framework/issues/35)) ([c7d9a2c](https://github.com/AIGNE-io/aigne-framework/commit/c7d9a2c9fcab8d384d4198db5ff6ba4603846cdf))
+
+## [1.10.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.9.0...agent-library-v1.10.0) (2025-05-25)
+
+
+### Features
+
+* add user context support ([#131](https://github.com/AIGNE-io/aigne-framework/issues/131)) ([4dd9d20](https://github.com/AIGNE-io/aigne-framework/commit/4dd9d20953f6ac33933723db56efd9b44bafeb02))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.17.0
+
+## [1.9.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.8.1...agent-library-v1.9.0) (2025-05-23)
+
+
+### Features
+
+* **models:** publish model adapters as standalone packages ([#126](https://github.com/AIGNE-io/aigne-framework/issues/126)) ([588b8ae](https://github.com/AIGNE-io/aigne-framework/commit/588b8aea6abcee5fa87def1358bf51f84021c6ef))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.16.0
 
 ## [1.8.1](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.8.0...agent-library-v1.8.1) (2025-05-15)
 

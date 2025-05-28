@@ -46,9 +46,9 @@ pnpm add @aigne/core
 
 ### Usage Example
 
-```ts file=examples/workflow-handoff/usages.ts
+```ts file="/examples/workflow-handoff/usages.ts"
 import { AIAgent, AIGNE } from "@aigne/core";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { OpenAIChatModel } from "@aigne/openai";
 
 const { OPENAI_API_KEY } = process.env;
 
@@ -56,7 +56,7 @@ const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
-function transfer_to_b() {
+function transferToB() {
   return agentB;
 }
 
@@ -64,7 +64,7 @@ const agentA = AIAgent.from({
   name: "AgentA",
   instructions: "You are a helpful agent.",
   outputKey: "A",
-  skills: [transfer_to_b],
+  skills: [transferToB],
 });
 
 const agentB = AIAgent.from({
@@ -98,13 +98,19 @@ console.log(result2);
 * [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
 * [packages/agent-library](./packages/agent-library) - AIGNE agent library, providing a variety of specialized agents for different tasks.
 * [packages/cli](./packages/cli) - Command-line interface for AIGNE Framework, providing tools for project management and deployment.
+* models - AIGNE Framework's built-in models, including OpenAI, Gemini, Claude, and Nova.
+  * [packages/openai](./packages/openai) - OpenAI model implementation, supporting OpenAI's API and function calling.
+  * [packages/anthropic](./packages/anthropic) - Anthropic model implementation, supporting Anthropic's API and function calling.
+  * [packages/bedrock](./packages/bedrock) - Bedrock model implementation, supporting Bedrock's API and function calling.
+  * [packages/deepseek](./packages/deepseek) - DeepSeek model implementation, supporting DeepSeek's API and function calling.
+  * [packages/gemini](./packages/gemini) - Gemini model implementation, supporting Gemini's API and function calling.
+  * [packages/ollama](./packages/ollama) - Ollama model implementation, supporting Ollama's API and function calling.
+  * [packages/open-router](./packages/open-router) - OpenRouter model implementation, supporting OpenRouter's API and function calling.
+  * [packages/xai](./packages/xai) - XAI model implementation, supporting XAI's API and function calling.
 
 ## Documentation
 
-* [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): Practical recipes and patterns for AIGNE Framework API usage
-* [CLI Guide](./docs/cli.md) ([中文](./docs/cli.zh.md)): Comprehensive guide to the AIGNE CLI tool
-* [Agent Development Guide](./docs/agent-development.md) ([中文](./docs/agent-development.zh.md)): Guide to developing AIGNE agents using YAML/JS configuration files
-* [API References](https://aigne-io.github.io/#/api/@aigne/core/README)
+[AIGNE Framework Documentation](https://aigne-io.github.io/aigne-framework) provides comprehensive guides and API references to help developers quickly get started and master the framework.
 
 ## Architecture
 

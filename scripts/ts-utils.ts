@@ -1,5 +1,5 @@
 import { Biome, Distribution } from "@biomejs/js-api";
-import { Project, SyntaxKind } from "ts-morph";
+import { type Node, Project, SyntaxKind } from "ts-morph";
 
 export function removeFunctionCallsFromCode(sourceCode: string, functionName: string[]): string {
   const project = new Project();
@@ -8,10 +8,27 @@ export function removeFunctionCallsFromCode(sourceCode: string, functionName: st
   for (const e of sourceFile
     .getDescendantsOfKind(SyntaxKind.CallExpression)
     .filter((i) => functionName.includes(i.getExpression().getText()))) {
-    (
+    if (e?.wasForgotten()) continue;
+    const node =
       e.getFirstAncestorByKind(SyntaxKind.VariableStatement) ??
-      e.getFirstAncestorByKind(SyntaxKind.ExpressionStatement)
-    )?.replaceWithText("");
+      e.getFirstAncestorByKind(SyntaxKind.ExpressionStatement);
+    node?.replaceWithText("");
+  }
+
+  return sourceFile.getText();
+}
+
+export function removeCommentsFromCode(
+  sourceCode: string,
+  predict: (comment: Node) => boolean,
+): string {
+  const project = new Project();
+  const sourceFile = project.createSourceFile("temp.ts", sourceCode, { overwrite: true });
+
+  for (const e of sourceFile
+    .getDescendantsOfKind(SyntaxKind.SingleLineCommentTrivia)
+    .filter(predict)) {
+    e.replaceWithText("");
   }
 
   return sourceFile.getText();
@@ -71,4 +88,52 @@ export function extractTestCode(code: string): string {
   }
 
   return sourceFile.getText();
+}
+
+export function extractRegionCode(
+  code: string,
+  region: string,
+  { includeImports = false }: { includeImports?: boolean } = {},
+): string {
+  const project = new Project();
+  const sourceFile = project.createSourceFile("temp.ts", code, { overwrite: true });
+
+  const comments = sourceFile.getDescendantsOfKind(SyntaxKind.SingleLineCommentTrivia);
+
+  const regionStart = comments.find((comment) => comment.getText().endsWith(`#region ${region}`));
+  const regionEnd = comments.find((comment) => comment.getText().endsWith(`#endregion ${region}`));
+
+  if (!regionEnd) {
+    console.log(
+      region,
+      code,
+      comments.map((i) => i.getText()),
+    );
+  }
+
+  if (!regionStart) throw new Error(`Cannot find #region ${region}`);
+  if (!regionEnd) throw new Error(`Cannot find #endregion ${region}`);
+
+  const startLine = regionStart.getEndLineNumber();
+  const endLine = regionEnd.getStartLineNumber() - 1;
+
+  const lines = sourceFile.getFullText().split("\n").slice(startLine, endLine);
+
+  const extractedCode = lines.join("\n");
+
+  if (includeImports) {
+    return `${extractImports(code)}\n\n${extractedCode}`.trim();
+  }
+
+  return extractedCode;
+}
+
+export function extractImports(code: string): string {
+  const project = new Project();
+  const sourceFile = project.createSourceFile("temp.ts", code, { overwrite: true });
+
+  return sourceFile
+    .getImportDeclarations()
+    .map((i) => i.getText())
+    .join("\n");
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { AIAgent, AIGNE } from "@aigne/core";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { OpenAIChatModel } from "@aigne/openai";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
@@ -9,7 +9,7 @@ const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
-function transfer_to_b() {
+function transferToB() {
   return agentB;
 }
 
@@ -17,7 +17,7 @@ const agentA = AIAgent.from({
   name: "AgentA",
   instructions: "You are a helpful agent.",
   outputKey: "A",
-  skills: [transfer_to_b],
+  skills: [transferToB],
 });
 
 const agentB = AIAgent.from({

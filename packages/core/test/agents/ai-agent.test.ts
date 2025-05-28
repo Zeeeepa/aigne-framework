@@ -13,13 +13,12 @@ import {
   UserMessageTemplate,
   createMessage,
 } from "@aigne/core";
-import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import {
   readableStreamToArray,
   stringToAgentResponseStream,
 } from "@aigne/core/utils/stream-utils.js";
 import { z } from "zod";
+import { ClaudeChatModel, OpenAIChatModel } from "../_mocks/mock-models.js";
 import { createToolCallResponse } from "../_utils/openai-like-utils.js";
 
 test("AIAgent basic creation", async () => {
@@ -393,7 +392,7 @@ test.each([true, false])("AIAgent.invoke with streaming %p", async (streaming) =
     Promise.resolve(stringToAgentResponseStream("Here is a beautiful T-shirt")),
   );
 
-  const result = await agent.invoke("write a long blog about arcblock", context, { streaming });
+  const result = await agent.invoke("write a long blog about arcblock", { context, streaming });
 
   if (streaming) {
     assert(result instanceof ReadableStream);
@@ -461,9 +460,8 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
 
   const result = await aigne.invoke(agent, "1 + 1 = ?");
 
-  expect(plusCall).toHaveBeenCalledWith(
+  expect(plusCall).toHaveBeenLastCalledWith(
     { ...createMessage("1 + 1 = ?"), a: 1, b: 1 },
-    expect.anything(),
     expect.anything(),
   );
   expect(result).toEqual(createMessage("The sum is 2"));
@@ -501,9 +499,8 @@ test.each([true, false])(
       expect(result).toMatchSnapshot();
     }
 
-    expect(salesCall).toHaveBeenCalledWith(
+    expect(salesCall).toHaveBeenLastCalledWith(
       { ...createMessage("Hello, I want to buy a T-shirt"), indent: "T-shirt" },
-      expect.anything(),
       expect.anything(),
     );
   },

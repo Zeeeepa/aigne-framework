@@ -4,8 +4,6 @@ import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
 import { Agent, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
-import type { Context } from "../aigne/context.js";
-import type { Memory, MemoryAgent } from "../memory/memory.js";
 import type {
   ChatModel,
   ChatModelInput,
@@ -14,7 +12,9 @@ import type {
   ChatModelInputTool,
   ChatModelInputToolChoice,
   ChatModelOptions,
-} from "../models/chat-model.js";
+} from "../agents/chat-model.js";
+import type { Context } from "../aigne/context.js";
+import type { Memory, MemoryAgent } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
 import { isNil, orArrayToArray, unique } from "../utils/type-utils.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
@@ -28,10 +28,27 @@ import {
 
 export const MESSAGE_KEY = "$message";
 
-export function createMessage<I extends Message>(message: string | I): I {
-  return typeof message === "string"
-    ? ({ [MESSAGE_KEY]: message } as unknown as I)
-    : { ...message };
+export function createMessage<V extends Message>(
+  message: string,
+  variables?: V,
+): { [MESSAGE_KEY]: string } & typeof variables;
+export function createMessage<I extends Message, V extends Message>(
+  message: I,
+  variables?: V,
+): I & typeof variables;
+export function createMessage<I extends Message, V extends Message>(
+  message: string | I,
+  variables?: V,
+): ({ [MESSAGE_KEY]: string } | I) & typeof variables;
+export function createMessage<I extends Message, V extends Message>(
+  message: string | I,
+  variables?: V,
+): ({ [MESSAGE_KEY]: string } | I) & typeof variables {
+  return (
+    typeof message === "string"
+      ? { [MESSAGE_KEY]: message, ...variables }
+      : { ...message, ...variables }
+  ) as ({ [MESSAGE_KEY]: string } | I) & typeof variables;
 }
 
 export function getMessage(input: Message): string | undefined {

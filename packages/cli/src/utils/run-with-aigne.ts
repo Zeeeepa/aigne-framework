@@ -1,14 +1,15 @@
 import { fstat } from "node:fs";
 import { isatty } from "node:tty";
 import { promisify } from "node:util";
-import { AIGNE, type Agent, type ChatModelOptions, createMessage } from "@aigne/core";
-import { availableModels, loadModel } from "@aigne/core/loader/index.js";
+import { AIGNE, type Agent, type ChatModelOptions, UserAgent, createMessage } from "@aigne/core";
+import { loadModel } from "@aigne/core/loader/index.js";
 import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { readAllString } from "@aigne/core/utils/stream-utils.js";
 import { type PromiseOrValue, tryOrThrow } from "@aigne/core/utils/type-utils.js";
 import { Command } from "commander";
 import PrettyError from "pretty-error";
 import { ZodError, z } from "zod";
+import { availableModels } from "../constants.js";
 import { TerminalTracer } from "../tracer/terminal.js";
 import { type ChatLoopOptions, runChatLoopInTerminal } from "./run-chat-loop.js";
 
@@ -86,6 +87,7 @@ export async function runWithAIGNE(
       }
 
       const model = await loadModel(
+        availableModels,
         {
           ...parseModelOption(options.model),
           temperature: options.temperature,
@@ -138,7 +140,7 @@ export async function runAgentWithAIGNE(
       throw new Error("--chat mode requires a TTY terminal");
     }
 
-    const userAgent = aigne.invoke(agent);
+    const userAgent = agent instanceof UserAgent ? agent : aigne.invoke(agent);
 
     await runChatLoopInTerminal(userAgent, {
       ...chatLoopOptions,

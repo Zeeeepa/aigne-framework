@@ -5,11 +5,11 @@ import {
   type AgentResponseStream,
   type Message,
 } from "../agents/agent.js";
+import { ChatModel } from "../agents/chat-model.js";
 import type { UserAgent } from "../agents/user-agent.js";
-import { load } from "../loader/index.js";
-import { ChatModel } from "../models/chat-model.js";
+import { type LoadOptions, load } from "../loader/index.js";
 import { checkArguments, createAccessorArray } from "../utils/type-utils.js";
-import { AIGNEContext, type InvokeOptions } from "./context.js";
+import { AIGNEContext, type Context, type InvokeOptions, type UserContext } from "./context.js";
 import {
   type MessagePayload,
   MessageQueue,
@@ -65,7 +65,7 @@ export interface AIGNEOptions {
  * Here's an example of how to use AIGNE with streaming response:
  * {@includeCode ../../test/aigne/aigne.test.ts#example-streaming}
  */
-export class AIGNE {
+export class AIGNE<U extends UserContext = UserContext> {
   /**
    * Loads an AIGNE instance from a directory containing an aigne.yaml file and agent definitions.
    * This static method provides a convenient way to initialize an AIGNE system from configuration files.
@@ -74,8 +74,11 @@ export class AIGNE {
    * @param options - Options to override the loaded configuration.
    * @returns A fully initialized AIGNE instance with configured agents and skills.
    */
-  static async load(path: string, options?: AIGNEOptions): Promise<AIGNE> {
-    const { model, agents, skills, ...aigne } = await load({ path });
+  static async load(
+    path: string,
+    options: AIGNEOptions & Pick<LoadOptions, "models">,
+  ): Promise<AIGNE> {
+    const { model, agents, skills, ...aigne } = await load({ models: options.models, path });
     return new AIGNE({
       ...options,
       model: options?.model || model,
@@ -165,8 +168,8 @@ export class AIGNE {
    *
    * @returns A new AIGNEContext instance bound to this AIGNE.
    */
-  newContext() {
-    return new AIGNEContext(this);
+  newContext(options?: Partial<Context>) {
+    return new AIGNEContext(this, options);
   }
 
   /**
@@ -195,7 +198,7 @@ export class AIGNE {
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message: I | string,
-    options: InvokeOptions & { returnActiveAgent: true; streaming?: false },
+    options: InvokeOptions<U> & { returnActiveAgent: true; streaming?: false },
   ): Promise<[O, Agent]>;
 
   /**
@@ -211,7 +214,7 @@ export class AIGNE {
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message: I | string,
-    options: InvokeOptions & { returnActiveAgent: true; streaming: true },
+    options: InvokeOptions<U> & { returnActiveAgent: true; streaming: true },
   ): Promise<[AgentResponseStream<O>, Promise<Agent>]>;
 
   /**
@@ -230,7 +233,7 @@ export class AIGNE {
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message: I | string,
-    options?: InvokeOptions & { returnActiveAgent?: false; streaming?: false },
+    options?: InvokeOptions<U> & { returnActiveAgent?: false; streaming?: false },
   ): Promise<O>;
 
   /**
@@ -249,7 +252,7 @@ export class AIGNE {
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message: I | string,
-    options: InvokeOptions & { returnActiveAgent?: false; streaming: true },
+    options: InvokeOptions<U> & { returnActiveAgent?: false; streaming: true },
   ): Promise<AgentResponseStream<O>>;
 
   /**
@@ -265,13 +268,13 @@ export class AIGNE {
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message?: I | string,
-    options?: InvokeOptions,
+    options?: InvokeOptions<U>,
   ): UserAgent<I, O> | Promise<AgentResponse<O> | [AgentResponse<O>, Agent]>;
 
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
     message?: I | string,
-    options?: InvokeOptions,
+    options?: InvokeOptions<U>,
   ): UserAgent<I, O> | Promise<AgentResponse<O> | [AgentResponse<O>, Agent]> {
     return new AIGNEContext(this).invoke(agent, message, options);
   }
@@ -283,13 +286,18 @@ export class AIGNE {
    *
    * @param topic - The topic or array of topics to publish the message to
    * @param payload - The message payload to be delivered to subscribers
+   * @param options - Optional configuration parameters for the publish operation
    *
    * @example
    * Here's an example of how to publish a message:
    * {@includeCode ../../test/aigne/aigne.test.ts#example-publish-message}
    */
-  publish(topic: string | string[], payload: Omit<MessagePayload, "context"> | Message | string) {
-    return new AIGNEContext(this).publish(topic, payload);
+  publish(
+    topic: string | string[],
+    payload: Omit<MessagePayload, "context"> | Message | string,
+    options?: InvokeOptions<U>,
+  ) {
+    return new AIGNEContext(this).publish(topic, payload, options);
   }
 
   /**

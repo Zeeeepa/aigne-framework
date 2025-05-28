@@ -46,9 +46,9 @@ pnpm add @aigne/core
 
 ### 使用示例
 
-```ts file=examples/workflow-handoff/usages.ts
+```ts file="/examples/workflow-handoff/usages.ts"
 import { AIAgent, AIGNE } from "@aigne/core";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { OpenAIChatModel } from "@aigne/openai";
 
 const { OPENAI_API_KEY } = process.env;
 
@@ -56,7 +56,7 @@ const model = new OpenAIChatModel({
   apiKey: OPENAI_API_KEY,
 });
 
-function transfer_to_b() {
+function transferToB() {
   return agentB;
 }
 
@@ -64,7 +64,7 @@ const agentA = AIAgent.from({
   name: "AgentA",
   instructions: "You are a helpful agent.",
   outputKey: "A",
-  skills: [transfer_to_b],
+  skills: [transferToB],
 });
 
 const agentB = AIAgent.from({
@@ -98,13 +98,19 @@ console.log(result2);
 * [packages/core](./packages/core) - 核心包，为构建 AIGNE 应用程序提供基础。
 * [packages/agent-library](./packages/agent-library) - 提供多种代理实现，简化代理的创建和管理。
 * [packages/cli](./packages/cli) - 命令行工具，提供便捷的命令行界面，简化开发和调试过程。
+* models - 大语言模型的实现，支持多种模型和 API
+  * [packages/openai](./packages/openai) - OpenAI 模型的实现，支持 OpenAI 的 API 和函数调用。
+  * [packages/anthropic](./packages/anthropic) - Anthropic 模型的实现，支持 Anthropic 的 API 和函数调用。
+  * [packages/bedrock](./packages/bedrock) - Bedrock 模型的实现，支持 Bedrock 的 API 和函数调用。
+  * [packages/deepseek](./packages/deepseek) - DeepSeek 模型的实现，支持 DeepSeek 的 API 和函数调用。
+  * [packages/gemini](./packages/gemini) - Gemini 模型的实现，支持 Gemini 的 API 和函数调用。
+  * [packages/ollama](./packages/ollama) - Ollama 模型的实现，支持 Ollama 的 API 和函数调用。
+  * [packages/open-router](./packages/open-router) - OpenRouter 模型的实现，支持 OpenRouter 的 API 和函数调用。
+  * [packages/xai](./packages/xai) - XAI 模型的实现，支持 XAI 的 API 和函数调用。
 
 ## 文档
 
-* [Cookbook](./docs/cookbook.md) ([中文](./docs/cookbook.zh.md)): AIGNE Framework API 使用的实用方案和模式
-* [CLI 指南](./docs/cli.md) ([中文](./docs/cli.zh.md)): AIGNE CLI 工具的全面指南
-* [代理开发指南](./docs/agent-development.md) ([中文](./docs/agent-development.zh.md)): 使用 YAML/JS 配置文件开发 AIGNE 代理的指南
-* [API 参考](https://aigne-io.github.io/#/api/@aigne/core/README)
+[AIGNE Framework 文档](https://aigne-io.github.io/aigne-framework) 提供了全面的 API 参考和使用指南，帮助开发者快速上手。
 
 ## 架构
 
