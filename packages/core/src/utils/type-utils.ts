@@ -82,6 +82,31 @@ export function unique<T>(arr: T[], key: (item: T) => unknown = (item: T) => ite
   });
 }
 
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  ...keys: (K | K[])[]
+): Omit<T, K> {
+  const flattenedKeys = new Set(keys.flat());
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) => !flattenedKeys.has(key as K)),
+  ) as Omit<T, K>;
+}
+
+export function omitDeep<T, K>(obj: T, ...keys: (K | K[])[]): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => omitDeep(item, ...keys));
+  }
+  if (isRecord(obj)) {
+    const flattenedKeys = new Set(keys.flat());
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([key]) => !flattenedKeys.has(key as K))
+        .map(([key, value]) => [key, omitDeep(value, ...keys)]),
+    );
+  }
+  return obj;
+}
+
 export function omitBy<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   predicate: (value: T[K], key: K) => boolean,

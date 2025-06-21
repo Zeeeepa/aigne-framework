@@ -176,7 +176,6 @@ export function addNullableToOptional(schema: Schema): Schema {
   return newSchema;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 function makeNullable(schema: any): any {
   if (!schema || typeof schema !== "object") return schema;
 

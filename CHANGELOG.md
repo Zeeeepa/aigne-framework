@@ -4,6 +4,78 @@
 
 * add user context support ([#131](https://github.com/AIGNE-io/aigne-framework/issues/131)) ([4dd9d20](https://github.com/AIGNE-io/aigne-framework/commit/4dd9d20953f6ac33933723db56efd9b44bafeb02))
 
+## [1.22.1](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.22.0...aigne-framework-v1.22.1) (2025-06-19)
+
+
+### Bug Fixes
+
+* use `inputKey` instead of implicit $message for AIAgent ([#165](https://github.com/AIGNE-io/aigne-framework/issues/165)) ([8b6e589](https://github.com/AIGNE-io/aigne-framework/commit/8b6e5896bba8209fd2eecb0f5b9263618bffdaf8))
+
+## [1.22.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.21.0...aigne-framework-v1.22.0) (2025-06-17)
+
+
+### Features
+
+* support return $meta output by enable returnMetadata option ([#163](https://github.com/AIGNE-io/aigne-framework/issues/163)) ([ac73759](https://github.com/AIGNE-io/aigne-framework/commit/ac73759615d44a09fa71b3bfbd3e9356ffe1d2ed))
+
+## [1.21.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.6...aigne-framework-v1.21.0) (2025-06-16)
+
+
+### Features
+
+* support respond progressing chunks by enable `returnProgressChunks` option for aigne.invoke ([cf4c313](https://github.com/AIGNE-io/aigne-framework/commit/cf4c313ee69f255be799ac196da675b79f69bf76))
+
+## [1.20.6](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.5...aigne-framework-v1.20.6) (2025-06-11)
+
+
+### Bug Fixes
+
+* **core:** add async generator polyfill for ReadableStream on safari ([#158](https://github.com/AIGNE-io/aigne-framework/issues/158)) ([70ef026](https://github.com/AIGNE-io/aigne-framework/commit/70ef026f413726c369f6a0781efc7f0333735406))
+* **core:** exclude nested skills from final tool list in invokable skill ([#156](https://github.com/AIGNE-io/aigne-framework/issues/156)) ([91645f1](https://github.com/AIGNE-io/aigne-framework/commit/91645f12e79110a00f8f2db8ebc19401ddbd5a80))
+
+## [1.20.5](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.4...aigne-framework-v1.20.5) (2025-06-06)
+
+
+### Bug Fixes
+
+* **core:** should pass memories from invocation options to nested agents ([#153](https://github.com/AIGNE-io/aigne-framework/issues/153)) ([57629a5](https://github.com/AIGNE-io/aigne-framework/commit/57629a5da6cf2a295356dfe32ecbb15154e098fe))
+
+## [1.20.4](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.3...aigne-framework-v1.20.4) (2025-06-05)
+
+
+### Bug Fixes
+
+* **core:** prioritize returning json chunks ([#151](https://github.com/AIGNE-io/aigne-framework/issues/151)) ([8bf49a1](https://github.com/AIGNE-io/aigne-framework/commit/8bf49a18c083b33d2e0b35e8d0f22f68d9d6effa))
+
+## [1.20.3](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.2...aigne-framework-v1.20.3) (2025-06-05)
+
+
+### Bug Fixes
+
+* compatible nodejs version &gt;=20 ([#149](https://github.com/AIGNE-io/aigne-framework/issues/149)) ([d5ae9f2](https://github.com/AIGNE-io/aigne-framework/commit/d5ae9f245972e87e70fd87cdd960ade9940f288c))
+
+## [1.20.2](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.1...aigne-framework-v1.20.2) (2025-05-30)
+
+
+### Bug Fixes
+
+* blank file handling in converter ([#146](https://github.com/AIGNE-io/aigne-framework/issues/146)) ([4323522](https://github.com/AIGNE-io/aigne-framework/commit/432352202ab958ed4788cd2eeb81a918831e07e7))
+* provide available memories for AIGNE ([#145](https://github.com/AIGNE-io/aigne-framework/issues/145)) ([c5dc960](https://github.com/AIGNE-io/aigne-framework/commit/c5dc9605e0fb7ca60e1f5fa2f0da67ffec00c601))
+
+## [1.20.1](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.20.0...aigne-framework-v1.20.1) (2025-05-30)
+
+
+### Bug Fixes
+
+* respect DEBUG env for logger ([#142](https://github.com/AIGNE-io/aigne-framework/issues/142)) ([f84738a](https://github.com/AIGNE-io/aigne-framework/commit/f84738acb382d9fb4f47253fcf91c92c02200053))
+
+## [1.20.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.19.0...aigne-framework-v1.20.0) (2025-05-29)
+
+
+### Features
+
+* add memory agents support for client agent ([#139](https://github.com/AIGNE-io/aigne-framework/issues/139)) ([57044fa](https://github.com/AIGNE-io/aigne-framework/commit/57044fa87b8abcba395cd05f941d6d312ab65764))
+
 ## [1.19.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.18.0...aigne-framework-v1.19.0) (2025-05-27)
 
 

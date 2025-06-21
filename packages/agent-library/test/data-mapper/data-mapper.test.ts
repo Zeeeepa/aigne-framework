@@ -30,7 +30,6 @@ test(
 
     // Verify data transformation
     const sourceData = JSON.parse(testData.sourceData);
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
     // Verify key fields
@@ -61,7 +60,6 @@ test(
 
     // Verify data transformation
     const sourceData = JSON.parse(testData2.sourceData);
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
     // Verify key fields
@@ -95,7 +93,6 @@ test(
 
     // Verify data transformation
     const sourceData = JSON.parse(testData3.sourceData);
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const transformedData = (await applyJsonata(sourceData, result?.jsonata || "")) as any;
 
     // Verify key fields
@@ -124,11 +121,8 @@ test("getSchemaFromData - basic tests", () => {
   const simpleData = { name: "test", value: 123 };
   const schema = getSchemaFromData(simpleData);
   expect(schema).not.toBeNull();
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   expect((schema as any).type).toBe("object");
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   expect((schema as any).properties.name.type).toBe("string");
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   expect((schema as any).properties.value.type).toBe("integer");
 });
 
@@ -143,7 +137,6 @@ test("applyJsonata - error handling", async () => {
 // Testing error handling for applyJsonataWithValidation
 test("applyJsonataWithValidation - error handling", async () => {
   const data = { test: "value" };
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const schema: any = {
     type: "object",
     properties: {
@@ -331,7 +324,6 @@ test("addNullableToOptional - schema modification", () => {
   };
 
   // Applying addNullableToOptional
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const modifiedSchema = addNullableToOptional(schema) as any;
 
   // Verifying that required_field type hasn't changed
@@ -379,7 +371,6 @@ test("addNullableToOptional - top level array schema", () => {
   };
 
   // Applying addNullableToOptional
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const modifiedSchema = addNullableToOptional(arraySchema) as any;
 
   // Verifying the structure is preserved

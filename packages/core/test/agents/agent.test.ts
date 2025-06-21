@@ -11,6 +11,7 @@ import {
   type AgentResponseStream,
   FunctionAgent,
   type Message,
+  isAgentResponseDelta,
   textDelta,
 } from "@aigne/core";
 import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent";
@@ -34,7 +35,7 @@ test("Custom agent", async () => {
 
   const agent = new MyAgent();
 
-  const result = await agent.invoke("hello");
+  const result = await agent.invoke({ message: "hello" });
 
   console.log(result); // { text: "Hello, How can I assist you today?" }
 
@@ -92,12 +93,14 @@ test("Agent returning a ReadableStream", async () => {
   }
 
   const agent = new StreamResponseAgent();
-  const stream = await agent.invoke("Hello", { streaming: true });
+  const stream = await agent.invoke({ message: "Hello" }, { streaming: true });
 
   let fullText = "";
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+    }
   }
 
   console.log(fullText); // Output: "Hello, This is..."
@@ -129,15 +132,17 @@ test("Agent using AsyncGenerator", async () => {
   }
 
   const agent = new AsyncGeneratorAgent();
-  const stream = await agent.invoke("Hello", { streaming: true });
+  const stream = await agent.invoke({ message: "Hello" }, { streaming: true });
 
   const message: string[] = [];
   let json: Message | undefined;
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.message;
-    if (text) message.push(text);
-    if (chunk.delta.json) json = chunk.delta.json;
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.message;
+      if (text) message.push(text);
+      if (chunk.delta.json) json = chunk.delta.json;
+    }
   }
 
   console.log(message); // Output: ["This", ",", " ", "This", " ", "is", "..."]
@@ -171,7 +176,7 @@ test("Agent returning another agent (transfer agent)", async () => {
   const aigne = new AIGNE({});
   const mainAgent = new MainAgent();
 
-  const result = await aigne.invoke(mainAgent, "technical question");
+  const result = await aigne.invoke(mainAgent, { message: "technical question" });
   console.log(result); // { response: "This is a specialist response", expertise: "technical" }
 
   expect(result).toEqual({ response: "This is a specialist response", expertise: "technical" });
@@ -198,14 +203,15 @@ test("Agent.invoke with regular response", async () => {
   const agent = AIAgent.from({
     name: "chat",
     description: "A chat agent",
+    inputKey: "message",
   });
 
   // Invoke the agent
-  const result = await aigne.invoke(agent, "hello");
+  const result = await aigne.invoke(agent, { message: "hello" });
 
-  console.log(result); // Output: { $message: "Hello, How can I assist you today?" }
+  console.log(result); // Output: { message: "Hello, How can I assist you today?" }
 
-  expect(result).toEqual({ $message: "Hello, How can I assist you today?" });
+  expect(result).toEqual({ message: "Hello, How can I assist you today?" });
 
   // #endregion example-invoke
 });
@@ -229,18 +235,21 @@ test("Agent.invoke with streaming response", async () => {
   const agent = AIAgent.from({
     name: "chat",
     description: "A chat agent",
+    inputKey: "message",
   });
 
   // Invoke the agent with streaming enabled
-  const stream = await aigne.invoke(agent, "hello", { streaming: true });
+  const stream = await aigne.invoke(agent, { message: "hello" }, { streaming: true });
 
   const chunks: string[] = [];
 
   // Read the stream using an async iterator
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.$message;
-    if (text) {
-      chunks.push(text);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.message;
+      if (text) {
+        chunks.push(text);
+      }
     }
   }
 
@@ -413,7 +422,7 @@ test("Agent should return the original error from guide rails", async () => {
     }),
   );
 
-  const result = await agent.invoke("What will be the price of Bitcoin next year?");
+  const result = await agent.invoke({ message: "What will be the price of Bitcoin next year?" });
 
   expect(result).toEqual({
     $status: "GuideRailError",
@@ -466,18 +475,20 @@ test("Agent can be intercepted by guide rails", async () => {
     }),
   );
 
-  const result = await aigne.invoke(agent, "What will be the price of Bitcoin next month?");
+  const result = await aigne.invoke(agent, {
+    message: "What will be the price of Bitcoin next month?",
+  });
 
   console.log(result);
   // Output:
   // {
   //   "$status": "GuideRailError",
-  //   "$message": "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading."
+  //   "message": "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading."
   // }
 
   expect(result).toEqual({
     $status: "GuideRailError",
-    $message:
+    message:
       "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading.",
   });
 
@@ -507,6 +518,7 @@ test("Agent should respond result if no any guide rails error", async () => {
 
   const agent = AIAgent.from({
     guideRails: [financial],
+    inputKey: "message",
   });
 
   spyOn(model, "process").mockReturnValueOnce(
@@ -524,10 +536,10 @@ test("Agent should respond result if no any guide rails error", async () => {
     }),
   );
 
-  const result = await aigne.invoke(agent, "How to create an agent?");
+  const result = await aigne.invoke(agent, { message: "How to create an agent?" });
 
   expect(result).toEqual({
-    $message: "You can use AIGNE Framework create a useful agent!",
+    message: "You can use AIGNE Framework create a useful agent!",
   });
 });
 
@@ -607,6 +619,7 @@ test("Agent hooks simple example", async () => {
       },
     },
     skills: [weather],
+    inputKey: "message",
   });
 
   const onStart = spyOn(agent.hooks, "onStart");
@@ -618,19 +631,19 @@ test("Agent hooks simple example", async () => {
     .mockReturnValueOnce({ toolCalls: [createToolCallResponse("weather", { city: "Paris" })] })
     .mockReturnValueOnce({ text: "The weather in Paris is 25 degrees." });
 
-  const result = await aigne.invoke(agent, "What is the weather in Paris?");
+  const result = await aigne.invoke(agent, { message: "What is the weather in Paris?" });
 
   console.log(result);
-  // Output: { $message: "The weather in Paris is 25 degrees." }
+  // Output: { message: "The weather in Paris is 25 degrees." }
 
-  expect(result).toEqual({ $message: "The weather in Paris is 25 degrees." });
+  expect(result).toEqual({ message: "The weather in Paris is 25 degrees." });
   expect(onStart).toHaveBeenLastCalledWith(
-    expect.objectContaining({ input: { $message: "What is the weather in Paris?" } }),
+    expect.objectContaining({ input: { message: "What is the weather in Paris?" } }),
   );
   expect(onEnd).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      input: { $message: "What is the weather in Paris?" },
-      output: { $message: "The weather in Paris is 25 degrees." },
+      input: { message: "What is the weather in Paris?" },
+      output: { message: "The weather in Paris is 25 degrees." },
     }),
   );
   expect(onSkillStart).toHaveBeenLastCalledWith(
@@ -667,17 +680,20 @@ test("Agent hook onHandoff should work correctly", async () => {
       },
     ],
     toolChoice: AIAgentToolChoice.router,
+    inputKey: "message",
   });
 
   const onHandoff = spyOn(triage.hooks, "onHandoff");
 
-  const feedback = AIAgent.from({});
+  const feedback = AIAgent.from({
+    inputKey: "message",
+  });
 
   spyOn(model, "process")
     .mockReturnValueOnce({ toolCalls: [createToolCallResponse("transferToFeedback", {})] })
     .mockReturnValueOnce({ text: "Hello, I am feedback agent." });
 
-  const result = await aigne.invoke(triage, "I want to give feedback");
+  const result = await aigne.invoke(triage, { message: "I want to give feedback" });
 
   console.log(result);
 
@@ -685,9 +701,9 @@ test("Agent hook onHandoff should work correctly", async () => {
     expect.objectContaining({
       source: triage,
       target: feedback,
-      input: { $message: "I want to give feedback" },
+      input: { message: "I want to give feedback" },
     }),
   );
 
-  expect(result).toEqual({ $message: "Hello, I am feedback agent." });
+  expect(result).toEqual({ message: "Hello, I am feedback agent." });
 });

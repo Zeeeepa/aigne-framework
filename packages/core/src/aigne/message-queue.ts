@@ -1,7 +1,6 @@
-import { EventEmitter } from "node:events";
+import { Emitter, type EventMap } from "strict-event-emitter";
 import { z } from "zod";
 import type { Message } from "../agents/agent.js";
-import { createMessage } from "../prompt/prompt-builder.js";
 import { checkArguments, isNil, orArrayToArray } from "../utils/type-utils.js";
 import type { Context } from "./context.js";
 
@@ -43,16 +42,16 @@ function isMessagePayload(payload: unknown): payload is Omit<MessagePayload, "co
  * @hidden
  */
 export function toMessagePayload(
-  payload: Omit<MessagePayload, "context"> | string | Message,
+  payload: Omit<MessagePayload, "context"> | Message,
   options?: Partial<Pick<MessagePayload, "role" | "source">>,
 ): Omit<MessagePayload, "context"> {
   if (isMessagePayload(payload)) {
-    return { ...payload, message: createMessage(payload.message), ...options };
+    return { ...payload, ...options };
   }
   return {
     role: options?.role || "user",
     source: options?.source,
-    message: createMessage(payload),
+    message: payload,
   };
 }
 
@@ -66,11 +65,15 @@ export type MessageQueueListener = (message: MessagePayload) => void;
  */
 export type Unsubscribe = () => void;
 
+interface MessageQueueEventMap extends EventMap {
+  [key: string]: any[];
+}
+
 /**
  * @hidden
  */
 export class MessageQueue {
-  events = new EventEmitter();
+  events = new Emitter<MessageQueueEventMap>();
 
   publish(topic: string | string[], payload: MessagePayload) {
     checkArguments("MessageQueue.publish", publishArgsSchema, {
@@ -131,7 +134,7 @@ export class MessageQueue {
 }
 
 function on<T>(
-  events: EventEmitter,
+  events: Emitter<MessageQueueEventMap>,
   event: string | string[],
   listener: (arg: T, ...args: unknown[]) => void,
 ): Unsubscribe {
@@ -140,7 +143,7 @@ function on<T>(
 }
 
 function once<T>(
-  events: EventEmitter,
+  events: Emitter<MessageQueueEventMap>,
   event: string | string[],
   listener: (arg: T, ...args: unknown[]) => void,
 ): Unsubscribe {

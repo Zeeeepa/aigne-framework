@@ -1,4 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
+import assert from "node:assert";
 import { AIAgent, AIGNE, FunctionAgent, type Message } from "@aigne/core";
 import { ProcessMode, TeamAgent } from "@aigne/core/agents/team-agent.js";
 import {
@@ -97,10 +98,12 @@ test.each(processModes)(
 
     const first = AIAgent.from({
       outputKey: "first",
+      inputKey: "message",
     });
 
     const second = AIAgent.from({
       outputKey: "second",
+      inputKey: "message",
     });
 
     spyOn(model, "process")
@@ -112,7 +115,7 @@ test.each(processModes)(
       mode,
     });
 
-    const stream = await aigne.invoke(team, "hello", { streaming: true });
+    const stream = await aigne.invoke(team, { message: "hello" }, { streaming: true });
 
     expect(readableStreamToArray(stream)).resolves.toMatchSnapshot();
   },
@@ -142,8 +145,44 @@ test.each(processModes)(
       mode,
     });
 
-    const stream = await aigne.invoke(team, "hello", { streaming: true });
+    const stream = await aigne.invoke(team, { message: "hello" }, { streaming: true });
 
     expect(readableStreamToArray(stream)).resolves.toMatchSnapshot();
   },
 );
+
+test("TeamAgent with sequential mode should yield output chunks correctly", async () => {
+  const teamAgent = TeamAgent.from({
+    name: "sequential-team",
+    mode: ProcessMode.sequential,
+    skills: [
+      FunctionAgent.from({
+        name: "search",
+        process: async ({ question }: Message) => {
+          return {
+            question,
+            result: [
+              { title: "First Result", link: "https://example.com/1" },
+              { title: "Second Result", link: "https://example.com/2" },
+            ],
+          };
+        },
+      }),
+      AIAgent.from({
+        name: "summarizer",
+        instructions: "Summarize the search results:\n{{result}}",
+        outputKey: "summary",
+      }),
+    ],
+  });
+
+  const aigne = new AIGNE({ model: new OpenAIChatModel() });
+
+  assert(aigne.model);
+  spyOn(aigne.model, "process").mockReturnValueOnce(
+    stringToAgentResponseStream("First Result, Second Result"),
+  );
+
+  const stream = await aigne.invoke(teamAgent, { question: "What is AIGNE?" }, { streaming: true });
+  expect(await readableStreamToArray(stream)).toMatchSnapshot();
+});

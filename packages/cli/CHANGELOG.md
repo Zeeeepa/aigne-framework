@@ -1,5 +1,208 @@
 # Changelog
 
+## [1.11.9](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.8...cli-v1.11.9) (2025-06-19)
+
+
+### Bug Fixes
+
+* use `inputKey` instead of implicit $message for AIAgent ([#165](https://github.com/AIGNE-io/aigne-framework/issues/165)) ([8b6e589](https://github.com/AIGNE-io/aigne-framework/commit/8b6e5896bba8209fd2eecb0f5b9263618bffdaf8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.13.2
+    * @aigne/anthropic bumped to 0.3.2
+    * @aigne/bedrock bumped to 0.3.2
+    * @aigne/core bumped to 1.20.1
+    * @aigne/deepseek bumped to 0.3.2
+    * @aigne/gemini bumped to 0.3.2
+    * @aigne/ollama bumped to 0.3.2
+    * @aigne/open-router bumped to 0.3.2
+    * @aigne/openai bumped to 0.3.2
+    * @aigne/xai bumped to 0.3.2
+
+## [1.11.8](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.7...cli-v1.11.8) (2025-06-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.13.1
+    * @aigne/anthropic bumped to 0.3.1
+    * @aigne/bedrock bumped to 0.3.1
+    * @aigne/core bumped to 1.20.0
+    * @aigne/deepseek bumped to 0.3.1
+    * @aigne/gemini bumped to 0.3.1
+    * @aigne/ollama bumped to 0.3.1
+    * @aigne/open-router bumped to 0.3.1
+    * @aigne/openai bumped to 0.3.1
+    * @aigne/xai bumped to 0.3.1
+
+## [1.11.7](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.6...cli-v1.11.7) (2025-06-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.13.0
+    * @aigne/anthropic bumped to 0.3.0
+    * @aigne/bedrock bumped to 0.3.0
+    * @aigne/core bumped to 1.19.0
+    * @aigne/deepseek bumped to 0.3.0
+    * @aigne/gemini bumped to 0.3.0
+    * @aigne/ollama bumped to 0.3.0
+    * @aigne/open-router bumped to 0.3.0
+    * @aigne/openai bumped to 0.3.0
+    * @aigne/xai bumped to 0.3.0
+
+## [1.11.6](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.5...cli-v1.11.6) (2025-06-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.12.6
+    * @aigne/anthropic bumped to 0.2.7
+    * @aigne/bedrock bumped to 0.2.7
+    * @aigne/core bumped to 1.18.6
+    * @aigne/deepseek bumped to 0.2.7
+    * @aigne/gemini bumped to 0.2.7
+    * @aigne/ollama bumped to 0.2.7
+    * @aigne/open-router bumped to 0.2.7
+    * @aigne/openai bumped to 0.2.7
+    * @aigne/xai bumped to 0.2.7
+
+## [1.11.5](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.4...cli-v1.11.5) (2025-06-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.12.5
+    * @aigne/anthropic bumped to 0.2.6
+    * @aigne/bedrock bumped to 0.2.6
+    * @aigne/core bumped to 1.18.5
+    * @aigne/deepseek bumped to 0.2.6
+    * @aigne/gemini bumped to 0.2.6
+    * @aigne/ollama bumped to 0.2.6
+    * @aigne/open-router bumped to 0.2.6
+    * @aigne/openai bumped to 0.2.6
+    * @aigne/xai bumped to 0.2.6
+
+## [1.11.4](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.3...cli-v1.11.4) (2025-06-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.12.4
+    * @aigne/anthropic bumped to 0.2.5
+    * @aigne/bedrock bumped to 0.2.5
+    * @aigne/core bumped to 1.18.4
+    * @aigne/deepseek bumped to 0.2.5
+    * @aigne/gemini bumped to 0.2.5
+    * @aigne/ollama bumped to 0.2.5
+    * @aigne/open-router bumped to 0.2.5
+    * @aigne/openai bumped to 0.2.5
+    * @aigne/xai bumped to 0.2.5
+
+## [1.11.3](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.2...cli-v1.11.3) (2025-06-05)
+
+
+### Bug Fixes
+
+* compatible nodejs version &gt;=20 ([#149](https://github.com/AIGNE-io/aigne-framework/issues/149)) ([d5ae9f2](https://github.com/AIGNE-io/aigne-framework/commit/d5ae9f245972e87e70fd87cdd960ade9940f288c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.12.3
+    * @aigne/anthropic bumped to 0.2.4
+    * @aigne/bedrock bumped to 0.2.4
+    * @aigne/core bumped to 1.18.3
+    * @aigne/deepseek bumped to 0.2.4
+    * @aigne/gemini bumped to 0.2.4
+    * @aigne/ollama bumped to 0.2.4
+    * @aigne/open-router bumped to 0.2.4
+    * @aigne/openai bumped to 0.2.4
+    * @aigne/xai bumped to 0.2.4
+
+## [1.11.2](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.1...cli-v1.11.2) (2025-05-30)
+
+
+### Bug Fixes
+
+* provide available memories for AIGNE ([#145](https://github.com/AIGNE-io/aigne-framework/issues/145)) ([c5dc960](https://github.com/AIGNE-io/aigne-framework/commit/c5dc9605e0fb7ca60e1f5fa2f0da67ffec00c601))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.12.2
+    * @aigne/anthropic bumped to 0.2.3
+    * @aigne/bedrock bumped to 0.2.3
+    * @aigne/core bumped to 1.18.2
+    * @aigne/deepseek bumped to 0.2.3
+    * @aigne/gemini bumped to 0.2.3
+    * @aigne/ollama bumped to 0.2.3
+    * @aigne/open-router bumped to 0.2.3
+    * @aigne/openai bumped to 0.2.3
+    * @aigne/xai bumped to 0.2.3
+
+## [1.11.1](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.11.0...cli-v1.11.1) (2025-05-30)
+
+
+### Bug Fixes
+
+* respect DEBUG env for logger ([#142](https://github.com/AIGNE-io/aigne-framework/issues/142)) ([f84738a](https://github.com/AIGNE-io/aigne-framework/commit/f84738acb382d9fb4f47253fcf91c92c02200053))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/anthropic bumped to 0.2.2
+    * @aigne/bedrock bumped to 0.2.2
+    * @aigne/core bumped to 1.18.1
+    * @aigne/deepseek bumped to 0.2.2
+    * @aigne/gemini bumped to 0.2.2
+    * @aigne/ollama bumped to 0.2.2
+    * @aigne/open-router bumped to 0.2.2
+    * @aigne/openai bumped to 0.2.2
+    * @aigne/xai bumped to 0.2.2
+
+## [1.11.0](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.10.1...cli-v1.11.0) (2025-05-29)
+
+
+### Features
+
+* add memory agents support for client agent ([#139](https://github.com/AIGNE-io/aigne-framework/issues/139)) ([57044fa](https://github.com/AIGNE-io/aigne-framework/commit/57044fa87b8abcba395cd05f941d6d312ab65764))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/anthropic bumped to 0.2.1
+    * @aigne/bedrock bumped to 0.2.1
+    * @aigne/core bumped to 1.18.0
+    * @aigne/deepseek bumped to 0.2.1
+    * @aigne/gemini bumped to 0.2.1
+    * @aigne/ollama bumped to 0.2.1
+    * @aigne/open-router bumped to 0.2.1
+    * @aigne/openai bumped to 0.2.1
+    * @aigne/xai bumped to 0.2.1
+
 ## [1.10.1](https://github.com/AIGNE-io/aigne-framework/compare/cli-v1.10.0...cli-v1.10.1) (2025-05-25)
 
 

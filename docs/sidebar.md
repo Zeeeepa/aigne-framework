@@ -1,4 +1,4 @@
-* Getting Started
+* [Getting Started](/getting-started/index.md)
 
   * [What is AIGNE](/getting-started/what-is-aigne.md)
   * [Quick Start](/getting-started/quick-start.md)
@@ -11,6 +11,7 @@
   * [Enable Memory for Agent](/how-to-guides/enable-memory-for-agent.md)
   * [Custom User Context](/how-to-guides/custom-user-context.md)
   * [Serve Agent as API](/how-to-guides/serve-agent-as-api.md)
+  * [Enable Memory for Client Agent](/how-to-guides/enable-memory-for-client-agent.md)
   * [Available Chat Models](/how-to-guides/available-chat-models.md)
 
 * Concepts
@@ -24,6 +25,22 @@
   * [Guide Rail Agent](/concepts/guide-rail-agent.md)
   * [Chat Model](/concepts/chat-model.md)
   * [HTTP Transport](/concepts/http-transport.md)
+
+* [AIGNE CLI](/cli/index.md)
+
+  * [Create Project](/cli/create.md)
+
+  * [Run Agent](/cli/run.md)
+
+  * [Serve Agent](/cli/serve.md)
+
+  * [Test Agent](/cli/test.md)
+
+  * [Agent Definitions](/cli/definitions/index.md)
+
+    * [AI Agent](/cli/definitions/agent.md)
+    * [MCP Agent](/cli/definitions/mcp.md)
+    * [Function Agent](/cli/definitions/function.md)
 
 <!-- api reference -->
 

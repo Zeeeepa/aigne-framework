@@ -16,12 +16,13 @@
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-custom-user-context-create-agent" exclude_imports
 const agent = AIAgent.from({
   instructions: "You are a helpful assistant for Crypto market analysis",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
       getSessionId: ({ userContext }) => userContext.userId as string, // Use userId from userContext as session ID
     },
-  },
+  }),
+  inputKey: "message",
 });
 ```
 
@@ -37,13 +38,13 @@ const agent = AIAgent.from({
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-custom-user-context-invoke-agent" exclude_imports
 const result = await aigne.invoke(
   agent,
-  "My name is John Doe and I like to invest in Bitcoin.",
+  { message: "My name is John Doe and I like to invest in Bitcoin." },
   {
     userContext: { userId: "user_123" },
   },
 );
 console.log(result);
-// Output: { $message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
+// Output: { message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
 ```
 
 **说明**：
@@ -59,6 +60,7 @@ console.log(result);
 下面的代码展示了如何创建一个 Agent 并从用户上下文中获取会话 ID，以实现多用户隔离的记忆功能：
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-custom-user-context"
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
 
@@ -68,23 +70,24 @@ const aigne = new AIGNE({
 
 const agent = AIAgent.from({
   instructions: "You are a helpful assistant for Crypto market analysis",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
       getSessionId: ({ userContext }) => userContext.userId as string, // Use userId from userContext as session ID
     },
-  },
+  }),
+  inputKey: "message",
 });
 
 const result = await aigne.invoke(
   agent,
-  "My name is John Doe and I like to invest in Bitcoin.",
+  { message: "My name is John Doe and I like to invest in Bitcoin." },
   {
     userContext: { userId: "user_123" },
   },
 );
 console.log(result);
-// Output: { $message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
+// Output: { message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
 ```
 
 ## 最佳实践

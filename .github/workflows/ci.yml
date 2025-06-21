@@ -32,7 +32,10 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
+          pnpm exec playwright install --with-deps
+
 
       - name: Build
         run: pnpm build

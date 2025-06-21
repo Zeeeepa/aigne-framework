@@ -1,0 +1,269 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+        "modelOptions": undefined,
+        "responseFormat": undefined,
+        "toolChoice": undefined,
+        "tools": undefined,
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": ",",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "How",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "can",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "I",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "assist",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "you",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello, How can I assist you today?",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "today",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "?",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello, How can I assist you today?",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) correctly 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+        "modelOptions": undefined,
+        "responseFormat": undefined,
+        "toolChoice": undefined,
+        "tools": undefined,
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "error": [Error: Test error],
+      "event": "agentFailed",
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "error": [Error: Test error],
+      "event": "agentFailed",
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " world",
+      },
+    },
+  },
+  [Error: Test error],
+]
+`;
+
+exports[`AIGNE.invoke should respond $meta field with usage metrics with {
+  streaming: true,
+  returnMetadata: true,
+} 1`] = `
+[
+  {
+    "delta": {
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": " world",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "$meta": {
+          "usage": {
+            "agentCalls": 4,
+            "inputTokens": 13,
+            "outputTokens": 24,
+          },
+        },
+        "message": "Hello world",
+      },
+    },
+  },
+]
+`;

@@ -1,27 +1,30 @@
 import { EOL } from "node:os";
 import { inspect } from "node:util";
 import {
+  AIAgent,
   type Agent,
   ChatModel,
   type ChatModelOutput,
   type Context,
   type ContextEventMap,
   type ContextUsage,
-  MESSAGE_KEY,
+  DEFAULT_OUTPUT_KEY,
   type Message,
 } from "@aigne/core";
 import { LogLevel, logger } from "@aigne/core/utils/logger.js";
+import { promiseWithResolvers } from "@aigne/core/utils/promise.js";
+import { omit } from "@aigne/core/utils/type-utils.js";
 import type { Listener } from "@aigne/core/utils/typed-event-emtter.js";
 import { type Listr, figures } from "@aigne/listr2";
 import { markedTerminal } from "@aigne/marked-terminal";
 import chalk from "chalk";
 import { Marked } from "marked";
 import { AIGNEListr, type AIGNEListrTaskWrapper } from "../utils/listr.js";
-import { promiseWithResolvers } from "../utils/promise-with-resolvers.js";
 import { parseDuration } from "../utils/time.js";
 
 export interface TerminalTracerOptions {
   printRequest?: boolean;
+  outputKey?: string;
 }
 
 export class TerminalTracer {
@@ -38,8 +41,8 @@ export class TerminalTracer {
     const listr = new AIGNEListr(
       {
         formatRequest: () =>
-          this.options.printRequest ? this.formatRequest(context, input) : undefined,
-        formatResult: (result) => [this.formatResult(context, result)].filter(Boolean),
+          this.options.printRequest ? this.formatRequest(agent, context, input) : undefined,
+        formatResult: (result) => [this.formatResult(agent, context, result)].filter(Boolean),
       },
       [],
       { concurrent: true },
@@ -183,12 +186,33 @@ export class TerminalTracer {
     return title;
   }
 
-  private marked = new Marked().use(markedTerminal({ forceHyperLink: false }));
+  private marked = new Marked().use(
+    {
+      // marked-terminal does not support code block meta, so we need to strip it
+      walkTokens: (token) => {
+        if (token.type === "code") {
+          if (typeof token.lang === "string") {
+            token.lang = token.lang.trim().split(/\s+/)[0];
+          }
+        }
+      },
+    },
+    markedTerminal({ forceHyperLink: false }),
+  );
 
-  formatRequest(_context: Context, { [MESSAGE_KEY]: msg, ...message }: Message = {}) {
+  get outputKey() {
+    return this.options.outputKey || DEFAULT_OUTPUT_KEY;
+  }
+
+  formatRequest(agent: Agent, _context: Context, m: Message = {}) {
     if (!logger.enabled(LogLevel.INFO)) return;
 
     const prefix = `${chalk.grey(figures.pointer)} 💬 `;
+
+    const inputKey = agent instanceof AIAgent ? agent.inputKey : undefined;
+
+    const msg = inputKey ? m[inputKey] : undefined;
+    const message = inputKey ? omit(m, inputKey) : m;
 
     const text =
       msg && typeof msg === "string" ? this.marked.parse(msg, { async: false }).trim() : undefined;
@@ -198,18 +222,25 @@ export class TerminalTracer {
     return [prefix, [text, json].filter(Boolean).join(EOL)].join(" ");
   }
 
-  formatResult(context: Context, { [MESSAGE_KEY]: msg, ...message }: Message = {}) {
+  formatResult(agent: Agent, context: Context, m: Message = {}) {
+    const { isTTY } = process.stdout;
+    const outputKey = agent instanceof AIAgent ? agent.outputKey : undefined;
+
     const prefix = logger.enabled(LogLevel.INFO)
       ? `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`
       : null;
 
-    const text =
-      msg && typeof msg === "string" ? this.marked.parse(msg, { async: false }).trim() : undefined;
+    const msg = outputKey ? m[outputKey] : undefined;
+    const message = outputKey ? omit(m, outputKey) : m;
 
-    const json =
-      Object.keys(message).length > 0
-        ? inspect(message, { colors: process.stdout.isTTY })
+    const text =
+      msg && typeof msg === "string"
+        ? isTTY
+          ? this.marked.parse(msg, { async: false }).trim()
+          : msg
         : undefined;
+
+    const json = Object.keys(message).length > 0 ? inspect(message, { colors: isTTY }) : undefined;
 
     return [prefix, text, json].filter(Boolean).join(EOL);
   }

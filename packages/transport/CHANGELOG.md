@@ -1,5 +1,145 @@
 # Changelog
 
+## [0.4.2](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.4.1...transport-v0.4.2) (2025-06-19)
+
+
+### Bug Fixes
+
+* use `inputKey` instead of implicit $message for AIAgent ([#165](https://github.com/AIGNE-io/aigne-framework/issues/165)) ([8b6e589](https://github.com/AIGNE-io/aigne-framework/commit/8b6e5896bba8209fd2eecb0f5b9263618bffdaf8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.3.2
+  * devDependencies
+    * @aigne/core bumped to 1.20.1
+    * @aigne/test-utils bumped to 0.4.2
+
+## [0.4.1](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.4.0...transport-v0.4.1) (2025-06-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.3.1
+  * devDependencies
+    * @aigne/core bumped to 1.20.0
+    * @aigne/test-utils bumped to 0.4.1
+
+## [0.4.0](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.6...transport-v0.4.0) (2025-06-16)
+
+
+### Features
+
+* support respond progressing chunks by enable `returnProgressChunks` option for aigne.invoke ([cf4c313](https://github.com/AIGNE-io/aigne-framework/commit/cf4c313ee69f255be799ac196da675b79f69bf76))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.3.0
+  * devDependencies
+    * @aigne/core bumped to 1.19.0
+    * @aigne/test-utils bumped to 0.4.0
+
+## [0.3.6](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.5...transport-v0.3.6) (2025-06-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.7
+  * devDependencies
+    * @aigne/core bumped to 1.18.6
+    * @aigne/test-utils bumped to 0.3.8
+
+## [0.3.5](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.4...transport-v0.3.5) (2025-06-06)
+
+
+### Bug Fixes
+
+* **core:** should pass memories from invocation options to nested agents ([#153](https://github.com/AIGNE-io/aigne-framework/issues/153)) ([57629a5](https://github.com/AIGNE-io/aigne-framework/commit/57629a5da6cf2a295356dfe32ecbb15154e098fe))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.6
+  * devDependencies
+    * @aigne/core bumped to 1.18.5
+    * @aigne/test-utils bumped to 0.3.7
+
+## [0.3.4](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.3...transport-v0.3.4) (2025-06-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.5
+  * devDependencies
+    * @aigne/core bumped to 1.18.4
+    * @aigne/test-utils bumped to 0.3.6
+
+## [0.3.3](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.2...transport-v0.3.3) (2025-06-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.4
+  * devDependencies
+    * @aigne/core bumped to 1.18.3
+    * @aigne/test-utils bumped to 0.3.5
+
+## [0.3.2](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.1...transport-v0.3.2) (2025-05-30)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.3
+  * devDependencies
+    * @aigne/core bumped to 1.18.2
+    * @aigne/test-utils bumped to 0.3.4
+
+## [0.3.1](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.3.0...transport-v0.3.1) (2025-05-30)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.2
+  * devDependencies
+    * @aigne/core bumped to 1.18.1
+    * @aigne/test-utils bumped to 0.3.3
+
+## [0.3.0](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.2.0...transport-v0.3.0) (2025-05-29)
+
+
+### Features
+
+* add memory agents support for client agent ([#139](https://github.com/AIGNE-io/aigne-framework/issues/139)) ([57044fa](https://github.com/AIGNE-io/aigne-framework/commit/57044fa87b8abcba395cd05f941d6d312ab65764))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.2.1
+  * devDependencies
+    * @aigne/core bumped to 1.18.0
+    * @aigne/test-utils bumped to 0.3.2
+
 ## [0.2.0](https://github.com/AIGNE-io/aigne-framework/compare/transport-v0.1.0...transport-v0.2.0) (2025-05-25)
 
 

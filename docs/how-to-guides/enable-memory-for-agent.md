@@ -17,14 +17,18 @@ Let's understand the implementation details of each step:
 
 ### Create Agent with Memory Functionality
 
-```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-enable-memory" exclude_imports
+```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-enable-memory"
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
+import { AIAgent } from "@aigne/core";
+
 const agent = AIAgent.from({
   instructions: "You are a helpful assistant for Crypto market analysis",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
     },
-  },
+  }),
+  inputKey: "message",
 });
 ```
 
@@ -37,12 +41,11 @@ const agent = AIAgent.from({
 ### First Round of Conversation - Provide Personal Information
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-invoke-agent-1" exclude_imports
-const result1 = await aigne.invoke(
-  agent,
-  "My name is John Doe and I like to invest in Bitcoin.",
-);
+const result1 = await aigne.invoke(agent, {
+  message: "My name is John Doe and I like to invest in Bitcoin.",
+});
 console.log(result1);
-// Output: { $message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
+// Output: { message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
 ```
 
 **Explanation**:
@@ -56,12 +59,11 @@ console.log(result1);
 ### Second Round of Conversation - Test Memory Capability
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-invoke-agent-2" exclude_imports
-const result2 = await aigne.invoke(
-  agent,
-  "What is my favorite cryptocurrency?",
-);
+const result2 = await aigne.invoke(agent, {
+  message: "What is my favorite cryptocurrency?",
+});
 console.log(result2);
-// Output: { $message: "Your favorite cryptocurrency is Bitcoin." }
+// Output: { message: "Your favorite cryptocurrency is Bitcoin." }
 ```
 
 **Explanation**:
@@ -75,9 +77,11 @@ console.log(result2);
 ### Third Round of Conversation - Add More Information
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-invoke-agent-3" exclude_imports
-const result3 = await aigne.invoke(agent, "I've invested $5000 in Ethereum.");
+const result3 = await aigne.invoke(agent, {
+  message: "I've invested $5000 in Ethereum.",
+});
 console.log(result3);
-// Output: { $message: "Got it, you've invested $5000 in Ethereum! That's a good investment. If there's anything else you'd like to share about your crypto portfolio or have questions, feel free!" }
+// Output: { message: "Got it, you've invested $5000 in Ethereum! That's a good investment. If there's anything else you'd like to share about your crypto portfolio or have questions, feel free!" }
 ```
 
 **Explanation**:
@@ -91,12 +95,11 @@ console.log(result3);
 ### Fourth Round of Conversation - Further Test Memory Capability
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-invoke-agent-4" exclude_imports
-const result4 = await aigne.invoke(
-  agent,
-  "How much have I invested in Ethereum?",
-);
+const result4 = await aigne.invoke(agent, {
+  message: "How much have I invested in Ethereum?",
+});
 console.log(result4);
-// Output: { $message: "You've invested $5000 in Ethereum." }
+// Output: { message: "You've invested $5000 in Ethereum." }
 ```
 
 **Explanation**:
@@ -112,6 +115,7 @@ console.log(result4);
 The following example shows how to create an Agent with memory functionality and test its memory capability in continuous conversations:
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent"
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
 
@@ -121,37 +125,37 @@ const aigne = new AIGNE({
 
 const agent = AIAgent.from({
   instructions: "You are a helpful assistant for Crypto market analysis",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
     },
-  },
+  }),
+  inputKey: "message",
 });
 
-const result1 = await aigne.invoke(
-  agent,
-  "My name is John Doe and I like to invest in Bitcoin.",
-);
+const result1 = await aigne.invoke(agent, {
+  message: "My name is John Doe and I like to invest in Bitcoin.",
+});
 console.log(result1);
-// Output: { $message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
+// Output: { message: "Nice to meet you, John Doe! Bitcoin is an interesting cryptocurrency to invest in. How long have you been investing in crypto? Do you have a diversified portfolio?" }
 
-const result2 = await aigne.invoke(
-  agent,
-  "What is my favorite cryptocurrency?",
-);
+const result2 = await aigne.invoke(agent, {
+  message: "What is my favorite cryptocurrency?",
+});
 console.log(result2);
-// Output: { $message: "Your favorite cryptocurrency is Bitcoin." }
+// Output: { message: "Your favorite cryptocurrency is Bitcoin." }
 
-const result3 = await aigne.invoke(agent, "I've invested $5000 in Ethereum.");
+const result3 = await aigne.invoke(agent, {
+  message: "I've invested $5000 in Ethereum.",
+});
 console.log(result3);
-// Output: { $message: "Got it, you've invested $5000 in Ethereum! That's a good investment. If there's anything else you'd like to share about your crypto portfolio or have questions, feel free!" }
+// Output: { message: "Got it, you've invested $5000 in Ethereum! That's a good investment. If there's anything else you'd like to share about your crypto portfolio or have questions, feel free!" }
 
-const result4 = await aigne.invoke(
-  agent,
-  "How much have I invested in Ethereum?",
-);
+const result4 = await aigne.invoke(agent, {
+  message: "How much have I invested in Ethereum?",
+});
 console.log(result4);
-// Output: { $message: "You've invested $5000 in Ethereum." }
+// Output: { message: "You've invested $5000 in Ethereum." }
 ```
 
 ## How Memory Functionality Works

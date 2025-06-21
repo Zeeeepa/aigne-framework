@@ -2,6 +2,7 @@
 
 import assert from "node:assert";
 import { randomUUID } from "node:crypto";
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import {
   AIAgent,
   AIAgentToolChoice,
@@ -9,8 +10,6 @@ import {
   FunctionAgent,
   PromptTemplate,
   UserAgent,
-  createMessage,
-  getMessage,
 } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
 import inquirer from "inquirer";
@@ -34,19 +33,21 @@ const writer = AIAgent.from({
   name: "writer",
   description: "Writer for creating any text content",
   publishTopic: DEFAULT_TOPIC,
-  memory: { subscribeTopic: DEFAULT_TOPIC },
+  memory: new DefaultMemory({ subscribeTopic: DEFAULT_TOPIC }),
   instructions: "You are a Writer. You produce good work.",
+  inputKey: "message",
 });
 
 const editor = AIAgent.from({
   name: "editor",
   description: "Editor for planning and reviewing the content",
   publishTopic: DEFAULT_TOPIC,
-  memory: { subscribeTopic: DEFAULT_TOPIC },
+  memory: new DefaultMemory({ subscribeTopic: DEFAULT_TOPIC }),
   instructions: `\
 You are an Editor. Plan and guide the task given by the user.
 Provide critical feedbacks to the draft and illustration produced by Writer and Illustrator.
 Approve if the task is completed and the draft and illustration meets user's requirements.`,
+  inputKey: "message",
 });
 
 const generateImage = FunctionAgent.from({
@@ -67,7 +68,7 @@ const illustrator = AIAgent.from({
   name: "illustrator",
   description: "An illustrator for creating images",
   publishTopic: DEFAULT_TOPIC,
-  memory: { subscribeTopic: DEFAULT_TOPIC },
+  memory: new DefaultMemory({ subscribeTopic: DEFAULT_TOPIC }),
   instructions: `\
 You are an Illustrator. You use the generate_image tool to create images given user's requirement.
 Make sure the images have consistent characters and style.`,
@@ -82,6 +83,7 @@ Make sure the images have consistent characters and style.`,
       )
       .describe("The images created by the illustrator"),
   }),
+  inputKey: "message",
 });
 
 let isFirstQuestion = true;
@@ -104,7 +106,7 @@ const user = UserAgent.from({
       },
     ]);
     isFirstQuestion = false;
-    return createMessage(question);
+    return { message: question };
   },
 });
 
@@ -114,7 +116,7 @@ const manager = AIAgent.from({
   name: "manager",
   subscribeTopic: DEFAULT_TOPIC,
   publishTopic: (output) => output.role,
-  memory: { subscribeTopic: DEFAULT_TOPIC },
+  memory: new DefaultMemory({ subscribeTopic: DEFAULT_TOPIC }),
   instructions: PromptTemplate.from(`\
   You are participating in a role-playing game. The available roles are:
 
@@ -136,6 +138,7 @@ const manager = AIAgent.from({
       .union(assertZodUnionArray(roles.map((i) => z.literal(i.topic))))
       .describe("The next role to play"),
   }),
+  inputKey: "message",
 });
 
 aigne.addAgent(user, writer, editor, illustrator, manager);
@@ -144,7 +147,7 @@ aigne.subscribe(DEFAULT_TOPIC, (message) => {
   console.log(
     "------------- Received message -------------\n",
     `${message.source}:`,
-    getMessage(message.message) || message.message,
+    message.message.message || message.message,
     "\n--------------------------------------------",
   );
 });

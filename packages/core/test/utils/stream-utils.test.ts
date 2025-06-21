@@ -6,6 +6,7 @@ import {
   arrayToReadableStream,
   asyncGeneratorToReadableStream,
   mergeAgentResponseChunk,
+  mergeReadableStreams,
   objectToAgentResponseStream,
   onAgentResponseStreamEnd,
   readAllString,
@@ -169,11 +170,61 @@ test("onAgentResponseStreamEnd should continue reading until end", async () => {
       { delta: {} },
       { delta: { text: { text: "world" } } },
     ]),
-    () => {},
   );
 
   expect(await readableStreamToArray(stream)).toEqual([
     { delta: { text: { text: "Hello " } } },
     { delta: { text: { text: "world" } } },
   ]);
+});
+
+test("mergeReadableStreams should merge multiple streams", async () => {
+  const stream1 = arrayToReadableStream([{ delta: { text: { text: "Hello" } } }]);
+  const stream2 = arrayToReadableStream([{ delta: { text: { text: " world" } } }]);
+  const mergedStream = mergeReadableStreams(stream1, stream2);
+
+  expect(await readableStreamToArray(mergedStream)).toEqual([
+    { delta: { text: { text: "Hello" } } },
+    { delta: { text: { text: " world" } } },
+  ]);
+});
+
+test("mergeReadableStreams should throw error from input stream", async () => {
+  const stream1 = arrayToReadableStream([
+    { delta: { text: { text: "Hello" } } },
+    { delta: { text: { text: " world" } } },
+    { delta: { text: { text: " SHOULD NOT MERGED" } } },
+  ]);
+  const stream2 = arrayToReadableStream([
+    { delta: { text: { text: " 123" } } },
+    new Error("test error"),
+  ]);
+
+  const mergedStream = mergeReadableStreams(stream1, stream2);
+  expect(await readableStreamToArray(mergedStream, { catchError: true })).toMatchInlineSnapshot(`
+    [
+      {
+        "delta": {
+          "text": {
+            "text": "Hello",
+          },
+        },
+      },
+      {
+        "delta": {
+          "text": {
+            "text": " 123",
+          },
+        },
+      },
+      {
+        "delta": {
+          "text": {
+            "text": " world",
+          },
+        },
+      },
+      [Error: test error],
+    ]
+  `);
 });

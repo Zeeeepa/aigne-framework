@@ -4,10 +4,12 @@ import {
   type AgentResponseChunk,
   type AgentResponseStream,
   type Message,
+  isAgentResponseDelta,
   isEmptyChunk,
 } from "../agents/agent.js";
-import type { MESSAGE_KEY } from "../prompt/prompt-builder.js";
 import { type PromiseOrValue, omitBy } from "./type-utils.js";
+import "./stream-polyfill.js";
+import type { ReadableStreamDefaultReadResult } from "bun";
 
 export function objectToAgentResponseStream<T extends Message>(json: T): AgentResponseStream<T> {
   return new ReadableStream({
@@ -22,19 +24,21 @@ export function mergeAgentResponseChunk<T extends Message>(
   output: T,
   chunk: AgentResponseChunk<T>,
 ) {
-  if (chunk.delta.text) {
-    for (const [key, text] of Object.entries(chunk.delta.text)) {
-      const original = output[key] as string | undefined;
-      const t = (original || "") + (text || "");
-      if (t) Object.assign(output, { [key]: t });
+  if (isAgentResponseDelta(chunk)) {
+    if (chunk.delta.text) {
+      for (const [key, text] of Object.entries(chunk.delta.text)) {
+        const original = output[key] as string | undefined;
+        const t = (original || "") + (text || "");
+        if (t) Object.assign(output, { [key]: t });
+      }
     }
-  }
 
-  if (chunk.delta.json) {
-    Object.assign(
-      output,
-      omitBy(chunk.delta.json, (v) => v === undefined),
-    );
+    if (chunk.delta.json) {
+      Object.assign(
+        output,
+        omitBy(chunk.delta.json, (v) => v === undefined),
+      );
+    }
   }
 
   return output;
@@ -93,12 +97,14 @@ export function asyncGeneratorToReadableStream<T extends Message>(
 
 export function onAgentResponseStreamEnd<T extends Message>(
   stream: AgentResponseStream<T>,
-  callback: (result: T) => PromiseOrValue<Partial<T> | void>,
   options?: {
-    errorCallback?: (error: Error) => PromiseOrValue<Error>;
-    processChunk?: (chunk: AgentResponseChunk<T>) => AgentResponseChunk<T>;
+    onChunk?: (
+      chunk: AgentResponseChunk<T>,
+    ) => PromiseOrValue<AgentResponseChunk<T> | undefined | void>;
+    onResult?: (result: T) => PromiseOrValue<Partial<T> | undefined | void>;
+    onError?: (error: Error) => PromiseOrValue<Error>;
   },
-) {
+): AgentResponseStream<T> {
   const json: T = {} as T;
   const reader = stream.getReader();
 
@@ -109,11 +115,11 @@ export function onAgentResponseStreamEnd<T extends Message>(
           const { value, done } = await reader.read();
 
           if (done) {
-            const result = await callback(json);
+            const result = (await options?.onResult?.(json)) ?? json;
 
             if (result && !equal(result, json)) {
               let chunk: AgentResponseChunk<T> = { delta: { json: result } };
-              if (options?.processChunk) chunk = options.processChunk(chunk);
+              chunk = (await options?.onChunk?.(chunk)) ?? chunk;
               controller.enqueue(chunk);
             }
 
@@ -124,14 +130,14 @@ export function onAgentResponseStreamEnd<T extends Message>(
 
           mergeAgentResponseChunk(json, value);
 
-          const chunk = options?.processChunk ? options.processChunk(value) : value;
+          const chunk = (await options?.onChunk?.(value)) ?? value;
           if (!isEmptyChunk(chunk)) {
             controller.enqueue(chunk);
             break;
           }
         }
       } catch (error) {
-        controller.error((await options?.errorCallback?.(error)) ?? error);
+        controller.error((await options?.onError?.(error)) ?? error);
       }
     },
   });
@@ -182,7 +188,7 @@ export async function readableStreamToArray<T>(
 ): Promise<(T | Error)[]>;
 export async function readableStreamToArray<T>(
   stream: ReadableStream<T>,
-  options?: { catchError?: false },
+  options?: { catchError?: boolean },
 ): Promise<T[]>;
 export async function readableStreamToArray<T>(
   stream: ReadableStream<T>,
@@ -203,7 +209,7 @@ export async function readableStreamToArray<T>(
 
 export function stringToAgentResponseStream(
   str: string,
-  key: "text" | typeof MESSAGE_KEY | string = "text",
+  key: "text" | string = "text",
 ): AgentResponseStream<Message> {
   const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
   const segments = segmenter.segment(str);
@@ -251,4 +257,53 @@ export async function readAllString(stream: NodeJS.ReadStream | ReadableStream):
       ),
     )
   ).join("");
+}
+
+export function mergeReadableStreams<T1, T2>(
+  s1: ReadableStream<T1>,
+  s2: ReadableStream<T2>,
+): ReadableStream<T1 | T2>;
+export function mergeReadableStreams(...streams: ReadableStream<any>[]): ReadableStream<any>;
+export function mergeReadableStreams(...streams: ReadableStream<any>[]): ReadableStream<any> {
+  type Reader = {
+    reader: ReadableStreamDefaultReader;
+    reading?: Promise<{
+      result: ReadableStreamDefaultReadResult<any>;
+      item: any;
+    }>;
+  };
+
+  let readers: Reader[] | undefined;
+
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        readers ??= streams.map((s) => ({ reader: s.getReader(), data: [] }));
+
+        while (readers.length) {
+          const chunk: Awaited<NonNullable<Reader["reading"]>> = await Promise.race(
+            readers.map((i) => {
+              i.reading ??= i.reader.read().then((result) => ({ result, item: i }));
+              return i.reading;
+            }),
+          );
+
+          if (chunk.result.value) {
+            controller.enqueue(chunk.result.value);
+            chunk.item.reading = undefined;
+            return;
+          }
+
+          if (chunk.result.done) {
+            readers = readers.filter((i) => i !== chunk.item);
+          }
+        }
+
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+        if (readers) for (const item of readers) item.reader.releaseLock();
+      }
+    },
+  });
 }

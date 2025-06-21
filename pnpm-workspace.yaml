@@ -1,8 +1,10 @@
 packages:
   - packages/*
+  - models/*
   - examples/*
+  - tests/*
   - docs-examples
 onlyBuiltDependencies:
   - '@biomejs/biome'
+  - esbuild
   - simple-git-hooks
-  - sqlite3

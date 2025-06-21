@@ -6,39 +6,39 @@ import {
   AIAgentToolChoice,
   AIGNE,
   FunctionAgent,
-  MESSAGE_KEY,
+  MCPAgent,
   PromptBuilder,
-  createMessage,
+  TeamAgent,
 } from "@aigne/core";
-import { DefaultMemory } from "@aigne/core/memory/default-memory/index.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-
-test("userInput function should return correct object", () => {
-  const message = "Hello";
-  const result = createMessage(message);
-  expect(result).toEqual({ [MESSAGE_KEY]: message });
-});
+import { MockMemory } from "../_mocks/mock-memory.js";
 
 test("PromptBuilder should build messages correctly", async () => {
   const context = new AIGNE().newContext();
 
   const builder = PromptBuilder.from("Test instructions");
 
-  const memory = new DefaultMemory({});
+  const memory = new MockMemory({});
   await memory.record(
     {
       role: "agent",
-      content: [createMessage("Hello, How can I help you?")],
+      content: [{ message: "Hello, How can I help you?" }],
       source: "TestAgent",
     },
 
     context,
   );
 
-  const prompt1 = await builder.build({
+  const agent = AIAgent.from({
     memory,
-    input: createMessage("Hello"),
+    inputKey: "message",
+  });
+
+  const prompt1 = await builder.build({
+    agent,
+    input: { message: "Hello" },
     context,
   });
 
@@ -58,7 +58,7 @@ test("PromptBuilder should build messages correctly", async () => {
   ]);
 
   const prompt2 = await builder.build({
-    input: createMessage({ name: "foo" }),
+    input: { name: "foo" },
     context,
   });
   expect(prompt2.messages).toEqual([
@@ -114,10 +114,41 @@ test("PromptBuilder should build skills correctly", async () => {
     }),
   });
 
+  const teamAgentSkill = TeamAgent.from({
+    name: "TestTeamAgent",
+    skills: [
+      AIAgent.from({
+        name: "TestSkillInTeamAgent1",
+      }),
+      AIAgent.from({
+        name: "TestSkillInTeamAgent2",
+      }),
+    ],
+  });
+
+  // MCPAgent is not invokable, so we use it as a skill container
+  const mcpAgentSkill = new MCPAgent({
+    name: "TestMCPAgent",
+    client: new Client({
+      name: "TestClient",
+      version: "1.0.0",
+    }),
+    skills: [
+      AIAgent.from({
+        name: "TestMCPSkill1",
+        instructions: "TestMCPSkill1 instructions",
+      }),
+      AIAgent.from({
+        name: "TestMCPSkill2",
+        instructions: "TestMCPSkill2 instructions",
+      }),
+    ],
+  });
+
   const agent = AIAgent.from({
     name: "TestAgent",
     instructions: "Test instructions",
-    skills: [skill],
+    skills: [skill, teamAgentSkill, mcpAgentSkill],
     toolChoice: skill,
   });
 
@@ -138,6 +169,29 @@ test("PromptBuilder should build skills correctly", async () => {
           required: ["name"],
           additionalProperties: false,
         }),
+      },
+    },
+    // TeamAgent as skill, nested skills should no longer be included in the tools
+    {
+      type: "function",
+      function: {
+        name: "TestTeamAgent",
+        parameters: {},
+      },
+    },
+    // MCPAgent is not invokable, so it should not be included in the tools, and the nested skills should be included
+    {
+      type: "function",
+      function: {
+        name: "TestMCPSkill1",
+        parameters: {},
+      },
+    },
+    {
+      type: "function",
+      function: {
+        name: "TestMCPSkill2",
+        parameters: {},
       },
     },
   ]);
@@ -299,7 +353,7 @@ test("PromptBuilder from file", async () => {
   const path = join(import.meta.dirname, "test-prompt.txt");
   const content = await readFile(path, "utf-8");
 
-  const builder = await PromptBuilder.from({ path });
+  const builder = PromptBuilder.from({ path });
 
   const prompt = await builder.build({ input: { agentName: "Alice" }, context });
 

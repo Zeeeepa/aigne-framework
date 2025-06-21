@@ -99,18 +99,18 @@ console.log(result2);
 * [packages/agent-library](./packages/agent-library) - 提供多种代理实现，简化代理的创建和管理。
 * [packages/cli](./packages/cli) - 命令行工具，提供便捷的命令行界面，简化开发和调试过程。
 * models - 大语言模型的实现，支持多种模型和 API
-  * [packages/openai](./packages/openai) - OpenAI 模型的实现，支持 OpenAI 的 API 和函数调用。
-  * [packages/anthropic](./packages/anthropic) - Anthropic 模型的实现，支持 Anthropic 的 API 和函数调用。
-  * [packages/bedrock](./packages/bedrock) - Bedrock 模型的实现，支持 Bedrock 的 API 和函数调用。
-  * [packages/deepseek](./packages/deepseek) - DeepSeek 模型的实现，支持 DeepSeek 的 API 和函数调用。
-  * [packages/gemini](./packages/gemini) - Gemini 模型的实现，支持 Gemini 的 API 和函数调用。
-  * [packages/ollama](./packages/ollama) - Ollama 模型的实现，支持 Ollama 的 API 和函数调用。
-  * [packages/open-router](./packages/open-router) - OpenRouter 模型的实现，支持 OpenRouter 的 API 和函数调用。
-  * [packages/xai](./packages/xai) - XAI 模型的实现，支持 XAI 的 API 和函数调用。
+  * [models/openai](./models/openai) - OpenAI 模型的实现，支持 OpenAI 的 API 和函数调用。
+  * [models/anthropic](./models/anthropic) - Anthropic 模型的实现，支持 Anthropic 的 API 和函数调用。
+  * [models/bedrock](./models/bedrock) - Bedrock 模型的实现，支持 Bedrock 的 API 和函数调用。
+  * [models/deepseek](./models/deepseek) - DeepSeek 模型的实现，支持 DeepSeek 的 API 和函数调用。
+  * [models/gemini](./models/gemini) - Gemini 模型的实现，支持 Gemini 的 API 和函数调用。
+  * [models/ollama](./models/ollama) - Ollama 模型的实现，支持 Ollama 的 API 和函数调用。
+  * [models/open-router](./models/open-router) - OpenRouter 模型的实现，支持 OpenRouter 的 API 和函数调用。
+  * [models/xai](./models/xai) - XAI 模型的实现，支持 XAI 的 API 和函数调用。
 
 ## 文档
 
-[AIGNE Framework 文档](https://aigne-io.github.io/aigne-framework) 提供了全面的 API 参考和使用指南，帮助开发者快速上手。
+[AIGNE Framework 文档](https://www.arcblock.io/docs/aigne-framework) 提供了全面的 API 参考和使用指南，帮助开发者快速上手。
 
 ## 架构
 
@@ -316,5 +316,5 @@ AIGNE Framework 是一个开源项目，欢迎社区贡献。我们使用 [relea
 
 AIGNE Framework 拥有活跃的开发者社区，提供多种支持渠道：
 
-* [文档中心](https://aigne-io.github.io/#/api/@aigne/core/README)：全面的官方文档，帮助开发者快速入门。
+* [文档中心](https://www.arcblock.io/docs/aigne-framework)：全面的官方文档，帮助开发者快速入门。
 * [技术论坛](https://community.arcblock.io/discussions/boards/aigne)：与全球开发者交流经验，解决技术问题。

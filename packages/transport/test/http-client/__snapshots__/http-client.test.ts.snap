@@ -7,40 +7,149 @@ exports[`AIGNEClient should return correct process options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello ",
+        "message": "Hello ",
       },
       "text": {
-        "$message": " ",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world",
+        "message": "Hello world",
       },
       "text": {
-        "$message": "world",
+        "message": "world",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world!",
+        "message": "Hello world!",
       },
       "text": {
-        "$message": "!",
+        "message": "!",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNEClient should return correct process options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello ",
+      },
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
+      },
+      "text": {
+        "message": "world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
       },
     },
   },
@@ -51,7 +160,7 @@ exports[`AIGNEClient should return correct process options {
   streaming: false,
 } for express server 1`] = `
 {
-  "$message": "Hello world!",
+  "message": "Hello world!",
 }
 `;
 
@@ -62,40 +171,149 @@ exports[`AIGNEClient should return correct process options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello ",
+        "message": "Hello ",
       },
       "text": {
-        "$message": " ",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world",
+        "message": "Hello world",
       },
       "text": {
-        "$message": "world",
+        "message": "world",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world!",
+        "message": "Hello world!",
       },
       "text": {
-        "$message": "!",
+        "message": "!",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNEClient should return correct process options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (with json middleware) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello ",
+      },
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
+      },
+      "text": {
+        "message": "world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
       },
     },
   },
@@ -106,7 +324,7 @@ exports[`AIGNEClient should return correct process options {
   streaming: false,
 } for express (with json middleware) server 1`] = `
 {
-  "$message": "Hello world!",
+  "message": "Hello world!",
 }
 `;
 
@@ -117,40 +335,149 @@ exports[`AIGNEClient should return correct process options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello ",
+        "message": "Hello ",
       },
       "text": {
-        "$message": " ",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world",
+        "message": "Hello world",
       },
       "text": {
-        "$message": "world",
+        "message": "world",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world!",
+        "message": "Hello world!",
       },
       "text": {
-        "$message": "!",
+        "message": "!",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNEClient should return correct process options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (with compression middleware) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello ",
+      },
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
+      },
+      "text": {
+        "message": "world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
       },
     },
   },
@@ -161,7 +488,7 @@ exports[`AIGNEClient should return correct process options {
   streaming: false,
 } for express (with compression middleware) server 1`] = `
 {
-  "$message": "Hello world!",
+  "message": "Hello world!",
 }
 `;
 
@@ -172,40 +499,149 @@ exports[`AIGNEClient should return correct process options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello ",
+        "message": "Hello ",
       },
       "text": {
-        "$message": " ",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world",
+        "message": "Hello world",
       },
       "text": {
-        "$message": "world",
+        "message": "world",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world!",
+        "message": "Hello world!",
       },
       "text": {
-        "$message": "!",
+        "message": "!",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNEClient should return correct process options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (pass body directly) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello ",
+      },
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
+      },
+      "text": {
+        "message": "world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
       },
     },
   },
@@ -216,7 +652,7 @@ exports[`AIGNEClient should return correct process options {
   streaming: false,
 } for express (pass body directly) server 1`] = `
 {
-  "$message": "Hello world!",
+  "message": "Hello world!",
 }
 `;
 
@@ -227,40 +663,149 @@ exports[`AIGNEClient should return correct process options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello ",
+        "message": "Hello ",
       },
       "text": {
-        "$message": " ",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world",
+        "message": "Hello world",
       },
       "text": {
-        "$message": "world",
+        "message": "world",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello world!",
+        "message": "Hello world!",
       },
       "text": {
-        "$message": "!",
+        "message": "!",
+      },
+    },
+  },
+]
+`;
+
+exports[`AIGNEClient should return correct process options {
+  streaming: true,
+  returnProgressChunks: true,
+} for hono server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "text": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello ",
+      },
+      "text": {
+        "message": " ",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
+      },
+      "text": {
+        "message": "world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentSucceed",
+      "output": {
+        "message": "Hello world!",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
       },
     },
   },
@@ -271,7 +816,7 @@ exports[`AIGNEClient should return correct process options {
   streaming: false,
 } for hono server 1`] = `
 {
-  "$message": "Hello world!",
+  "message": "Hello world!",
 }
 `;
 
@@ -282,20 +827,106 @@ exports[`AIGNEClient should return error with options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello, world",
+        "message": "Hello, world",
       },
       "text": {
-        "$message": ", world",
+        "message": ", world",
+      },
+    },
+  },
+  [Error: test llm model error],
+]
+`;
+
+exports[`AIGNEClient should return error with options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello, world",
+      },
+      "text": {
+        "message": ", world",
       },
     },
   },
@@ -310,20 +941,106 @@ exports[`AIGNEClient should return error with options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello, world",
+        "message": "Hello, world",
       },
       "text": {
-        "$message": ", world",
+        "message": ", world",
+      },
+    },
+  },
+  [Error: test llm model error],
+]
+`;
+
+exports[`AIGNEClient should return error with options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (with json middleware) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello, world",
+      },
+      "text": {
+        "message": ", world",
       },
     },
   },
@@ -338,20 +1055,106 @@ exports[`AIGNEClient should return error with options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello, world",
+        "message": "Hello, world",
       },
       "text": {
-        "$message": ", world",
+        "message": ", world",
+      },
+    },
+  },
+  [Error: test llm model error],
+]
+`;
+
+exports[`AIGNEClient should return error with options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (with compression middleware) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello, world",
+      },
+      "text": {
+        "message": ", world",
       },
     },
   },
@@ -366,20 +1169,106 @@ exports[`AIGNEClient should return error with options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello, world",
+        "message": "Hello, world",
       },
       "text": {
-        "$message": ", world",
+        "message": ", world",
+      },
+    },
+  },
+  [Error: test llm model error],
+]
+`;
+
+exports[`AIGNEClient should return error with options {
+  streaming: true,
+  returnProgressChunks: true,
+} for express (pass body directly) server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello, world",
+      },
+      "text": {
+        "message": ", world",
       },
     },
   },
@@ -394,20 +1283,106 @@ exports[`AIGNEClient should return error with options {
   {
     "delta": {
       "json": {
-        "$message": "Hello",
+        "message": "Hello",
       },
       "text": {
-        "$message": "Hello",
+        "message": "Hello",
       },
     },
   },
   {
     "delta": {
       "json": {
-        "$message": "Hello, world",
+        "message": "Hello, world",
       },
       "text": {
-        "$message": ", world",
+        "message": ", world",
+      },
+    },
+  },
+  [Error: test llm model error],
+]
+`;
+
+exports[`AIGNEClient should return error with options {
+  streaming: true,
+  returnProgressChunks: true,
+} for hono server 1`] = `
+[
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "message": "hello",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "agentStarted",
+      "input": {
+        "messages": [
+          {
+            "content": "hello",
+            "role": "user",
+          },
+        ],
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello",
+      },
+      "text": {
+        "message": "Hello",
+      },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "chat",
+      },
+      "contextId": "TEST_CONTEXT_ID",
+      "error": [Error: test llm model error],
+      "event": "agentFailed",
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello, world",
+      },
+      "text": {
+        "message": ", world",
       },
     },
   },

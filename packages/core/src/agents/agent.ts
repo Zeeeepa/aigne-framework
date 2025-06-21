@@ -1,9 +1,11 @@
-import { inspect } from "node:util";
+import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { ZodObject, type ZodType, z } from "zod";
-import type { Context, UserContext } from "../aigne/context.js";
+import type { AgentEvent, Context, UserContext } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
-import type { MemoryAgent } from "../memory/memory.js";
-import { createMessage } from "../prompt/prompt-builder.js";
+import type { ContextUsage } from "../aigne/usage.js";
+import type { Memory, MemoryAgent } from "../memory/memory.js";
+import type { MemoryRecorderInput } from "../memory/recorder.js";
+import type { MemoryRetrieverInput } from "../memory/retriever.js";
 import { logger } from "../utils/logger.js";
 import {
   agentResponseStreamToObject,
@@ -33,7 +35,11 @@ export * from "./types.js";
 /**
  * Basic message type that can contain any key-value pairs
  */
-export type Message = Record<string, unknown>;
+export interface Message extends Record<string, unknown> {
+  $meta?: {
+    usage: ContextUsage;
+  };
+}
 
 /**
  * Topics the agent subscribes to, can be a single topic string or an array of topic strings
@@ -134,6 +140,11 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
    * One or more memory agents this agent can use
    */
   memory?: MemoryAgent | MemoryAgent[];
+
+  /**
+   * Maximum number of memory items to retrieve
+   */
+  maxRetrieveMemoryCount?: number;
 }
 
 export const agentOptionsSchema: ZodObject<{
@@ -151,6 +162,7 @@ export const agentOptionsSchema: ZodObject<{
   skills: z.array(z.union([z.custom<Agent>(), z.custom<FunctionAgentFn>()])).optional(),
   disableEvents: z.boolean().optional(),
   memory: z.union([z.custom<MemoryAgent>(), z.array(z.custom<MemoryAgent>())]).optional(),
+  maxRetrieveMemoryCount: z.number().optional(),
   hooks: z
     .object({
       onStart: z.custom<AgentHooks["onStart"]>().optional(),
@@ -190,6 +202,10 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
    * and returns the final JSON result
    */
   streaming?: boolean;
+
+  userContext?: U;
+
+  memories?: Pick<Memory, "content">[];
 }
 
 /**
@@ -237,6 +253,8 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
       this.memories.push(options.memory);
     }
 
+    this.maxRetrieveMemoryCount = options.maxRetrieveMemoryCount;
+
     this.hooks = options.hooks ?? {};
     this.guideRails = options.guideRails;
   }
@@ -245,6 +263,11 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * List of memories this agent can use
    */
   readonly memories: MemoryAgent[] = [];
+
+  /**
+   * Maximum number of memory items to retrieve
+   */
+  maxRetrieveMemoryCount?: number;
 
   /**
    * Lifecycle hooks for agent processing.
@@ -404,7 +427,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
   async onMessage({ message, context }: MessagePayload) {
     try {
-      await context.invoke(this, message);
+      await context.invoke(this, message as I);
     } catch (error) {
       context.emit("agentFailed", { agent: this, error });
     }
@@ -450,13 +473,44 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     return import("../aigne/context.js").then((m) => new m.AIGNEContext());
   }
 
+  async retrieveMemories(
+    input: Pick<MemoryRetrieverInput, "limit"> & { search?: Message | string },
+    options: Pick<AgentInvokeOptions, "context">,
+  ) {
+    const memories: Pick<Memory, "content">[] = [];
+
+    for (const memory of this.memories) {
+      const ms = (
+        await memory.retrieve(
+          {
+            ...input,
+            search: typeof input.search === "string" ? input.search : JSON.stringify(input.search),
+            limit: input.limit ?? this.maxRetrieveMemoryCount,
+          },
+          options.context,
+        )
+      ).memories;
+      memories.push(...ms);
+    }
+
+    return memories;
+  }
+
+  async recordMemories(input: MemoryRecorderInput, options: Pick<AgentInvokeOptions, "context">) {
+    for (const memory of this.memories) {
+      if (memory.autoUpdate) {
+        await memory.record(input, options.context);
+      }
+    }
+  }
+
   /**
    * Invoke the agent with regular (non-streaming) response
    *
    * Regular mode waits for the agent to complete processing and return the final result,
    * suitable for scenarios where a complete result is needed at once.
    *
-   * @param input Input message to the agent, can be a string or structured object
+   * @param input Input message to the agent
    * @param options Invocation options, must set streaming to false or leave unset
    * @returns Final JSON response
    *
@@ -465,7 +519,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * {@includeCode ../../test/agents/agent.test.ts#example-invoke}
    */
   async invoke(
-    input: I | string,
+    input: I & Message,
     options?: Partial<AgentInvokeOptions> & { streaming?: false },
   ): Promise<O>;
 
@@ -476,7 +530,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * suitable for scenarios requiring real-time progress updates, such as
    * chat bot typing effects.
    *
-   * @param input Input message to the agent, can be a string or structured object
+   * @param input Input message to the agent
    * @param options Invocation options, must set streaming to true for this overload
    * @returns Streaming response object
    *
@@ -485,7 +539,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * {@includeCode ../../test/agents/agent.test.ts#example-invoke-streaming}
    */
   async invoke(
-    input: I | string,
+    input: I & Message,
     options: Partial<AgentInvokeOptions> & { streaming: true },
   ): Promise<AgentResponseStream<O>>;
 
@@ -498,10 +552,13 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * @param options Invocation options
    * @returns Agent response (streaming or regular)
    */
-  async invoke(input: I | string, options?: Partial<AgentInvokeOptions>): Promise<AgentResponse<O>>;
+  async invoke(
+    input: I & Message,
+    options?: Partial<AgentInvokeOptions>,
+  ): Promise<AgentResponse<O>>;
 
   async invoke(
-    input: I | string,
+    input: I & Message,
     options: Partial<AgentInvokeOptions> = {},
   ): Promise<AgentResponse<O>> {
     const opts: AgentInvokeOptions = {
@@ -509,15 +566,22 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
       context: options.context ?? (await this.newDefaultContext()),
     };
 
-    const message = typeof input === "string" ? (createMessage(input) as I) : input;
+    if (options.userContext) {
+      Object.assign(opts.context.userContext, options.userContext);
+      options.userContext = undefined;
+    }
+    if (options.memories?.length) {
+      opts.context.memories.push(...options.memories);
+      options.memories = undefined;
+    }
 
     logger.debug("Invoke agent %s started with input: %O", this.name, input);
-    if (!this.disableEvents) opts.context.emit("agentStarted", { agent: this, input: message });
+    if (!this.disableEvents) opts.context.emit("agentStarted", { agent: this, input });
 
     try {
-      await this.hooks.onStart?.({ context: opts.context, input: message });
+      await this.hooks.onStart?.({ context: opts.context, input });
 
-      const parsedInput = checkArguments(`Agent ${this.name} input`, this.inputSchema, message);
+      const parsedInput = checkArguments(`Agent ${this.name} input`, this.inputSchema, input);
 
       await this.preprocess(parsedInput, opts);
 
@@ -534,27 +598,24 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
             ? response
             : isAsyncGenerator(response)
               ? asyncGeneratorToReadableStream(response)
-              : objectToAgentResponseStream(response);
+              : objectToAgentResponseStream(response as O);
 
         return this.checkResponseByGuideRails(
-          message,
-          onAgentResponseStreamEnd(
-            stream,
-            async (result) => {
+          input,
+          onAgentResponseStreamEnd(stream, {
+            onResult: async (result) => {
               return await this.processAgentOutput(parsedInput, result, opts);
             },
-            {
-              errorCallback: async (error) => {
-                return await this.processAgentError(message, error, opts);
-              },
+            onError: async (error) => {
+              return await this.processAgentError(input, error, opts);
             },
-          ),
+          }),
           opts,
         );
       }
 
       return await this.checkResponseByGuideRails(
-        message,
+        input,
         this.processAgentOutput(
           parsedInput,
           response instanceof ReadableStream
@@ -567,13 +628,13 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
         opts,
       );
     } catch (error) {
-      throw await this.processAgentError(message, error, opts);
+      throw await this.processAgentError(input, error, opts);
     }
   }
 
   protected async invokeSkill<I extends Message, O extends Message>(
     skill: Agent<I, O>,
-    input: I,
+    input: I & Message,
     options: AgentInvokeOptions,
   ): Promise<O> {
     const { context } = options;
@@ -690,14 +751,16 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     const result = await output;
 
     if (result instanceof ReadableStream) {
-      return onAgentResponseStreamEnd(result, async (result) => {
-        const error = await this.runGuideRails(input, result, options);
-        if (error) {
-          return {
-            ...(await this.onGuideRailError(error)),
-            $status: "GuideRailError",
-          } as unknown as O;
-        }
+      return onAgentResponseStreamEnd(result, {
+        onResult: async (result) => {
+          const error = await this.runGuideRails(input, result, options);
+          if (error) {
+            return {
+              ...(await this.onGuideRailError(error)),
+              $status: "GuideRailError",
+            } as unknown as O;
+          }
+        },
       });
     }
 
@@ -753,19 +816,15 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
     this.publishToTopics(output, options);
 
-    for (const memory of this.memories) {
-      if (memory.autoUpdate) {
-        await memory.record(
-          {
-            content: [
-              { role: "user", content: input },
-              { role: "agent", content: replaceTransferAgentToName(output), source: this.name },
-            ],
-          },
-          options.context,
-        );
-      }
-    }
+    await this.recordMemories(
+      {
+        content: [
+          { role: "user", content: input },
+          { role: "agent", content: replaceTransferAgentToName(output), source: this.name },
+        ],
+      },
+      options,
+    );
   }
 
   protected async publishToTopics(output: Message, options: AgentInvokeOptions) {
@@ -845,7 +904,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    *
    * @returns Agent name
    */
-  [inspect.custom]() {
+  [nodejs.customInspect]() {
     return this.name;
   }
 
@@ -962,7 +1021,7 @@ export type AgentResponseStream<T> = ReadableStream<AgentResponseChunk<T>>;
  *
  * @template T Response data type
  */
-export type AgentResponseChunk<T> = AgentResponseDelta<T>;
+export type AgentResponseChunk<T> = AgentResponseDelta<T> | AgentResponseProgress;
 
 /**
  * Check if a response chunk is empty
@@ -972,7 +1031,7 @@ export type AgentResponseChunk<T> = AgentResponseDelta<T>;
  * @returns True if the chunk is empty
  */
 export function isEmptyChunk<T>(chunk: AgentResponseChunk<T>): boolean {
-  return isEmpty(chunk.delta.json) && isEmpty(chunk.delta.text);
+  return isAgentResponseDelta(chunk) && isEmpty(chunk.delta.json) && isEmpty(chunk.delta.text);
 }
 
 /**
@@ -995,6 +1054,36 @@ export interface AgentResponseDelta<T> {
         }>;
     json?: Partial<T> | TransferAgentOutput;
   };
+}
+
+export function isAgentResponseDelta<T>(
+  chunk: AgentResponseChunk<T>,
+): chunk is AgentResponseDelta<T> {
+  return "delta" in chunk;
+}
+
+export interface AgentResponseProgress {
+  progress: (
+    | {
+        event: "agentStarted";
+        input: Message;
+      }
+    | {
+        event: "agentSucceed";
+        output: Message;
+      }
+    | {
+        event: "agentFailed";
+        error: Error;
+      }
+  ) &
+    Omit<AgentEvent, "agent"> & { agent: { name: string } };
+}
+
+export function isAgentResponseProgress<T>(
+  chunk: AgentResponseChunk<T>,
+): chunk is AgentResponseProgress {
+  return "progress" in chunk;
 }
 
 /**
@@ -1192,7 +1281,6 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
  * @param context Execution context
  * @returns Processing result, can be synchronous or asynchronous
  */
-// biome-ignore lint/suspicious/noExplicitAny: make it easier to use
 export type FunctionAgentFn<I extends Message = any, O extends Message = any> = (
   input: I,
   options: AgentInvokeOptions,

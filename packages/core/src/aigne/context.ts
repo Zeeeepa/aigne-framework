@@ -1,4 +1,5 @@
-import EventEmitter from "node:events";
+import equal from "fast-deep-equal";
+import { Emitter } from "strict-event-emitter";
 import { v7 } from "uuid";
 import { type ZodType, z } from "zod";
 import {
@@ -6,9 +7,12 @@ import {
   type AgentInvokeOptions,
   type AgentProcessAsyncGenerator,
   type AgentResponse,
+  type AgentResponseChunk,
   type AgentResponseStream,
   type FunctionAgentFn,
   type Message,
+  isAgentResponseDelta,
+  isEmptyChunk,
 } from "../agents/agent.js";
 import type { ChatModel } from "../agents/chat-model.js";
 import {
@@ -17,17 +21,21 @@ import {
   transferAgentOutputKey,
 } from "../agents/types.js";
 import { UserAgent } from "../agents/user-agent.js";
-import { createMessage } from "../prompt/prompt-builder.js";
+import type { Memory } from "../memory/memory.js";
+import { AgentResponseProgressStream } from "../utils/event-stream.js";
+import { promiseWithResolvers } from "../utils/promise.js";
 import {
   agentResponseStreamToObject,
   asyncGeneratorToReadableStream,
+  mergeReadableStreams,
   onAgentResponseStreamEnd,
 } from "../utils/stream-utils.js";
 import {
   type OmitPropertiesFromArrayFirstElement,
   checkArguments,
+  isEmpty,
   isNil,
-  omitBy,
+  omit,
 } from "../utils/type-utils.js";
 import type { Args, Listener, TypedEventEmitter } from "../utils/typed-event-emtter.js";
 import {
@@ -74,9 +82,10 @@ export type ContextEmitEventMap = {
 export interface InvokeOptions<U extends UserContext = UserContext>
   extends Partial<Omit<AgentInvokeOptions<U>, "context">> {
   returnActiveAgent?: boolean;
+  returnProgressChunks?: boolean;
+  returnMetadata?: boolean;
   disableTransfer?: boolean;
   sourceAgent?: Agent;
-  userContext?: U;
 }
 
 /**
@@ -89,6 +98,10 @@ export interface UserContext extends Record<string, unknown> {}
  */
 export interface Context<U extends UserContext = UserContext>
   extends TypedEventEmitter<ContextEventMap, ContextEmitEventMap> {
+  id: string;
+
+  parentId?: string;
+
   model?: ChatModel;
 
   skills?: Agent[];
@@ -100,6 +113,8 @@ export interface Context<U extends UserContext = UserContext>
   status?: "normal" | "timeout";
 
   userContext: U;
+
+  memories: Pick<Memory, "content">[];
 
   /**
    * Create a user agent to consistently invoke an agent
@@ -117,12 +132,12 @@ export interface Context<U extends UserContext = UserContext>
    */
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I & Message,
     options: InvokeOptions & { returnActiveAgent: true; streaming?: false },
   ): Promise<[O, Agent]>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I & Message,
     options: InvokeOptions & { returnActiveAgent: true; streaming: true },
   ): Promise<[AgentResponseStream<O>, Promise<Agent>]>;
   /**
@@ -133,17 +148,17 @@ export interface Context<U extends UserContext = UserContext>
    */
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I & Message,
     options?: InvokeOptions & { streaming?: false },
   ): Promise<O>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I & Message,
     options: InvokeOptions & { streaming: true },
   ): Promise<AgentResponseStream<O>>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message?: I | string,
+    message?: I & Message,
     options?: InvokeOptions,
   ): UserAgent<I, O> | Promise<AgentResponse<O> | [AgentResponse<O>, Agent]>;
 
@@ -154,7 +169,7 @@ export interface Context<U extends UserContext = UserContext>
    */
   publish(
     topic: string | string[],
-    payload: Omit<MessagePayload, "context"> | Message | string,
+    payload: Omit<MessagePayload, "context"> | Message,
     options?: InvokeOptions,
   ): void;
 
@@ -228,6 +243,13 @@ export class AIGNEContext implements Context {
     this.internal.userContext = userContext;
   }
 
+  get memories() {
+    return this.internal.memories;
+  }
+  set memories(memories: Context["memories"]) {
+    this.internal.memories = memories;
+  }
+
   newContext({ reset }: { reset?: boolean } = {}) {
     if (reset) return new AIGNEContext(this, { userContext: {} });
     return new AIGNEContext(this);
@@ -239,7 +261,14 @@ export class AIGNEContext implements Context {
       message,
       options,
     });
-    if (options?.userContext) Object.assign(this.userContext, options.userContext);
+    if (options?.userContext) {
+      Object.assign(this.userContext, options.userContext);
+      options.userContext = undefined;
+    }
+    if (options?.memories?.length) {
+      this.memories.push(...options.memories);
+      options.memories = undefined;
+    }
 
     if (isNil(message)) {
       return UserAgent.from({
@@ -249,13 +278,13 @@ export class AIGNEContext implements Context {
     }
 
     const newContext = this.newContext();
-    const msg = createMessage(message);
 
-    return Promise.resolve(newContext.internal.invoke(agent, msg, newContext, options)).then(
+    return Promise.resolve(newContext.internal.invoke(agent, message, newContext, options)).then(
       async (response) => {
         if (!options?.streaming) {
-          const { __activeAgent__: activeAgent, ...output } =
+          let { __activeAgent__: activeAgent, ...output } =
             await agentResponseStreamToObject(response);
+          output = await this.onInvocationResult(output, options);
 
           if (options?.returnActiveAgent) {
             return [output, activeAgent];
@@ -264,43 +293,68 @@ export class AIGNEContext implements Context {
           return output;
         }
 
-        const activeAgentPromise = Promise.withResolvers<Agent>();
+        const activeAgentPromise = promiseWithResolvers<Agent>();
 
-        const stream = onAgentResponseStreamEnd(
-          asyncGeneratorToReadableStream(response),
-          async ({ __activeAgent__: activeAgent }) => {
-            activeAgentPromise.resolve(activeAgent);
+        const stream = onAgentResponseStreamEnd(asyncGeneratorToReadableStream(response), {
+          onChunk(chunk) {
+            if (isAgentResponseDelta(chunk) && chunk.delta.json) {
+              return {
+                ...chunk,
+                delta: {
+                  ...chunk.delta,
+                  json: omit(chunk.delta.json, "__activeAgent__") as Exclude<
+                    typeof chunk.delta.json,
+                    TransferAgentOutput
+                  >,
+                },
+              };
+            }
           },
-          {
-            processChunk(chunk) {
-              if (chunk.delta.json) {
-                return {
-                  ...chunk,
-                  delta: {
-                    ...chunk.delta,
-                    json: omitBy(chunk.delta.json, (_, k) => k === "__activeAgent__") as Exclude<
-                      typeof chunk.delta.json,
-                      TransferAgentOutput
-                    >,
-                  },
-                };
-              }
-              return chunk;
-            },
+          onResult: async (output) => {
+            activeAgentPromise.resolve(output.__activeAgent__);
+            return await this.onInvocationResult(output, options);
           },
-        );
+        });
+
+        const finalStream = !options.returnProgressChunks
+          ? stream
+          : mergeReadableStreams(stream, new AgentResponseProgressStream(newContext));
 
         if (options.returnActiveAgent) {
-          return [stream, activeAgentPromise.promise];
+          return [finalStream, activeAgentPromise.promise];
         }
 
-        return stream;
+        return finalStream;
       },
     );
   }) as Context["invoke"];
 
+  private async onInvocationResult<O extends Message>(
+    output: O,
+    options?: InvokeOptions,
+  ): Promise<O> {
+    if (!options?.returnMetadata) {
+      return output;
+    }
+
+    return {
+      ...output,
+      $meta: {
+        ...output.$meta,
+        usage: this.usage,
+      },
+    };
+  }
+
   publish = ((topic, payload, options) => {
-    if (options?.userContext) Object.assign(this.userContext, options.userContext);
+    if (options?.userContext) {
+      Object.assign(this.userContext, options.userContext);
+      options.userContext = undefined;
+    }
+    if (options?.memories?.length) {
+      this.memories.push(...options.memories);
+      options.memories = undefined;
+    }
 
     return this.internal.messageQueue.publish(topic, {
       ...toMessagePayload(payload),
@@ -360,11 +414,12 @@ class AIGNEContextShared {
   ) {
     this.messageQueue = this.parent?.messageQueue ?? new MessageQueue();
     this.userContext = overrides?.userContext ?? {};
+    this.memories = overrides?.memories ?? [];
   }
 
   readonly messageQueue: MessageQueue;
 
-  readonly events = new EventEmitter<ContextEventMap>();
+  readonly events = new Emitter<any>();
 
   get model() {
     return this.parent?.model;
@@ -381,6 +436,8 @@ class AIGNEContextShared {
   usage: ContextUsage = newEmptyContextUsage();
 
   userContext: Context["userContext"];
+
+  memories: Context["memories"];
 
   private abortController = new AbortController();
 
@@ -403,7 +460,7 @@ class AIGNEContextShared {
 
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    input: I,
+    input: I & Message,
     context: Context,
     options?: InvokeOptions,
   ): AgentProcessAsyncGenerator<O & { __activeAgent__: Agent }> {
@@ -416,59 +473,72 @@ class AIGNEContextShared {
 
   private async *invokeAgent<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    input: I,
+    input: I & Message,
     context: Context,
     options?: InvokeOptions,
   ): AgentProcessAsyncGenerator<O & { __activeAgent__: Agent }> {
-    let activeAgent: Agent = agent;
-    let output: O | undefined;
+    const startedAt = Date.now();
+    try {
+      let activeAgent: Agent = agent;
 
-    for (;;) {
-      const result: Message = {};
+      for (;;) {
+        const result: Message = {};
 
-      if (options?.sourceAgent && activeAgent !== options.sourceAgent) {
-        options.sourceAgent.hooks.onHandoff?.({
-          context,
-          source: options.sourceAgent,
-          target: activeAgent,
-          input,
-        });
+        if (options?.sourceAgent && activeAgent !== options.sourceAgent) {
+          options.sourceAgent.hooks.onHandoff?.({
+            context,
+            source: options.sourceAgent,
+            target: activeAgent,
+            input,
+          });
+        }
+
+        const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
+        for await (const value of stream) {
+          if (isAgentResponseDelta(value)) {
+            if (value.delta.json) {
+              value.delta.json = omitExistsProperties(result, value.delta.json);
+              Object.assign(result, value.delta.json);
+            }
+
+            delete value.delta.json?.[transferAgentOutputKey];
+          }
+
+          if (isEmptyChunk(value)) continue;
+
+          yield value as AgentResponseChunk<O & { __activeAgent__: Agent }>;
+        }
+
+        if (!options?.disableTransfer) {
+          const transferToAgent = isTransferAgentOutput(result)
+            ? result[transferAgentOutputKey].agent
+            : undefined;
+          if (transferToAgent) {
+            activeAgent = transferToAgent;
+            continue;
+          }
+        }
+        break;
       }
 
-      const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
-      for await (const value of stream) {
-        if (value.delta.text) {
-          yield { delta: { text: value.delta.text } as Message };
-        }
-        if (value.delta.json) {
-          Object.assign(result, value.delta.json);
-        }
-      }
-
-      if (!options?.disableTransfer) {
-        const transferToAgent = isTransferAgentOutput(result)
-          ? result[transferAgentOutputKey].agent
-          : undefined;
-        if (transferToAgent) {
-          activeAgent = transferToAgent;
-          continue;
-        }
-      }
-      output = result as O;
-      break;
-    }
-
-    if (!output) throw new Error("Unexpected empty output");
-
-    yield {
-      delta: {
-        json: {
-          ...output,
-          __activeAgent__: activeAgent,
+      yield {
+        delta: {
+          json: { __activeAgent__: activeAgent } as Partial<O & { __activeAgent__: Agent }>,
         },
-      },
-    };
+      };
+    } finally {
+      const endedAt = Date.now();
+      const duration = endedAt - startedAt;
+      this.usage.duration += duration;
+    }
   }
+}
+
+function omitExistsProperties(result: Message, { ...delta }: Message) {
+  for (const [key, val] of Object.entries(delta)) {
+    if (equal(result[key], val)) delete delta[key];
+  }
+  return isEmpty(delta) ? undefined : delta;
 }
 
 async function* withAbortSignal<T extends Message>(
@@ -478,7 +548,7 @@ async function* withAbortSignal<T extends Message>(
 ): AgentProcessAsyncGenerator<T> {
   const iterator = fn();
 
-  const timeoutPromise = Promise.withResolvers<never>();
+  const timeoutPromise = promiseWithResolvers<never>();
 
   const listener = () => {
     timeoutPromise.reject(error);

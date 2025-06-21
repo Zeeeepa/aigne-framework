@@ -39,14 +39,14 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
+          pnpm exec playwright install --with-deps
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Build
         if: ${{ steps.release.outputs.release_created }}
-        run: |
-          pnpm build
-          pnpm build:docs
+        run: pnpm build
 
       - name: Lint
         run: pnpm lint

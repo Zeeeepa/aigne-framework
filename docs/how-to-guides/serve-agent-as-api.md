@@ -29,12 +29,13 @@ Let's understand the server-side implementation details step by step:
 const agent = AIAgent.from({
   name: "chatbot",
   instructions: "You are a helpful assistant",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
       getSessionId: ({ userContext }) => userContext.userId as string, // Use userId from userContext as session ID
     },
-  },
+  }),
+  inputKey: "message",
 });
 ```
 
@@ -99,6 +100,7 @@ const httpServer = app.listen(port);
 The following example shows how to create an API server to provide Agent services:
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-serve-agent-as-api-service"
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
 import { AIGNEHTTPServer } from "@aigne/transport/http-server/index.js";
@@ -107,12 +109,13 @@ import express from "express";
 const agent = AIAgent.from({
   name: "chatbot",
   instructions: "You are a helpful assistant",
-  memory: {
+  memory: new DefaultMemory({
     storage: {
-      path: memoryStoragePath, // Path to store memory data, such as './memory.db'
+      url: `file:${memoryStoragePath}`, // Path to store memory data, such as 'file:./memory.db'
       getSessionId: ({ userContext }) => userContext.userId as string, // Use userId from userContext as session ID
     },
-  },
+  }),
+  inputKey: "message",
 });
 
 const aigne = new AIGNE({
@@ -156,12 +159,12 @@ const client = new AIGNEHTTPClient({
 ### Invoke Agent Services
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-aigne-http-client-invoke-agent" exclude_imports
-const result = await client.invoke(
-  "chatbot",
-  "What is the crypto price of ABT/USD on coinbase?",
-);
+const chatbot = await client.getAgent({ name: "chatbot" });
+const result = await chatbot.invoke({
+  message: "What is the crypto price of ABT/USD on coinbase?",
+});
 console.log(result);
-// Output: { $message: "The current price of ABT/USD on Coinbase is $0.9684." }
+// Output: { message: "The current price of ABT/USD on Coinbase is $0.9684." }
 ```
 
 **Explanation**:
@@ -185,10 +188,10 @@ const client = new AIGNEHTTPClient({
   url: `http://localhost:${port}/api/chat`,
 });
 
-const result = await client.invoke(
-  "chatbot",
-  "What is the crypto price of ABT/USD on coinbase?",
-);
+const chatbot = await client.getAgent({ name: "chatbot" });
+const result = await chatbot.invoke({
+  message: "What is the crypto price of ABT/USD on coinbase?",
+});
 console.log(result);
-// Output: { $message: "The current price of ABT/USD on Coinbase is $0.9684." }
+// Output: { message: "The current price of ABT/USD on Coinbase is $0.9684." }
 ```

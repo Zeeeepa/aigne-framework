@@ -1,7 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { AIAgent, AIGNE, ChatModel } from "@aigne/core";
-import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils";
+import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
 import { AIGNEHTTPClient } from "@aigne/transport/http-client/index.js";
 import { AIGNEHTTPServer } from "@aigne/transport/http-server/index.js";
 import { serve } from "bun";
@@ -45,9 +45,9 @@ test("AIGNEServer example with expression", async () => {
   const client = new AIGNEHTTPClient({ url });
 
   // Invoke the agent by client
-  const response = await client.invoke("chat", { $message: "hello" });
+  const response = await client.invoke("chat", { message: "hello" });
 
-  console.log(response); // Output: {$message: "Hello world!"}
+  console.log(response); // Output: {message: "Hello world!"}
 
   expect(response).toMatchSnapshot();
 
@@ -92,8 +92,8 @@ test("AIGNEServer example with hono", async () => {
   const client = new AIGNEHTTPClient({ url });
 
   // Invoke the agent by client
-  const response = await client.invoke("chat", { $message: "hello" });
-  console.log(response); // Output: {$message: "Hello world!"}
+  const response = await client.invoke("chat", { message: "hello" });
+  console.log(response); // Output: {message: "Hello world!"}
 
   expect(response).toMatchSnapshot();
 

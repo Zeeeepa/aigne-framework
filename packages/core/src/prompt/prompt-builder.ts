@@ -1,8 +1,8 @@
-import { readFile } from "node:fs/promises";
+import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
-import { Agent, type Message } from "../agents/agent.js";
+import { Agent, type AgentInvokeOptions, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
 import type {
   ChatModel,
@@ -13,10 +13,9 @@ import type {
   ChatModelInputToolChoice,
   ChatModelOptions,
 } from "../agents/chat-model.js";
-import type { Context } from "../aigne/context.js";
-import type { Memory, MemoryAgent } from "../memory/memory.js";
+import type { Memory } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
-import { isNil, orArrayToArray, unique } from "../utils/type-utils.js";
+import { unique } from "../utils/type-utils.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
 import {
   AgentMessageTemplate,
@@ -26,45 +25,11 @@ import {
   UserMessageTemplate,
 } from "./template.js";
 
-export const MESSAGE_KEY = "$message";
-
-export function createMessage<V extends Message>(
-  message: string,
-  variables?: V,
-): { [MESSAGE_KEY]: string } & typeof variables;
-export function createMessage<I extends Message, V extends Message>(
-  message: I,
-  variables?: V,
-): I & typeof variables;
-export function createMessage<I extends Message, V extends Message>(
-  message: string | I,
-  variables?: V,
-): ({ [MESSAGE_KEY]: string } | I) & typeof variables;
-export function createMessage<I extends Message, V extends Message>(
-  message: string | I,
-  variables?: V,
-): ({ [MESSAGE_KEY]: string } | I) & typeof variables {
-  return (
-    typeof message === "string"
-      ? { [MESSAGE_KEY]: message, ...variables }
-      : { ...message, ...variables }
-  ) as ({ [MESSAGE_KEY]: string } | I) & typeof variables;
-}
-
-export function getMessage(input: Message): string | undefined {
-  const userInputMessage = input[MESSAGE_KEY];
-  if (typeof userInputMessage === "string") return userInputMessage;
-  if (!isNil(userInputMessage)) return JSON.stringify(userInputMessage);
-  return undefined;
-}
-
 export interface PromptBuilderOptions {
   instructions?: string | ChatMessagesTemplate;
 }
 
-export interface PromptBuildOptions {
-  memory?: MemoryAgent | MemoryAgent[];
-  context: Context;
+export interface PromptBuildOptions extends Pick<AgentInvokeOptions, "context"> {
   agent?: AIAgent;
   input?: Message;
   model?: ChatModel;
@@ -72,15 +37,7 @@ export interface PromptBuildOptions {
 }
 
 export class PromptBuilder {
-  static from(instructions: string): PromptBuilder;
-  static from(instructions: GetPromptResult): PromptBuilder;
-  static from(instructions: { path: string }): Promise<PromptBuilder>;
-  static from(
-    instructions: string | { path: string } | GetPromptResult,
-  ): PromptBuilder | Promise<PromptBuilder>;
-  static from(
-    instructions: string | { path: string } | GetPromptResult,
-  ): PromptBuilder | Promise<PromptBuilder> {
+  static from(instructions: string | { path: string } | GetPromptResult): PromptBuilder {
     if (typeof instructions === "string") return new PromptBuilder({ instructions });
 
     if (isFromPromptResult(instructions)) return PromptBuilder.fromMCPPromptResult(instructions);
@@ -90,8 +47,8 @@ export class PromptBuilder {
     throw new Error(`Invalid instructions ${instructions}`);
   }
 
-  private static async fromFile(path: string): Promise<PromptBuilder> {
-    const text = await readFile(path, "utf-8");
+  private static fromFile(path: string): PromptBuilder {
+    const text = nodejs.fsSync.readFileSync(path, "utf-8");
     return PromptBuilder.from(text);
   }
 
@@ -142,31 +99,39 @@ export class PromptBuilder {
   private async buildMessages(options: PromptBuildOptions): Promise<ChatModelInputMessage[]> {
     const { input } = options;
 
+    const inputKey = options.agent?.inputKey;
+    const message = inputKey && typeof input?.[inputKey] === "string" ? input[inputKey] : undefined;
+
     const messages =
       (typeof this.instructions === "string"
         ? ChatMessagesTemplate.from([SystemMessageTemplate.from(this.instructions)])
         : this.instructions
       )?.format(options.input) ?? [];
 
-    for (const memory of orArrayToArray(options.memory ?? options.agent?.memories)) {
-      const memories = (
-        await memory.retrieve({ search: input && getMessage(input) }, options.context)
-      )?.memories;
+    const memories: Pick<Memory, "content">[] = [];
 
-      if (memories?.length) messages.push(...this.convertMemoriesToMessages(memories, options));
+    if (options.agent?.inputKey) {
+      memories.push(...(await options.agent.retrieveMemories({ search: message }, options)));
     }
 
-    const content = input && getMessage(input);
-    // add user input if it's not the same as the last message
-    if (content && messages.at(-1)?.content !== content) {
-      messages.push({ role: "user", content });
+    if (options.context.memories?.length) {
+      memories.push(...options.context.memories);
+    }
+
+    if (memories.length) messages.push(...this.convertMemoriesToMessages(memories, options));
+
+    if (message) {
+      messages.push({
+        role: "user",
+        content: message,
+      });
     }
 
     return messages;
   }
 
   private convertMemoriesToMessages(
-    memories: Memory[],
+    memories: Pick<Memory, "content">[],
     options: PromptBuildOptions,
   ): ChatModelInputMessage[] {
     const str = stringify(memories.map((i) => i.content));
@@ -207,8 +172,7 @@ export class PromptBuilder {
       (options.context?.skills ?? [])
         .concat(options.agent?.skills ?? [])
         .concat(options.agent?.memoryAgentsAsTools ? options.agent.memories : [])
-        // TODO: support nested tools?
-        .flatMap((i) => (i.isInvokable ? i.skills.concat(i) : i.skills)),
+        .flatMap((i) => (i.isInvokable ? i : i.skills)),
       (i) => i.name,
     );
 

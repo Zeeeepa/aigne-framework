@@ -1,5 +1,6 @@
 #!/usr/bin/env bunwrapper
 
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { runWithAIGNE } from "@aigne/cli/utils/run-with-aigne.js";
 import { AIAgent, AIAgentToolChoice } from "@aigne/core";
 
@@ -9,7 +10,8 @@ const productSupport = AIAgent.from({
   instructions: `You are an agent capable of handling any product-related questions.
   Your goal is to provide accurate and helpful information about the product.
   Be polite, professional, and ensure the user feels supported.`,
-  memory: true,
+  memory: new DefaultMemory(),
+  inputKey: "message",
 });
 
 const feedback = AIAgent.from({
@@ -18,7 +20,8 @@ const feedback = AIAgent.from({
   instructions: `You are an agent capable of handling any feedback-related questions.
   Your goal is to listen to the user's feedback, acknowledge their input, and provide appropriate responses.
   Be empathetic, understanding, and ensure the user feels heard.`,
-  memory: true,
+  memory: new DefaultMemory(),
+  inputKey: "message",
 });
 
 const other = AIAgent.from({
@@ -27,7 +30,8 @@ const other = AIAgent.from({
   instructions: `You are an agent capable of handling any general questions.
   Your goal is to provide accurate and helpful information on a wide range of topics.
   Be friendly, knowledgeable, and ensure the user feels satisfied with the information provided.`,
-  memory: true,
+  memory: new DefaultMemory(),
+  inputKey: "message",
 });
 
 const triage = AIAgent.from({
@@ -38,6 +42,7 @@ You must always choose a tool — do not answer the question directly or leave t
 Be concise, accurate, and ensure efficient handoff to the correct agent.`,
   skills: [productSupport, feedback, other],
   toolChoice: AIAgentToolChoice.router,
+  inputKey: "message",
 });
 
 await runWithAIGNE(triage, {
@@ -52,5 +57,6 @@ I can help you with any questions you have, such as
 How can I assist you today?
 `,
     defaultQuestion: "How do I use this product?",
+    inputKey: "message",
   },
 });

@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
+import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import {
   AIAgent,
   AIGNE,
@@ -9,6 +10,7 @@ import {
   FunctionAgent,
   type Message,
   guideRailAgentOptions,
+  isAgentResponseDelta,
 } from "@aigne/core";
 import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
 import type { PromiseOrValue } from "@aigne/core/utils/type-utils.js";
@@ -131,6 +133,7 @@ test("Example Agent: guide rails", async () => {
   const agent = AIAgent.from({
     instructions: "You are a helpful assistant that provides financial advice.",
     guideRails: [financial],
+    inputKey: "message",
   });
   // #endregion example-agent-guide-rails-create-agent
 
@@ -147,15 +150,17 @@ test("Example Agent: guide rails", async () => {
       },
     });
 
-  const result = await aigne.invoke(agent, "What will be the price of Bitcoin next month?");
+  const result = await aigne.invoke(agent, {
+    message: "What will be the price of Bitcoin next month?",
+  });
   console.log(result);
   // Output:
   // {
-  //   "$message": "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading."
+  //   "message": "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading."
   // }
   expect(result).toEqual(
     expect.objectContaining({
-      $message:
+      message:
         "I cannot provide cryptocurrency price predictions as they are speculative and potentially misleading.",
     }),
   );
@@ -175,7 +180,8 @@ test("Example Agent: enable memory for agent", async () => {
   // #region example-agent-enable-memory-for-agent
   const agent = AIAgent.from({
     instructions: "You are a helpful assistant for Crypto market analysis",
-    memory: true,
+    memory: new DefaultMemory(),
+    inputKey: "message",
   });
   // #endregion example-agent-enable-memory-for-agent
 
@@ -184,10 +190,10 @@ test("Example Agent: enable memory for agent", async () => {
   });
 
   // #region example-agent-enable-memory-invoke-1
-  const result2 = await aigne.invoke(agent, "What is my favorite cryptocurrency?");
+  const result2 = await aigne.invoke(agent, { message: "What is my favorite cryptocurrency?" });
   console.log(result2);
-  // Output: { $message: "Your favorite cryptocurrency is Bitcoin." }
-  expect(result2).toEqual({ $message: "Your favorite cryptocurrency is Bitcoin." });
+  // Output: { message: "Your favorite cryptocurrency is Bitcoin." }
+  expect(result2).toEqual({ message: "Your favorite cryptocurrency is Bitcoin." });
   // #endregion example-agent-enable-memory-invoke-1
 
   // #endregion example-agent-enable-memory
@@ -222,15 +228,16 @@ test("Example Agent: skills", async () => {
   const agent = AIAgent.from({
     instructions: "You are a helpful assistant for Crypto market analysis",
     skills: [getCryptoPrice],
+    inputKey: "message",
   });
   // #endregion example-agent-add-skills
 
   spyOn(aigne.model, "process").mockReturnValueOnce({ text: "ABT is currently priced at $1000." });
 
-  const result = await aigne.invoke(agent, "What is the price of ABT?");
+  const result = await aigne.invoke(agent, { message: "What is the price of ABT?" });
   console.log(result);
-  // Output: { $message: "ABT is currently priced at $1000." }
-  expect(result).toEqual({ $message: "ABT is currently priced at $1000." });
+  // Output: { message: "ABT is currently priced at $1000." }
+  expect(result).toEqual({ message: "ABT is currently priced at $1000." });
 
   // #endregion example-agent-skills
 });
@@ -239,6 +246,7 @@ test("Example Agent: invoke", async () => {
   const agent = AIAgent.from({
     model: new OpenAIChatModel(),
     instructions: "You are a helpful assistant for Crypto market analysis",
+    inputKey: "message",
   });
   assert(agent.model);
 
@@ -247,10 +255,10 @@ test("Example Agent: invoke", async () => {
     text: "ABT is currently priced at $1000.",
   });
 
-  const result = await agent.invoke("What is the price of ABT?");
+  const result = await agent.invoke({ message: "What is the price of ABT?" });
   console.log(result);
-  // Output: { $message: "ABT is currently priced at $1000." }
-  expect(result).toEqual({ $message: "ABT is currently priced at $1000." });
+  // Output: { message: "ABT is currently priced at $1000." }
+  expect(result).toEqual({ message: "ABT is currently priced at $1000." });
   // #endregion example-agent-invoke
 
   // #region example-agent-invoke-stream
@@ -258,10 +266,11 @@ test("Example Agent: invoke", async () => {
     stringToAgentResponseStream("ABT is currently priced at $1000."),
   );
 
-  const stream = await agent.invoke("What is the price of ABT?", { streaming: true });
+  const stream = await agent.invoke({ message: "What is the price of ABT?" }, { streaming: true });
   let response = "";
   for await (const chunk of stream) {
-    if (chunk.delta.text?.$message) response += chunk.delta.text.$message;
+    if (isAgentResponseDelta(chunk) && chunk.delta.text?.message)
+      response += chunk.delta.text.message;
   }
   console.log(response);
   // Output:  "ABT is currently priced at $1000."
@@ -279,17 +288,17 @@ test("Example Agent: custom agent", async () => {
     ): PromiseOrValue<AgentProcessResult<Message>> {
       console.log("Custom agent processing input:", input);
       return {
-        $message: "AIGNE is a platform for building AI agents.",
+        message: "AIGNE is a platform for building AI agents.",
       };
     }
   }
 
   const agent = new CustomAgent();
 
-  const result = await agent.invoke("What is the price of ABT?");
+  const result = await agent.invoke({ message: "What is the price of ABT?" });
   console.log(result);
-  // Output: { $message: "AIGNE is a platform for building AI agents." }
-  expect(result).toEqual({ $message: "AIGNE is a platform for building AI agents." });
+  // Output: { message: "AIGNE is a platform for building AI agents." }
+  expect(result).toEqual({ message: "AIGNE is a platform for building AI agents." });
   // #endregion example-agent-custom-process
 });
 

@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
-import { AIAgent, AIGNE } from "@aigne/core";
+import { AIAgent, AIGNE, isAgentResponseDelta } from "@aigne/core";
 import { arrayToAgentProcessAsyncGenerator } from "@aigne/core/utils/stream-utils.js";
 import { OpenAIChatModel } from "@aigne/openai";
 
@@ -20,6 +20,7 @@ test("Example quick start: basic", async () => {
   // #region example-quick-start-create-agent
   const agent = AIAgent.from({
     instructions: "You are a helpful assistant",
+    inputKey: "message",
   });
   // #endregion example-quick-start-create-agent
 
@@ -28,11 +29,11 @@ test("Example quick start: basic", async () => {
     text: "AIGNE is a platform for building AI agents.",
   });
 
-  const result = await aigne.invoke(agent, "What is AIGNE?");
+  const result = await aigne.invoke(agent, { message: "What is AIGNE?" });
   console.log(result);
-  // Output: { $message: "AIGNE is a platform for building AI agents." }
+  // Output: { message: "AIGNE is a platform for building AI agents." }
 
-  expect(result).toEqual({ $message: "AIGNE is a platform for building AI agents." });
+  expect(result).toEqual({ message: "AIGNE is a platform for building AI agents." });
   // #endregion example-quick-start-invoke
 
   // #region example-quick-start-streaming
@@ -42,12 +43,13 @@ test("Example quick start: basic", async () => {
     ]),
   );
 
-  const stream = await aigne.invoke(agent, "What is AIGNE?", { streaming: true });
+  const stream = await aigne.invoke(agent, { message: "What is AIGNE?" }, { streaming: true });
 
   let response = "";
   for await (const chunk of stream) {
     console.log(chunk);
-    if (chunk.delta.text?.$message) response += chunk.delta.text.$message;
+    if (isAgentResponseDelta(chunk) && chunk.delta.text?.message)
+      response += chunk.delta.text.message;
   }
   console.log(response);
   // Output:  "AIGNE is a platform for building AI agents."

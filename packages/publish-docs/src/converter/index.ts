@@ -6,6 +6,7 @@ import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import matter from "gray-matter";
 import { JSDOM } from "jsdom";
 import {
   $getRoot,
@@ -22,22 +23,37 @@ import { MermaidNode } from "./nodes/mermaid-node.js";
 export class Converter {
   private slugPrefix?: string;
   public usedSlugs: Record<string, string[]>;
+  public blankFilePaths: string[];
 
   constructor(options: { slugPrefix?: string } = {}) {
     this.slugPrefix = options.slugPrefix;
     this.usedSlugs = {};
+    this.blankFilePaths = [];
   }
 
   public async markdownToLexical(
     markdown: string,
     filePath: string,
-  ): Promise<{ title: string | undefined; content: SerializedEditorState }> {
+  ): Promise<{
+    title: string | undefined;
+    labels?: string[];
+    content: SerializedEditorState | null;
+  }> {
+    const m = matter(markdown);
+    let markdownContent = m.content.trim();
+
+    const labels = Array.isArray(m.data.labels) ? m.data.labels : undefined;
     let title: string | undefined;
-    let content = markdown;
-    const titleMatch = markdown.trim().match(/^#\s+(.+)$/m);
+
+    const titleMatch = markdownContent.match(/^#\s+(.+)$/m);
     if (titleMatch?.[1]) {
       title = titleMatch[1].trim();
-      content = markdown.replace(/^#\s+.+$/m, "").trim();
+      markdownContent = markdownContent.replace(/^#\s+.+$/m, "").trim();
+    }
+
+    if (markdownContent.trim() === "") {
+      this.blankFilePaths.push(filePath);
+      return { title, content: null };
     }
 
     const slugPrefix = this.slugPrefix;
@@ -62,7 +78,7 @@ export class Converter {
     };
 
     marked.use({ renderer });
-    const html = await marked.parse(content);
+    const html = await marked.parse(markdownContent);
 
     const editor = createHeadlessEditor({
       namespace: "editor",
@@ -96,17 +112,19 @@ export class Converter {
       { discrete: true },
     );
 
-    return new Promise((resolve) => {
+    const content = await new Promise<SerializedEditorState>((resolve) => {
       setTimeout(
         () => {
           editor.update(() => {
             const state = editor.getEditorState();
             const json = state.toJSON();
-            resolve({ title, content: json });
+            resolve(json);
           });
         },
-        Math.min(content.length, 500),
+        Math.min(markdownContent.length, 500),
       );
     });
+
+    return { title, labels, content };
   }
 }

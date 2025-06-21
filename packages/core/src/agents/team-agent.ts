@@ -7,6 +7,7 @@ import {
   type AgentProcessResult,
   type AgentResponseChunk,
   type Message,
+  isAgentResponseDelta,
 } from "./agent.js";
 
 /**
@@ -211,7 +212,7 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
         tasks.set(index, read(index, reader));
       }
 
-      if (value) {
+      if (value && isAgentResponseDelta(value)) {
         let {
           delta: { text, ...delta },
         } = value;
