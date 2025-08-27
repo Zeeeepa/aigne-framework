@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AIAgent,
@@ -23,9 +22,7 @@ test("PromptBuilder should build messages correctly", async () => {
   const memory = new MockMemory({});
   await memory.record(
     {
-      role: "agent",
-      content: [{ message: "Hello, How can I help you?" }],
-      source: "TestAgent",
+      content: [{ input: { message: "Hello, How can I help you?" }, source: "TestAgent" }],
     },
 
     context,
@@ -351,18 +348,21 @@ test("PromptBuilder from file", async () => {
   const context = new AIGNE().newContext();
 
   const path = join(import.meta.dirname, "test-prompt.txt");
-  const content = await readFile(path, "utf-8");
 
   const builder = PromptBuilder.from({ path });
 
-  const prompt = await builder.build({ input: { agentName: "Alice" }, context });
+  const prompt = await builder.build({
+    input: { agentName: "Alice", language: "English" },
+    context,
+  });
 
-  expect(prompt).toEqual({
-    messages: [
-      {
-        role: "system",
-        content: content.replace("{{agentName}}", "Alice"),
-      },
-    ],
+  expect(prompt).toMatchSnapshot();
+});
+
+test("PromptBuilder should build image prompt correctly", async () => {
+  const builder = PromptBuilder.from("Draw an image about {{topic}}");
+
+  expect(await builder.buildImagePrompt({ input: { topic: "a cat" } })).toEqual({
+    prompt: "Draw an image about a cat",
   });
 });

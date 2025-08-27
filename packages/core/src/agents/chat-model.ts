@@ -1,6 +1,12 @@
 import { z } from "zod";
 import type { PromiseOrValue } from "../utils/type-utils.js";
-import { Agent, type AgentInvokeOptions, type AgentProcessResult, type Message } from "./agent.js";
+import {
+  Agent,
+  type AgentInvokeOptions,
+  type AgentOptions,
+  type AgentProcessResult,
+  type Message,
+} from "./agent.js";
 
 /**
  * ChatModel is an abstract base class for interacting with Large Language Models (LLMs).
@@ -26,11 +32,24 @@ import { Agent, type AgentInvokeOptions, type AgentProcessResult, type Message }
  * {@includeCode ../../test/agents/chat-model.test.ts#example-chat-model-tools}
  */
 export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
-  constructor() {
+  override tag = "ChatModelAgent";
+
+  constructor(
+    options?: Omit<AgentOptions<ChatModelInput, ChatModelOutput>, "inputSchema" | "outputSchema">,
+  ) {
     super({
+      ...options,
       inputSchema: chatModelInputSchema,
       outputSchema: chatModelOutputSchema,
     });
+  }
+
+  get credential(): PromiseOrValue<{
+    url?: string;
+    apiKey?: string;
+    model?: string;
+  }> {
+    return {};
   }
 
   /**
@@ -117,7 +136,11 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
 
       this.validateToolNames(tools);
 
-      Object.assign(input, { _toolsMap: toolsMap, tools });
+      Object.assign(input, { tools });
+      Object.defineProperty(input, "_toolsMap", {
+        value: toolsMap,
+        enumerable: false,
+      });
     }
   }
 
@@ -155,6 +178,7 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
     if (usage) {
       options.context.usage.outputTokens += usage.outputTokens;
       options.context.usage.inputTokens += usage.inputTokens;
+      if (usage.aigneHubCredits) options.context.usage.aigneHubCredits += usage.aigneHubCredits;
     }
   }
 
@@ -178,7 +202,7 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
    * @param options - The options for invoking the agent, including context and limits
    * @returns A promise or direct value containing the model's response
    */
-  abstract process(
+  abstract override process(
     input: ChatModelInput,
     options: AgentInvokeOptions,
   ): PromiseOrValue<AgentProcessResult<ChatModelOutput>>;
@@ -313,7 +337,7 @@ const chatModelInputMessageSchema = z.object({
         type: z.literal("function"),
         function: z.object({
           name: z.string(),
-          arguments: z.record(z.unknown()),
+          arguments: z.record(z.string(), z.unknown()),
         }),
       }),
     )
@@ -346,7 +370,7 @@ const chatModelInputResponseFormatSchema = z.discriminatedUnion("type", [
     jsonSchema: z.object({
       name: z.string(),
       description: z.string().optional(),
-      schema: z.record(z.unknown()),
+      schema: z.record(z.string(), z.unknown()),
       strict: z.boolean().optional(),
     }),
   }),
@@ -393,7 +417,7 @@ const chatModelInputToolSchema = z.object({
   function: z.object({
     name: z.string(),
     description: z.string().optional(),
-    parameters: z.record(z.unknown()),
+    parameters: z.record(z.string(), z.unknown()),
   }),
 });
 
@@ -558,7 +582,7 @@ const chatModelOutputToolCallSchema = z.object({
   type: z.literal("function"),
   function: z.object({
     name: z.string(),
-    arguments: z.record(z.unknown()),
+    arguments: z.record(z.string(), z.unknown()),
   }),
 });
 
@@ -577,16 +601,22 @@ export interface ChatModelOutputUsage {
    * Number of output tokens
    */
   outputTokens: number;
+
+  /**
+   * AIGNE Hub credit usage
+   */
+  aigneHubCredits?: number;
 }
 
-const chatModelOutputUsageSchema = z.object({
+export const chatModelOutputUsageSchema = z.object({
   inputTokens: z.number(),
   outputTokens: z.number(),
+  aigneHubCredits: z.number().optional(),
 });
 
 const chatModelOutputSchema: z.ZodType<ChatModelOutput> = z.object({
   text: z.string().optional(),
-  json: z.record(z.unknown()).optional(),
+  json: z.record(z.string(), z.unknown()).optional(),
   toolCalls: z.array(chatModelOutputToolCallSchema).optional(),
   usage: chatModelOutputUsageSchema.optional(),
   model: z.string().optional(),

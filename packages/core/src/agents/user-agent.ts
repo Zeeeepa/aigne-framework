@@ -1,6 +1,6 @@
 import type { Context } from "../aigne/context.js";
-import { type MessagePayload, type Unsubscribe, toMessagePayload } from "../aigne/message-queue.js";
-import { orArrayToArray } from "../utils/type-utils.js";
+import { type MessagePayload, toMessagePayload, type Unsubscribe } from "../aigne/message-queue.js";
+import { flat } from "../utils/type-utils.js";
 import {
   Agent,
   type AgentInvokeOptions,
@@ -22,6 +22,8 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
   I,
   O
 > {
+  override tag = "UserAgent";
+
   static from<I extends Message, O extends Message>(
     options: UserAgentOptions<I, O>,
   ): UserAgent<I, O> {
@@ -50,9 +52,9 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
   }
 
   override invoke = ((input: I, options: Partial<AgentInvokeOptions> = {}) => {
-    if (!options.context) this.context = this.context.newContext({ reset: true });
+    options.context ??= this.context.newContext({ reset: true });
 
-    return super.invoke(input, { ...options, context: this.context });
+    return super.invoke(input, options);
   }) as Agent<I, O>["invoke"];
 
   async process(input: I, options: AgentInvokeOptions): Promise<AgentProcessResult<O>> {
@@ -64,6 +66,9 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
       const [output, agent] = await options.context.invoke(this.activeAgent, input, {
         returnActiveAgent: true,
         streaming: true,
+        // Do not create a new context for the nested agent invocation,
+        // We are resetting the context in the override invoke method
+        newContext: false,
       });
       agent.then((agent) => {
         this.activeAgent = agent;
@@ -75,7 +80,7 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
       typeof this.publishTopic === "function" ? await this.publishTopic(input) : this.publishTopic;
 
     if (publicTopic?.length) {
-      options.context.publish(publicTopic, input);
+      options.context.publish(publicTopic, input, { newContext: false });
 
       if (this.subscribeTopic) {
         return this.subscribe(this.subscribeTopic).then((res) => res.message as O);
@@ -107,7 +112,7 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
 
     return new ReadableStream<MessagePayload & { topic: string }>({
       start: (controller) => {
-        const subscribeTopic = orArrayToArray(this.subscribeTopic);
+        const subscribeTopic = flat(this.subscribeTopic);
 
         subscriptions = subscribeTopic.map((topic) =>
           this.subscribe(topic, (message) => {

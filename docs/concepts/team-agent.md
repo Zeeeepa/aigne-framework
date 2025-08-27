@@ -1,7 +1,5 @@
 # TeamAgent
 
-[English](./team-agent.md) | [中文](./team-agent.zh.md)
-
 ## Overview
 
 TeamAgent is a powerful component in the AIGNE framework that allows developers to combine multiple agents into a team to solve complex problems through collaborative work. TeamAgent supports two processing modes: sequential and parallel, enabling developers to flexibly choose the most suitable workflow based on task dependencies. Through TeamAgent, complex multi-stage workflows can be built, with each stage handled by specialized agents, achieving more efficient and professional task processing. Whether for task chains that need to be executed in a specific order or independent tasks that can be performed simultaneously, TeamAgent provides concise yet powerful solutions.
@@ -63,7 +61,6 @@ const result = await aigne.invoke(teamAgent, {
 console.log(result);
 // Output:
 // {
-//   translation: "AIGNE 是一个构建人工智能代理的优秀框架。",
 //   formatted: "AIGNE 是一个出色的人工智能代理构建框架。",
 // }
 ```

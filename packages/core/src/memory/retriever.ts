@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { Agent, type AgentOptions, type Message } from "../agents/agent.js";
+import {
+  Agent,
+  type AgentInvokeOptions,
+  type AgentOptions,
+  type AgentProcessResult,
+  type FunctionAgentFn,
+  type Message,
+} from "../agents/agent.js";
+import type { PromiseOrValue } from "../utils/type-utils.js";
 import type { Memory } from "./memory.js";
 
 /**
@@ -19,7 +27,7 @@ export interface MemoryRetrieverInput extends Message {
    * Search term to filter memories by.
    * How the search is implemented depends on the specific retriever implementation.
    */
-  search?: string;
+  search?: string | Message;
 }
 
 /**
@@ -41,7 +49,7 @@ export interface MemoryRetrieverOutput extends Message {
  */
 export const memoryRetrieverInputSchema = z.object({
   limit: z.number().optional(),
-  search: z.string().optional(),
+  search: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
 });
 
 /**
@@ -57,6 +65,14 @@ export const memoryRetrieverOutputSchema = z.object({
   ),
 });
 
+export interface MemoryRetrieverOptions
+  extends Omit<
+    AgentOptions<MemoryRetrieverInput, MemoryRetrieverOutput>,
+    "inputSchema" | "outputSchema"
+  > {
+  process?: FunctionAgentFn<MemoryRetrieverInput, MemoryRetrieverOutput>;
+}
+
 /**
  * Abstract base class for agents that retrieve memories from storage.
  *
@@ -71,22 +87,33 @@ export const memoryRetrieverOutputSchema = z.object({
  * Custom implementations should extend this class and provide concrete
  * implementations of the process method to handle the actual retrieval logic.
  */
-export abstract class MemoryRetriever extends Agent<MemoryRetrieverInput, MemoryRetrieverOutput> {
+export class MemoryRetriever extends Agent<MemoryRetrieverInput, MemoryRetrieverOutput> {
+  override tag = "MemoryRetrieverAgent";
+
   /**
    * Creates a new MemoryRetriever instance with predefined input and output schemas.
    *
    * @param options - Configuration options for the memory retriever agent
    */
-  constructor(
-    options: Omit<
-      AgentOptions<MemoryRetrieverInput, MemoryRetrieverOutput>,
-      "inputSchema" | "outputSchema"
-    >,
-  ) {
+  constructor(options: MemoryRetrieverOptions) {
     super({
       ...options,
       inputSchema: memoryRetrieverInputSchema,
       outputSchema: memoryRetrieverOutputSchema,
     });
+    this._process = options.process;
+  }
+
+  private _process?: FunctionAgentFn<MemoryRetrieverInput, MemoryRetrieverOutput>;
+
+  override process(
+    input: MemoryRetrieverInput,
+    options: AgentInvokeOptions,
+  ): PromiseOrValue<AgentProcessResult<MemoryRetrieverOutput>> {
+    if (!this._process) {
+      throw new Error("MemoryRetriever process function is not implemented.");
+    }
+
+    return this._process(input, options);
   }
 }

@@ -14,4 +14,8 @@ export class OpenAIChatModel extends ChatModel {
   ): PromiseOrValue<AgentProcessResult<ChatModelOutput>> {
     throw new Error("Method not implemented.");
   }
+
+  async getCredential() {
+    return {};
+  }
 }

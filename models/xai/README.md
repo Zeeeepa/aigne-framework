@@ -1,18 +1,30 @@
 # @aigne/xai
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/xai)](https://www.npmjs.com/package/@aigne/xai)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/xai)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE.md)
 
-**English** | [中文](README.zh.md)
-
 AIGNE XAI SDK for integrating with XAI language models and API services within the [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework).
 
 ## Introduction
 
 `@aigne/xai` provides a seamless integration between the AIGNE Framework and XAI's language models and API services. This package enables developers to easily leverage XAI's models in their AIGNE applications, providing a consistent interface across the framework while taking advantage of XAI's advanced AI capabilities.
+
+<picture>
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-xai-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-xai.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-xai.png" alt="AIGNE Arch" />
+</picture>
 
 ## Features
 
@@ -80,6 +92,7 @@ console.log(result);
 ## Streaming Responses
 
 ```typescript file="test/xai-chat-model.test.ts" region="example-xai-chat-model-streaming"
+import { isAgentResponseDelta } from "@aigne/core";
 import { XAIChatModel } from "@aigne/xai";
 
 const model = new XAIChatModel({
@@ -91,7 +104,6 @@ const stream = await model.invoke(
   {
     messages: [{ role: "user", content: "Tell me about yourself" }],
   },
-  undefined,
   { streaming: true },
 );
 
@@ -99,9 +111,11 @@ let fullText = "";
 const json = {};
 
 for await (const chunk of stream) {
-  const text = chunk.delta.text?.text;
-  if (text) fullText += text;
-  if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  if (isAgentResponseDelta(chunk)) {
+    const text = chunk.delta.text?.text;
+    if (text) fullText += text;
+    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  }
 }
 
 console.log(fullText); // Output: "I'm Grok, an AI assistant from X.AI. I'm here to assist with a touch of humor and wit!"

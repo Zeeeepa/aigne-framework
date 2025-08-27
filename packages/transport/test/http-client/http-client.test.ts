@@ -5,13 +5,14 @@ import {
   AIGNE,
   ChatModel,
   type ContextEventMap,
-  type Message,
   isAgentResponseDelta,
+  type Message,
 } from "@aigne/core";
 import {
   arrayToReadableStream,
   stringToAgentResponseStream,
 } from "@aigne/core/utils/stream-utils.js";
+import { DefaultMemory, DefaultMemoryStorage } from "@aigne/default-memory";
 import { agentResponseStreamToArraySnapshot } from "@aigne/test-utils/utils/agent-response.js";
 import {
   AIGNEHTTPClient,
@@ -23,7 +24,8 @@ import compression from "compression";
 import { detect } from "detect-port";
 import express from "express";
 import { Hono } from "hono";
-import { MockMemory } from "../_mocks_/mock-memory.js";
+import { ChatModelName } from "../../src/constants.js";
+import { ClientChatModel } from "../../src/http-client/client-chat-model.js";
 import { OpenAIChatModel } from "../_mocks_/mock-models.js";
 
 test("AIGNEClient example simple", async () => {
@@ -185,7 +187,7 @@ test.each(table)(
 
       const response = client.invoke("not-exists-agent", {}, options);
 
-      expect(response).rejects.toThrow("status 404: Agent not-exists-agent not found");
+      expect(response).rejects.toThrow("Agent not-exists-agent not found");
     } finally {
       await close();
     }
@@ -206,7 +208,7 @@ test.each(table)(
       });
 
       expect(response).rejects.toThrow(
-        "status 415: Unsupported Media Type: Content-Type must be application/json",
+        "Unsupported Media Type: Content-Type must be application/json",
       );
     } finally {
       await close();
@@ -225,7 +227,7 @@ test.each(table)(
       const response = client.invoke("chat", [] as unknown as Message, options);
 
       expect(response).rejects.toThrow(
-        "status 400: Invoke agent chat check arguments error: input: Expected object, received array",
+        "Invoke agent chat check arguments error: input: Expected object, received array",
       );
     } finally {
       await close();
@@ -238,17 +240,66 @@ test("AIGNEClient example simple", async () => {
 
   const client = new AIGNEHTTPClient({ url });
 
-  expect(() => client.publish("chat", "Hello world!")).toThrowError("Method not implemented.");
-  expect(() => client.subscribe("chat")).toThrowError("Method not implemented.");
-  expect(() => client.unsubscribe("chat", () => {})).toThrowError("Method not implemented.");
-  expect(() => client.emit("agentFailed", {} as ContextEventMap["agentFailed"][0])).toThrowError(
-    "Method not implemented.",
-  );
-  expect(() => client.on("agentFailed", () => {})).toThrowError("Method not implemented.");
-  expect(() => client.once("agentFailed", () => {})).toThrowError("Method not implemented.");
-  expect(() => client.off("agentFailed", () => {})).toThrowError("Method not implemented.");
+  const error = spyOn(console, "error").mockImplementation(() => {});
+
+  client.publish("chat", "Hello world!");
+  client.subscribe("chat");
+  client.unsubscribe("chat", () => {});
+  client.emit("agentFailed", {} as ContextEventMap["agentFailed"][0]);
+  client.on("agentFailed", () => {});
+  client.once("agentFailed", () => {});
+  client.off("agentFailed", () => {});
+
+  expect(error).toHaveBeenCalledTimes(7);
 
   await close();
+
+  error.mockRestore();
+});
+
+test("AIGNEClient should support invoke chat model on the server side", async () => {
+  const { url, close, aigne } = await createExpressServer();
+
+  try {
+    assert(aigne.model instanceof ChatModel);
+
+    const modelProcess = spyOn(aigne.model, "process").mockReturnValueOnce(
+      stringToAgentResponseStream("Hello Bob, How can I help you?"),
+    );
+
+    const client = new AIGNEHTTPClient({ url });
+
+    client.userContext.userId = "test_user_id";
+    client.userContext.sessionId = "test_session_id";
+
+    const response = await client.model.invoke({
+      messages: [{ role: "user", content: "Hello, I'm Bob!" }],
+    });
+    expect(response).toMatchInlineSnapshot(`
+      {
+        "text": "Hello Bob, How can I help you?",
+      }
+    `);
+    expect(modelProcess.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      {
+        "messages": [
+          {
+            "content": "Hello, I'm Bob!",
+            "role": "user",
+          },
+        ],
+      }
+    `);
+    expect(modelProcess.mock.lastCall?.[1]).toEqual(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          userContext: { userId: "test_user_id", sessionId: "test_session_id" },
+        }),
+      }),
+    );
+  } finally {
+    close();
+  }
 });
 
 test("AIGNEClient should support custom memory for client agent", async () => {
@@ -265,33 +316,28 @@ test("AIGNEClient should support custom memory for client agent", async () => {
 
     const clientAgent = await client.getAgent({
       name: "chat",
-      memory: new MockMemory(),
+      memory: new DefaultMemory(),
     });
 
     expect(clientAgent.memories.length).toBe(1);
     const memory = clientAgent.memories[0];
-    expect(memory).toBeInstanceOf(MockMemory);
-    assert(memory instanceof MockMemory);
+    expect(memory).toBeInstanceOf(DefaultMemory);
+    assert(memory instanceof DefaultMemory);
 
     const { storage } = memory;
+    assert(storage instanceof DefaultMemoryStorage);
 
     const response = await clientAgent.invoke({ message: "Hello, I'm Bob!" });
     expect(response).toEqual({ message: "Hello Bob, How can I help you?" });
 
-    expect(storage).toEqual([
-      expect.objectContaining({
-        content: expect.objectContaining({
-          role: "user",
-          content: { message: "Hello, I'm Bob!" },
-        }),
-      }),
-      expect.objectContaining({
-        content: expect.objectContaining({
-          role: "agent",
-          content: { message: "Hello Bob, How can I help you?" },
-        }),
-      }),
-    ]);
+    const memories = await (await storage.db).all("SELECT * FROM Memories");
+    expect(memories).toMatchSnapshot(
+      memories.map(() => ({
+        id: expect.any(String),
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })),
+    );
 
     spyOn(aigne.model, "process").mockReturnValueOnce(
       stringToAgentResponseStream("Your name is Bob."),
@@ -299,24 +345,41 @@ test("AIGNEClient should support custom memory for client agent", async () => {
 
     const response2 = await clientAgent.invoke({ message: "My name is?" });
     expect(response2).toEqual({ message: "Your name is Bob." });
+    expect(modelProcess.mock.lastCall).toMatchSnapshot([{}, expect.anything()]);
+  } finally {
+    close();
+  }
+});
+
+test("AIGNEClient should pass userContext to server side agent", async () => {
+  const { url, close, aigne } = await createExpressServer();
+
+  try {
+    assert(aigne.model instanceof ChatModel);
+
+    const modelProcess = spyOn(aigne.model, "process").mockReturnValueOnce(
+      stringToAgentResponseStream("Hello Bob, How can I help you?"),
+    );
+
+    const client = new AIGNEHTTPClient({ url });
+
+    const clientAgent = await client.getAgent({ name: "chat" });
+
+    const response = await client.invoke(
+      clientAgent,
+      { message: "Hello, I'm Bob!" },
+      { userContext: { userId: "test_user_id" } },
+    );
+
+    expect(response).toEqual({ message: "Hello Bob, How can I help you?" });
+
     expect(modelProcess).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        messages: expect.arrayContaining([
-          expect.objectContaining({
-            role: "system",
-            content: expect.stringContaining("Hello, I'm Bob!"),
-          }),
-          expect.objectContaining({
-            role: "system",
-            content: expect.stringContaining("Hello Bob, How can I help you?"),
-          }),
-          expect.objectContaining({
-            role: "user",
-            content: expect.stringContaining("My name is?"),
-          }),
-        ]),
-      }),
       expect.anything(),
+      expect.objectContaining({
+        context: expect.objectContaining({
+          userContext: { userId: "test_user_id" },
+        }),
+      }),
     );
   } finally {
     close();
@@ -387,7 +450,51 @@ async function createAIGNE() {
   const chat = AIAgent.from({
     name: "chat",
     inputKey: "message",
+    useMemoriesFromContext: true,
   });
 
   return new AIGNE({ model, agents: [chat] });
 }
+
+test("ClientChatModel should have correct name", () => {
+  const mockClient = {} as AIGNEHTTPClient;
+  const chatModel = new ClientChatModel(mockClient);
+
+  expect(chatModel.name).toBe(ChatModelName);
+});
+
+test("ClientChatModel should process input through client", async () => {
+  const mockClient = {
+    _invoke: () => Promise.resolve({ output: "test output" }),
+  } as unknown as AIGNEHTTPClient;
+
+  const mockInvoke = spyOn(mockClient, "_invoke");
+
+  const chatModel = new ClientChatModel(mockClient);
+  const input = { messages: [{ role: "user" as const, content: "test" }] };
+  const options = {
+    context: {
+      userContext: {},
+      memories: [],
+      hooks: [],
+      emit: () => {},
+      subscribe: () => {},
+      unsubscribe: () => {},
+      timeout: 5000,
+    } as any,
+  };
+
+  const result = await chatModel.process(input, options);
+
+  expect(mockInvoke).toHaveBeenCalledWith(ChatModelName, input, options);
+  expect(result).toEqual({ output: "test output" });
+});
+
+test("ClientChatModel should return empty credentials", async () => {
+  const mockClient = {} as AIGNEHTTPClient;
+  const chatModel = new ClientChatModel(mockClient);
+
+  const credentials = await chatModel.getCredential();
+
+  expect(credentials).toEqual({});
+});

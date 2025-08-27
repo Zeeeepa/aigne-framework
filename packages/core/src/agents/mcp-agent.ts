@@ -20,7 +20,6 @@ import type {
   ReadResourceResult,
   Request,
 } from "@modelcontextprotocol/sdk/types.js";
-import pRetry from "p-retry";
 import { type ZodType, z } from "zod";
 import { logger } from "../utils/logger.js";
 import {
@@ -28,7 +27,7 @@ import {
   resourceFromMCPResource,
   toolFromMCPTool,
 } from "../utils/mcp-utils.js";
-import { type PromiseOrValue, checkArguments, createAccessorArray } from "../utils/type-utils.js";
+import { checkArguments, createAccessorArray, type PromiseOrValue } from "../utils/type-utils.js";
 import { Agent, type AgentInvokeOptions, type AgentOptions, type Message } from "./agent.js";
 
 const MCP_AGENT_CLIENT_NAME = "AIGNE/MCPAgent";
@@ -121,6 +120,8 @@ function getMCPServerString(options: MCPAgentOptions | MCPServerOptions): string
  * {@includeCode ../../test/agents/mcp-agent.test.ts#example-mcp-agent-from-sse}
  */
 export class MCPAgent extends Agent {
+  override tag = "MCPAgent";
+
   /**
    * Create an MCPAgent from a connection to an SSE server.
    *
@@ -314,7 +315,7 @@ export class MCPAgent extends Agent {
    * MCPAgent itself is not directly invokable as it acts as a container
    * for tools, prompts, and resources. Always returns false.
    */
-  get isInvokable(): boolean {
+  override get isInvokable(): boolean {
     return false;
   }
 
@@ -381,7 +382,8 @@ class ClientWithReconnect extends Client {
     const transportCreator = this.reconnectOptions?.transportCreator;
     if (!transportCreator) throw new Error("reconnect requires a transportCreator");
 
-    await pRetry(
+    const retry = await import("p-retry");
+    await retry.default(
       async () => {
         await this.close();
         await this.connect(await transportCreator(), {
@@ -419,12 +421,14 @@ class ClientWithReconnect extends Client {
   }
 }
 
-export interface MCPBaseOptions<I extends Message = Message, O extends Message = Message>
+export interface MCPBaseOptions<I extends Message = any, O extends Message = any>
   extends AgentOptions<I, O> {
   client: ClientWithReconnect;
 }
 
 export abstract class MCPBase<I extends Message, O extends Message> extends Agent<I, O> {
+  override tag = "MCPBase";
+
   constructor(options: MCPBaseOptions<I, O>) {
     super(options);
     this.client = options.client;
@@ -434,6 +438,8 @@ export abstract class MCPBase<I extends Message, O extends Message> extends Agen
 }
 
 export class MCPTool extends MCPBase<Message, CallToolResult> {
+  override tag = "MCPTool";
+
   async process(input: Message): Promise<CallToolResult> {
     const result = await this.client.callTool({ name: this.name, arguments: input });
 
@@ -446,6 +452,8 @@ export interface MCPPromptInput extends Record<string, unknown> {
 }
 
 export class MCPPrompt extends MCPBase<MCPPromptInput, GetPromptResult> {
+  override tag = "MCPPrompt";
+
   async process(input: MCPPromptInput): Promise<GetPromptResult> {
     const result = await this.client.getPrompt({ name: this.name, arguments: input });
 
@@ -458,6 +466,8 @@ export interface MCPResourceOptions extends MCPBaseOptions<MCPPromptInput, ReadR
 }
 
 export class MCPResource extends MCPBase<MCPPromptInput, ReadResourceResult> {
+  override tag = "MCPResource";
+
   constructor(options: MCPResourceOptions) {
     super(options);
     this.uri = options.uri;
@@ -495,11 +505,11 @@ const mcpAgentOptionsSchema: ZodType<
     opts: z.object({}).optional(),
     timeout: z.number().optional(),
     maxReconnects: z.number().optional(),
-    shouldReconnect: z.function().args(z.instanceof(Error)).returns(z.boolean()).optional(),
+    shouldReconnect: z.custom<SSEServerParameters["shouldReconnect"]>().optional(),
   }),
   z.object({
     command: z.string(),
     args: z.array(z.string()).optional(),
-    env: z.record(z.string()).optional(),
+    env: z.record(z.string(), z.string()).optional(),
   }),
 ]);

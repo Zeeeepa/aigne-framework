@@ -12,6 +12,7 @@
 node_modules
 packages/*/lib
 models/*/lib
+memory/*/lib
 
 # testing
 coverage
@@ -29,6 +30,7 @@ dist-ssr
 # Log files
 logs
 *.log
+*.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -55,9 +57,7 @@ lerna-debug.log*
 /docs/api
 /docs/_media
 /docs/README.md
-/docs/README.zh.md
 /docs/LICENSE
 /docs/CONTRIBUTING.md
-/docs/CONTRIBUTING.zh.md
 /docs/RELEASING.md
-/docs/RELEASING.zh.md
+**/*/model-prices.json

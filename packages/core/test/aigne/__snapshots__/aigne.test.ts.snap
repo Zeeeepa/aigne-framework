@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://goo.gl/fbAQLP
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
 [
@@ -11,6 +11,7 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
       "input": {
         "message": "hello",
       },
+      "taskTitle": "Start process hello",
     },
   },
   {
@@ -31,6 +32,7 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
         "toolChoice": undefined,
         "tools": undefined,
       },
+      "taskTitle": undefined,
     },
   },
   {
@@ -118,13 +120,6 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
     },
   },
   {
-    "delta": {
-      "text": {
-        "message": " ",
-      },
-    },
-  },
-  {
     "progress": {
       "agent": {
         "name": "OpenAIChatModel",
@@ -138,14 +133,14 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
   {
     "delta": {
       "text": {
-        "message": "today",
+        "message": " ",
       },
     },
   },
   {
     "delta": {
       "text": {
-        "message": "?",
+        "message": "today",
       },
     },
   },
@@ -157,6 +152,13 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
       "event": "agentSucceed",
       "output": {
         "message": "Hello, How can I assist you today?",
+      },
+    },
+  },
+  {
+    "delta": {
+      "text": {
+        "message": "?",
       },
     },
   },
@@ -174,6 +176,7 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
       "input": {
         "message": "hello",
       },
+      "taskTitle": undefined,
     },
   },
   {
@@ -194,6 +197,7 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
         "toolChoice": undefined,
         "tools": undefined,
       },
+      "taskTitle": undefined,
     },
   },
   {
@@ -213,6 +217,13 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
     },
   },
   {
+    "delta": {
+      "text": {
+        "message": " world",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -221,18 +232,11 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
       "event": "agentFailed",
     },
   },
-  {
-    "delta": {
-      "text": {
-        "message": " world",
-      },
-    },
-  },
   [Error: Test error],
 ]
 `;
 
-exports[`AIGNE.invoke should respond $meta field with usage metrics with {
+exports[`AIGNE.invoke should respond $metafield with usage metrics with {
   streaming: true,
   returnMetadata: true,
 } 1`] = `
@@ -257,6 +261,7 @@ exports[`AIGNE.invoke should respond $meta field with usage metrics with {
         "$meta": {
           "usage": {
             "agentCalls": 4,
+            "aigneHubCredits": 0,
             "inputTokens": 13,
             "outputTokens": 24,
           },

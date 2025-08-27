@@ -1,25 +1,11 @@
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
-import { AnthropicChatModel } from "@aigne/anthropic";
-import { BedrockChatModel } from "@aigne/bedrock";
-import { DeepSeekChatModel } from "@aigne/deepseek";
-import { GeminiChatModel } from "@aigne/gemini";
-import { OllamaChatModel } from "@aigne/ollama";
-import { OpenRouterChatModel } from "@aigne/open-router";
-import { OpenAIChatModel } from "@aigne/openai";
-import { XAIChatModel } from "@aigne/xai";
-import pkg from "../package.json" with { type: "json" };
+import { createRequire } from "node:module";
+import { AgenticMemory } from "@aigne/agentic-memory";
+import { DefaultMemory } from "@aigne/default-memory";
 
-export const AIGNE_CLI_VERSION = pkg.version;
+const require = createRequire(import.meta.url);
 
-export const availableModels = [
-  OpenAIChatModel,
-  AnthropicChatModel,
-  BedrockChatModel,
-  DeepSeekChatModel,
-  GeminiChatModel,
-  OllamaChatModel,
-  OpenRouterChatModel,
-  XAIChatModel,
-];
+export const AIGNE_CLI_VERSION = require("../package.json").version;
 
-export const availableMemories = [DefaultMemory];
+export const availableMemories = [DefaultMemory, AgenticMemory];
+
+export const AIGNE_HUB_CREDITS_NOT_ENOUGH_ERROR_TYPE = "NOT_ENOUGH";

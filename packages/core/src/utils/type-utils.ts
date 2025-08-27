@@ -54,7 +54,7 @@ export function remove<T>(arr: T[], remove: T[] | ((item: T) => boolean)): T[] {
   const removed: T[] = [];
 
   for (let i = 0; i < arr.length; i++) {
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // biome-ignore lint/style/noNonNullAssertion: false positive
     const item = arr[i]!;
     if (
       (Array.isArray(remove) && remove.includes(item)) ||
@@ -82,7 +82,17 @@ export function unique<T>(arr: T[], key: (item: T) => unknown = (item: T) => ite
   });
 }
 
-export function omit<T extends Record<string, unknown>, K extends keyof T>(
+export function pick<T extends object, K extends keyof T>(
+  obj: T,
+  ...keys: (K | K[])[]
+): Pick<T, K> {
+  const flattenedKeys = new Set(keys.flat());
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) => flattenedKeys.has(key as K)),
+  ) as Pick<T, K>;
+}
+
+export function omit<T extends object, K extends keyof T>(
   obj: T,
   ...keys: (K | K[])[]
 ): Omit<T, K> {
@@ -107,7 +117,7 @@ export function omitDeep<T, K>(obj: T, ...keys: (K | K[])[]): unknown {
   return obj;
 }
 
-export function omitBy<T extends Record<string, unknown>, K extends keyof T>(
+export function omitBy<T extends object, K extends keyof T>(
   obj: T,
   predicate: (value: T[K], key: K) => boolean,
 ): Partial<T> {
@@ -119,9 +129,8 @@ export function omitBy<T extends Record<string, unknown>, K extends keyof T>(
   ) as Partial<T>;
 }
 
-export function orArrayToArray<T>(value?: T | T[]): T[] {
-  if (isNil(value)) return [];
-  return Array.isArray(value) ? value : [value];
+export function flat<T>(...value: (T | T[])[]): NonNullable<T>[] {
+  return value.flat().filter(isNonNullable) as NonNullable<T>[];
 }
 
 export function createAccessorArray<T>(

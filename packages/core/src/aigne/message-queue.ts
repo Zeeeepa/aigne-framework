@@ -1,7 +1,7 @@
 import { Emitter, type EventMap } from "strict-event-emitter";
 import { z } from "zod";
 import type { Message } from "../agents/agent.js";
-import { checkArguments, isNil, orArrayToArray } from "../utils/type-utils.js";
+import { checkArguments, flat, isNil } from "../utils/type-utils.js";
 import type { Context } from "./context.js";
 
 /**
@@ -81,7 +81,7 @@ export class MessageQueue {
       payload,
     });
 
-    for (const t of orArrayToArray(topic)) {
+    for (const t of flat(topic)) {
       this.events.emit(t, payload);
     }
   }
@@ -127,7 +127,7 @@ export class MessageQueue {
       listener,
     });
 
-    for (const t of orArrayToArray(topic)) {
+    for (const t of flat(topic)) {
       this.events.off(t, listener);
     }
   }
@@ -138,8 +138,8 @@ function on<T>(
   event: string | string[],
   listener: (arg: T, ...args: unknown[]) => void,
 ): Unsubscribe {
-  orArrayToArray(event).forEach((e) => events.on(e, listener));
-  return () => orArrayToArray(event).forEach((e) => events.off(e, listener));
+  flat(event).forEach((e) => events.on(e, listener));
+  return () => flat(event).forEach((e) => events.off(e, listener));
 }
 
 function once<T>(
@@ -147,18 +147,18 @@ function once<T>(
   event: string | string[],
   listener: (arg: T, ...args: unknown[]) => void,
 ): Unsubscribe {
-  orArrayToArray(event).forEach((e) => events.once(e, listener));
-  return () => orArrayToArray(event).forEach((e) => events.off(e, listener));
+  flat(event).forEach((e) => events.once(e, listener));
+  return () => flat(event).forEach((e) => events.off(e, listener));
 }
 
 const subscribeArgsSchema = z.object({
   topic: z.union([z.string(), z.array(z.string())]),
-  listener: z.function(z.tuple([z.any()]), z.any()).optional(),
+  listener: z.custom<MessageQueueListener>().optional(),
 });
 
 const unsubscribeArgsSchema = z.object({
   topic: z.union([z.string(), z.array(z.string())]),
-  listener: z.function(z.tuple([z.any()]), z.any()),
+  listener: z.custom<MessageQueueListener>(),
 });
 
 const publishArgsSchema = z.object({
@@ -166,7 +166,7 @@ const publishArgsSchema = z.object({
   payload: z.object({
     role: z.union([z.literal("user"), z.literal("agent")]),
     source: z.string().optional(),
-    message: z.union([z.string(), z.record(z.unknown())]),
+    message: z.union([z.string(), z.record(z.string(), z.unknown())]),
     context: z.any(),
   }),
 });

@@ -1,23 +1,30 @@
 import { expect, spyOn, test } from "bun:test";
+import assert from "node:assert";
 import { inspect } from "node:util";
 import {
-  AIAgent,
-  AIAgentToolChoice,
-  AIGNE,
   Agent,
+  type AgentInput,
   type AgentInvokeOptions,
+  type AgentOutput,
   type AgentProcessAsyncGenerator,
   type AgentResponseChunk,
   type AgentResponseStream,
+  AIAgent,
+  AIAgentToolChoice,
+  AIGNE,
   FunctionAgent,
-  type Message,
   isAgentResponseDelta,
+  type Message,
   textDelta,
 } from "@aigne/core";
 import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent";
-import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
+import {
+  readableStreamToArray,
+  stringToAgentResponseStream,
+} from "@aigne/core/utils/stream-utils.js";
 import { z } from "zod";
 import { OpenAIChatModel } from "../_mocks/mock-models.js";
+import { expectType } from "../_utils/expect.js";
 import { createToolCallResponse } from "../_utils/openai-like-utils.js";
 
 test("Custom agent", async () => {
@@ -622,10 +629,13 @@ test("Agent hooks simple example", async () => {
     inputKey: "message",
   });
 
-  const onStart = spyOn(agent.hooks, "onStart");
-  const onEnd = spyOn(agent.hooks, "onEnd");
-  const onSkillStart = spyOn(agent.hooks, "onSkillStart");
-  const onSkillEnd = spyOn(agent.hooks, "onSkillEnd");
+  const hooks = agent.hooks.at(0);
+  assert(hooks);
+
+  const onStart = spyOn(hooks, "onStart");
+  const onEnd = spyOn(hooks, "onEnd");
+  const onSkillStart = spyOn(hooks, "onSkillStart");
+  const onSkillEnd = spyOn(hooks, "onSkillEnd");
 
   spyOn(model, "process")
     .mockReturnValueOnce({ toolCalls: [createToolCallResponse("weather", { city: "Paris" })] })
@@ -683,7 +693,10 @@ test("Agent hook onHandoff should work correctly", async () => {
     inputKey: "message",
   });
 
-  const onHandoff = spyOn(triage.hooks, "onHandoff");
+  const hooks = triage.hooks.at(0);
+  assert(hooks);
+
+  const onHandoff = spyOn(hooks, "onHandoff");
 
   const feedback = AIAgent.from({
     inputKey: "message",
@@ -695,8 +708,6 @@ test("Agent hook onHandoff should work correctly", async () => {
 
   const result = await aigne.invoke(triage, { message: "I want to give feedback" });
 
-  console.log(result);
-
   expect(onHandoff).toHaveBeenLastCalledWith(
     expect.objectContaining({
       source: triage,
@@ -706,4 +717,101 @@ test("Agent hook onHandoff should work correctly", async () => {
   );
 
   expect(result).toEqual({ message: "Hello, I am feedback agent." });
+});
+
+test("AgentInput/AgentOutput should infer correct types", async () => {
+  const agent = AIAgent.from({
+    inputSchema: z.object({
+      name: z.string(),
+      age: z.number(),
+    }),
+    outputSchema: z.object({
+      greeting: z.string(),
+      ageInMonths: z.number(),
+    }),
+  });
+
+  expectType<AgentInput<typeof agent>>().is<{ name: string; age: number }>();
+  expectType<AgentOutput<typeof agent>>().is<{ greeting: string; ageInMonths: number }>();
+});
+
+test("Agent must return a record type", async () => {
+  // biome-ignore lint/security/noGlobalEval: just for testing
+  const agent = FunctionAgent.from(() => eval("4 * 4"));
+
+  expect(agent.invoke({}, { streaming: false })).rejects.toThrow(
+    "expect to return a record type such as {result: ...}, but got (number): 16",
+  );
+
+  expect(readableStreamToArray(await agent.invoke({}, { streaming: true }))).rejects.toThrow(
+    "expect to return a record type such as {result: ...}, but got (number): 16",
+  );
+});
+
+test("Agent should merge default input before invoking", async () => {
+  const agent = FunctionAgent.from({
+    inputSchema: z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      foo: z.string().optional(),
+    }),
+    defaultInput: {
+      description: "Default description",
+      foo: { $get: "title" },
+    },
+    process: async (input) => input,
+  });
+
+  const result = await agent.invoke({ title: "Test Title" });
+  expect(result).toEqual({
+    title: "Test Title",
+    description: "Default description",
+    foo: "Test Title",
+  });
+});
+
+test("Agent should prioritize direct input over default input", async () => {
+  const agent = FunctionAgent.from({
+    inputSchema: z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      foo: z.string().optional(),
+    }),
+    defaultInput: {
+      description: "Default description",
+      foo: { $get: "title" },
+    },
+    process: async (input) => input,
+  });
+
+  const result = await agent.invoke({
+    title: "Test Title",
+    description: "Custom description",
+    foo: "Custom Foo",
+  });
+  expect(result).toEqual({
+    title: "Test Title",
+    description: "Custom description",
+    foo: "Custom Foo",
+  });
+});
+
+test("Agent should render task title (string template) correctly", async () => {
+  const agent = AIAgent.from({
+    taskTitle: "Test Task for message: {{message}}",
+  });
+
+  expect(await agent.renderTaskTitle({ message: "Hello" })).toBe("Test Task for message: Hello");
+});
+
+test("Agent should render task title (function) correctly", async () => {
+  const agent = AIAgent.from({
+    taskTitle: (input) =>
+      input.lang === "zh" ? `测试任务: {{message}}` : `Test Task for message: {{message}}`,
+  });
+
+  expect(await agent.renderTaskTitle({ lang: "zh", message: "Hello" })).toBe("测试任务: Hello");
+  expect(await agent.renderTaskTitle({ lang: "en", message: "Hello" })).toBe(
+    "Test Task for message: Hello",
+  );
 });

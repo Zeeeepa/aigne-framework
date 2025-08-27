@@ -1,12 +1,18 @@
 # @aigne/transport
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/transport)](https://www.npmjs.com/package/@aigne/transport)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/transport)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE.md)
-
-**English** | [中文](README.zh.md)
 
 AIGNE Transport SDK providing HTTP client and server implementations for communication between AIGNE components within the [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework).
 
@@ -82,9 +88,9 @@ const httpServer = server.listen(port);
 const client = new AIGNEHTTPClient({ url });
 
 // Invoke the agent by client
-const response = await client.invoke("chat", { $message: "hello" });
+const response = await client.invoke("chat", { message: "hello" });
 
-console.log(response); // Output: {$message: "Hello world!"}
+console.log(response); // Output: {message: "Hello world!"}
 ```
 
 #### Hono Example
@@ -120,8 +126,8 @@ const server = serve({ port, fetch: honoApp.fetch });
 const client = new AIGNEHTTPClient({ url });
 
 // Invoke the agent by client
-const response = await client.invoke("chat", { $message: "hello" });
-console.log(response); // Output: {$message: "Hello world!"}
+const response = await client.invoke("chat", { message: "hello" });
+console.log(response); // Output: {message: "Hello world!"}
 ```
 
 ### HTTP Client
@@ -131,27 +137,30 @@ import { AIGNEHTTPClient } from "@aigne/transport/http-client/index.js";
 
 const client = new AIGNEHTTPClient({ url });
 
-const response = await client.invoke("chat", { $message: "hello" });
+const response = await client.invoke("chat", { message: "hello" });
 
-console.log(response); // Output: {$message: "Hello world!"}
+console.log(response); // Output: {message: "Hello world!"}
 ```
 
 ### Streaming Responses
 
 ```typescript file="test/http-client/http-client.test.ts" region="example-aigne-client-streaming"
+import { isAgentResponseDelta } from "@aigne/core";
 import { AIGNEHTTPClient } from "@aigne/transport/http-client/index.js";
 
 const client = new AIGNEHTTPClient({ url });
 
 const stream = await client.invoke(
   "chat",
-  { $message: "hello" },
+  { message: "hello" },
   { streaming: true },
 );
 
 let text = "";
 for await (const chunk of stream) {
-  if (chunk.delta.text?.$message) text += chunk.delta.text.$message;
+  if (isAgentResponseDelta(chunk)) {
+    if (chunk.delta.text?.message) text += chunk.delta.text.message;
+  }
 }
 
 console.log(text); // Output: "Hello world!"

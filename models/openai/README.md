@@ -1,18 +1,30 @@
 # @aigne/openai
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/openai)](https://www.npmjs.com/package/@aigne/openai)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/openai)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE.md)
 
-**English** | [中文](README.zh.md)
-
 AIGNE OpenAI SDK for integrating with OpenAI's GPT models and API services within the [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework).
 
 ## Introduction
 
 `@aigne/openai` provides a seamless integration between the AIGNE Framework and OpenAI's powerful language models and APIs. This package enables developers to easily leverage OpenAI's GPT models in their AIGNE applications, providing a consistent interface across the framework while taking advantage of OpenAI's advanced AI capabilities.
+
+<picture>
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-openai-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-openai.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-openai.png" alt="AIGNE Arch" />
+</picture>
 
 ## Features
 
@@ -79,6 +91,7 @@ console.log(result);
 ## Streaming Responses
 
 ```typescript file="test/openai-chat-model.test.ts" region="example-openai-chat-model-stream"
+import { isAgentResponseDelta } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
 
 const model = new OpenAIChatModel({
@@ -90,7 +103,6 @@ const stream = await model.invoke(
   {
     messages: [{ role: "user", content: "Hello, who are you?" }],
   },
-  undefined,
   { streaming: true },
 );
 
@@ -98,9 +110,11 @@ let fullText = "";
 const json = {};
 
 for await (const chunk of stream) {
-  const text = chunk.delta.text?.text;
-  if (text) fullText += text;
-  if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  if (isAgentResponseDelta(chunk)) {
+    const text = chunk.delta.text?.text;
+    if (text) fullText += text;
+    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  }
 }
 
 console.log(fullText); // Output: "Hello! How can I assist you today?"

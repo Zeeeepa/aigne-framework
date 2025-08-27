@@ -5,11 +5,11 @@ import {
   AIGNE,
   FunctionAgent,
   type InvokeOptions,
+  isAgentResponseDelta,
+  isAgentResponseProgress,
   type MessageQueueListener,
   UserInputTopic,
   UserOutputTopic,
-  isAgentResponseDelta,
-  isAgentResponseProgress,
 } from "@aigne/core";
 import { TeamAgent } from "@aigne/core/agents/team-agent.js";
 import {
@@ -471,6 +471,7 @@ test("AIGNE.invoke should respond progressing chunks correctly", async () => {
   const agent = AIAgent.from({
     name: "chat",
     inputKey: "message",
+    taskTitle: "Start process {{message}}",
   });
 
   const stream = await aigne.invoke(
@@ -576,6 +577,7 @@ test.each<[InvokeOptions]>([
           "$meta": {
             "usage": {
               "agentCalls": 4,
+              "aigneHubCredits": 0,
               "inputTokens": 13,
               "outputTokens": 24,
             },

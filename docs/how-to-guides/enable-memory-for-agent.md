@@ -1,7 +1,5 @@
 # Enable Memory for Agent
 
-[English](./enable-memory-for-agent.md) | [中文](./enable-memory-for-agent.zh.md)
-
 In conversational applications, the ability to remember previous conversation content is a very important feature. The AIGNE framework provides a simple way to enable memory capabilities for Agents, allowing them to maintain contextual coherence across multiple conversation rounds. This guide will introduce how to enable and use Agent memory functionality.
 
 ## Basic Process
@@ -18,8 +16,8 @@ Let's understand the implementation details of each step:
 ### Create Agent with Memory Functionality
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent-enable-memory"
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 
 const agent = AIAgent.from({
   instructions: "You are a helpful assistant for Crypto market analysis",
@@ -115,8 +113,8 @@ console.log(result4);
 The following example shows how to create an Agent with memory functionality and test its memory capability in continuous conversations:
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-enable-memory-for-agent"
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 import { OpenAIChatModel } from "@aigne/openai";
 
 const aigne = new AIGNE({

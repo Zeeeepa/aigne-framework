@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Examples for AIGNE Framework",
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
-  "homepage": "https://github.com/AIGNE-io/aigne-framework",
+  "homepage": "https://www.aigne.io/framework",
   "license": "MIT",
   "private": true,
   "repository": {
@@ -22,19 +22,23 @@
     "@aigne/bedrock": "workspace:^",
     "@aigne/core": "workspace:^",
     "@aigne/deepseek": "workspace:^",
+    "@aigne/default-memory": "workspace:^",
     "@aigne/gemini": "workspace:^",
     "@aigne/ollama": "workspace:^",
     "@aigne/open-router": "workspace:^",
     "@aigne/openai": "workspace:^",
     "@aigne/transport": "workspace:^",
     "@aigne/xai": "workspace:^",
+    "@aigne/aigne-hub": "workspace:^",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "hono": "^4.7.10",
-    "zod": "^3.24.4"
+    "hono": "^4.8.4",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.9",
-    "@types/express": "^5.0.1"
+    "@types/bun": "^1.2.18",
+    "@types/express": "^5.0.3",
+    "detect-port": "^2.1.0",
+    "rimraf": "^6.0.1"
   }
 }

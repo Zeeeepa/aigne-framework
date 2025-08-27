@@ -79,7 +79,7 @@ await runWithAIGNE(
   },
   {
     chatLoopOptions: {
-      inputKey: "message",
+      inputKey: "question",
       welcome: `Hello, I'm a coder with a reviewer. I can help you write code and get it reviewed.`,
       defaultQuestion: "Write a function to find the sum of all even numbers in a list.",
     },

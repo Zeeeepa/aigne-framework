@@ -2,15 +2,17 @@ import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { join } from "node:path";
 import { AIAgent, AIGNE, ChatModel, MCPAgent } from "@aigne/core";
+import * as agentJs from "@aigne/core/loader/agent-js.js";
 import { load, loadAgent } from "@aigne/core/loader/index.js";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { nanoid } from "nanoid";
-import { ClaudeChatModel, OpenAIChatModel, XAIChatModel } from "../_mocks/mock-models.js";
+import { ClaudeChatModel, OpenAIChatModel } from "../_mocks/mock-models.js";
+
+const loadModel = () => new OpenAIChatModel();
 
 test("AIGNE.load should load agents correctly", async () => {
   const aigne = await AIGNE.load(join(import.meta.dirname, "../../test-agents"), {
-    models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel],
+    model: loadModel,
   });
 
   expect(aigne).toEqual(
@@ -20,7 +22,7 @@ test("AIGNE.load should load agents correctly", async () => {
     }),
   );
 
-  expect(aigne.agents.length).toBe(3);
+  expect(aigne.agents.length).toBe(4);
 
   const chat = aigne.agents[0];
   expect(chat).toEqual(
@@ -36,22 +38,29 @@ test("AIGNE.load should load agents correctly", async () => {
   expect(aigne.model).toBeInstanceOf(ChatModel);
   assert(aigne.model, "model should be defined");
 
-  spyOn(aigne.model, "process")
-    .mockReturnValueOnce(
-      Promise.resolve({
-        toolCalls: [
-          {
-            id: nanoid(),
-            type: "function",
-            function: { name: "evaluateJs", arguments: { code: "1 + 1" } },
-          },
-        ],
-      }),
-    )
-    .mockReturnValueOnce(Promise.resolve({ text: "1 + 2 = 3" }));
-
-  const result = await aigne.invoke(chat, { message: "1 + 2 = ?" });
-  expect(result).toEqual(expect.objectContaining({ message: "1 + 2 = 3" }));
+  expect({
+    agents: aigne.agents.map((agent) => ({
+      name: agent.name,
+      description: agent.description,
+      taskTitle: agent.taskTitle,
+    })),
+    skills: aigne.skills.map((skill) => ({
+      name: skill.name,
+      description: skill.description,
+    })),
+    mcpServer: {
+      agents: aigne.mcpServer?.agents.map((agent) => ({
+        name: agent.name,
+        description: agent.description,
+      })),
+    },
+    cli: {
+      agents: aigne.cli?.agents.map((agent) => ({
+        name: agent.name,
+        description: agent.description,
+      })),
+    },
+  }).toMatchSnapshot();
 });
 
 test("loader should use override options", async () => {
@@ -60,7 +69,6 @@ test("loader should use override options", async () => {
   const testSkill = AIAgent.from({ name: "test-skill" });
 
   const aigne = await AIGNE.load(join(import.meta.dirname, "../../test-agents"), {
-    models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel],
     model,
     agents: [testAgent],
     skills: [testSkill],
@@ -77,6 +85,9 @@ test("loader should use override options", async () => {
     expect.objectContaining({
       name: "test-team-agent",
     }),
+    expect.objectContaining({
+      name: "test-image-agent",
+    }),
     testAgent,
   ]);
   expect([...aigne.skills]).toEqual([expect.objectContaining({ name: "evaluateJs" }), testSkill]);
@@ -92,50 +103,37 @@ test("load should process path correctly", async () => {
   const readFile = spyOn(nodejs.fs, "readFile");
 
   // mock a non-existing file
-  stat.mockReturnValueOnce(Promise.reject(new Error("no such file or directory")));
-  expect(
-    load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "aigne.yaml" }),
-  ).rejects.toThrow("no such file or directory");
+  stat.mockReturnValueOnce(Promise.reject(new Error("not found")));
+  expect(load("aigne.yaml", { model: loadModel })).rejects.toThrow("not found");
 
   // mock a yaml file with invalid content
   stat.mockReturnValueOnce(
-    Promise.resolve({ isDirectory: () => false }) as ReturnType<typeof nodejs.fs.stat>,
+    Promise.resolve({ isFile: () => true }) as ReturnType<typeof nodejs.fs.stat>,
   );
   readFile.mockReturnValueOnce(Promise.resolve("[this is not a valid yaml}"));
-  expect(
-    load({
-      models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel],
-      path: "invalid-yaml/aigne.yaml",
-    }),
-  ).rejects.toThrow("Failed to parse aigne.yaml");
+  expect(load("invalid-yaml/aigne.yaml", { model: loadModel })).rejects.toThrow(
+    "Failed to parse aigne.yaml",
+  );
   expect(readFile).toHaveBeenLastCalledWith("invalid-yaml/aigne.yaml", "utf8");
 
   // mock a valid yaml but invalid properties
   stat.mockReturnValueOnce(
-    Promise.resolve({ isDirectory: () => false }) as ReturnType<typeof nodejs.fs.stat>,
+    Promise.resolve({ isFile: () => true }) as ReturnType<typeof nodejs.fs.stat>,
   );
   readFile.mockReturnValueOnce(Promise.resolve("chat_model: 123"));
-  expect(
-    load({
-      models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel],
-      path: "invalid-properties/aigne.yaml",
-    }),
-  ).rejects.toThrow("Failed to validate aigne.yaml");
+  expect(load("invalid-properties/aigne.yaml", { model: loadModel })).rejects.toThrow(
+    "Failed to validate aigne.yaml",
+  );
   expect(readFile).toHaveBeenLastCalledWith("invalid-properties/aigne.yaml", "utf8");
 
   // mock a directory with a .yaml file
   stat.mockReturnValueOnce(
-    Promise.resolve({ isDirectory: () => true }) as ReturnType<typeof nodejs.fs.stat>,
-  );
-  stat.mockReturnValueOnce(
     Promise.resolve({ isFile: () => true }) as ReturnType<typeof nodejs.fs.stat>,
   );
   readFile.mockReturnValueOnce(Promise.resolve("chat_model: gpt-4o-mini"));
-  expect(
-    load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "foo" }),
-  ).resolves.toEqual(
+  expect(load("foo", { model: loadModel })).resolves.toEqual(
     expect.objectContaining({
-      model: expect.anything(),
+      chatModel: expect.anything(),
       agents: [],
       skills: [],
     }),
@@ -143,9 +141,6 @@ test("load should process path correctly", async () => {
   expect(readFile).toHaveBeenLastCalledWith("foo/aigne.yaml", "utf8");
 
   // mock a directory with a .yml file
-  stat.mockReturnValueOnce(
-    Promise.resolve({ isDirectory: () => true }) as ReturnType<typeof nodejs.fs.stat>,
-  );
   stat
     .mockReturnValueOnce(
       Promise.resolve({ isFile: () => false }) as ReturnType<typeof nodejs.fs.stat>,
@@ -154,65 +149,17 @@ test("load should process path correctly", async () => {
       Promise.resolve({ isFile: () => true }) as ReturnType<typeof nodejs.fs.stat>,
     );
   readFile.mockReturnValueOnce(Promise.resolve("chat_model: gpt-4o-mini"));
-  expect(
-    load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "bar" }),
-  ).resolves.toEqual(
+  expect(load("bar", { model: loadModel })).resolves.toEqual(
     expect.objectContaining({
-      model: expect.anything(),
+      chatModel: expect.anything(),
       agents: [],
       skills: [],
     }),
   );
   expect(readFile).toHaveBeenLastCalledWith("bar/aigne.yml", "utf8");
-});
 
-test("load should load model correctly", async () => {
-  spyOn(nodejs.fs, "stat").mockReturnValue(
-    Promise.resolve({ isDirectory: () => false }) as ReturnType<typeof nodejs.fs.stat>,
-  );
-  const readFile = spyOn(nodejs.fs, "readFile");
-
-  readFile.mockReturnValueOnce(Promise.resolve("chat_model: gpt-4o"));
-  expect(
-    (await load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "aigne.yaml" }))
-      .model,
-  ).toBeInstanceOf(OpenAIChatModel);
-
-  readFile.mockReturnValueOnce(
-    Promise.resolve(`\
-chat_model:
-  provider: openai
-  name: gpt-4o
-`),
-  );
-  expect(
-    (await load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "aigne.yaml" }))
-      .model,
-  ).toBeInstanceOf(OpenAIChatModel);
-
-  readFile.mockReturnValueOnce(
-    Promise.resolve(`\
-chat_model:
-  provider: claude
-  name: claude-3.5
-`),
-  );
-  expect(
-    (await load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "aigne.yaml" }))
-      .model,
-  ).toBeInstanceOf(ClaudeChatModel);
-
-  readFile.mockReturnValueOnce(
-    Promise.resolve(`\
-chat_model:
-  provider: xai
-  name: grok-2-latest
-`),
-  );
-  expect(
-    (await load({ models: [OpenAIChatModel, ClaudeChatModel, XAIChatModel], path: "aigne.yaml" }))
-      .model,
-  ).toBeInstanceOf(XAIChatModel);
+  stat.mockRestore();
+  readFile.mockRestore();
 });
 
 test("loadAgent should load MCP agent from url correctly", async () => {
@@ -223,7 +170,7 @@ test("loadAgent should load MCP agent from url correctly", async () => {
 
   const from = spyOn(MCPAgent, "from").mockReturnValueOnce(testMcp);
 
-  spyOn(nodejs.fs, "readFile").mockReturnValueOnce(
+  const readFile = spyOn(nodejs.fs, "readFile").mockReturnValueOnce(
     Promise.resolve(`\
 type: mcp
 url: http://localhost:3000/sse
@@ -231,19 +178,23 @@ url: http://localhost:3000/sse
   );
 
   expect(await loadAgent("./remote-mcp.yaml")).toBe(testMcp);
-  expect(from).toHaveBeenLastCalledWith({
-    url: "http://localhost:3000/sse",
-  });
+  expect(from).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      url: "http://localhost:3000/sse",
+    }),
+  );
+
+  readFile.mockRestore();
 });
 
 test("loadAgent should load MCP agent from command correctly", async () => {
   const fsMcp = MCPAgent.from({
     name: "filesystem",
-    client: new Client({ name: "test-mcp-cleint", version: "0.0.1" }),
+    client: new Client({ name: "test-mcp-client", version: "0.0.1" }),
   });
   const from = spyOn(MCPAgent, "from").mockReturnValueOnce(fsMcp);
 
-  spyOn(nodejs.fs, "readFile").mockReturnValueOnce(
+  const readFile = spyOn(nodejs.fs, "readFile").mockReturnValueOnce(
     Promise.resolve(`\
 type: mcp
 command: npx
@@ -252,10 +203,14 @@ args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
   );
 
   expect(await loadAgent("./local-mcp.yaml")).toBe(fsMcp);
-  expect(from).toHaveBeenLastCalledWith({
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "."],
-  });
+  expect(from).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."],
+    }),
+  );
+
+  readFile.mockRestore();
 });
 
 test("loadAgent should error if MCP agent options is not valid", async () => {
@@ -266,4 +221,19 @@ type: mcp
   );
 
   expect(loadAgent("./local-mcp.yaml")).rejects.toThrow("Missing url or command in mcp agent");
+});
+
+test("loadAgent should load js agent with a random key to avoid caching issues", async () => {
+  const loadAgentFromJsFile = spyOn(agentJs, "loadAgentFromJsFile");
+
+  await AIGNE.load(join(import.meta.dirname, "../../test-agents"));
+
+  expect(loadAgentFromJsFile).toHaveBeenLastCalledWith(
+    expect.any(String),
+    expect.objectContaining({
+      key: expect.any(Number),
+    }),
+  );
+
+  loadAgentFromJsFile.mockRestore();
 });

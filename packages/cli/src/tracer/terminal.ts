@@ -1,29 +1,35 @@
 import { EOL } from "node:os";
-import { inspect } from "node:util";
+import { type InspectOptions, inspect } from "node:util";
 import {
-  AIAgent,
   type Agent,
+  type AgentHooks,
+  AIAgent,
   ChatModel,
   type ChatModelOutput,
   type Context,
-  type ContextEventMap,
   type ContextUsage,
   DEFAULT_OUTPUT_KEY,
+  type InvokeOptions,
   type Message,
+  mergeContextUsage,
+  newEmptyContextUsage,
+  UserAgent,
 } from "@aigne/core";
-import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { promiseWithResolvers } from "@aigne/core/utils/promise.js";
-import { omit } from "@aigne/core/utils/type-utils.js";
-import type { Listener } from "@aigne/core/utils/typed-event-emtter.js";
-import { type Listr, figures } from "@aigne/listr2";
+import { flat, omit } from "@aigne/core/utils/type-utils.js";
+import { figures, type Listr } from "@aigne/listr2";
 import { markedTerminal } from "@aigne/marked-terminal";
+import * as prompts from "@inquirer/prompts";
 import chalk from "chalk";
 import { Marked } from "marked";
-import { AIGNEListr, type AIGNEListrTaskWrapper } from "../utils/listr.js";
+import { AIGNE_HUB_CREDITS_NOT_ENOUGH_ERROR_TYPE } from "../constants.js";
+import { AIGNEListr, AIGNEListrRenderer, type AIGNEListrTaskWrapper } from "../utils/listr.js";
+import { highlightUrl } from "../utils/string-utils.js";
 import { parseDuration } from "../utils/time.js";
 
+const CREDITS_ERROR_PROCESSED_FLAG = "$credits_error_processed";
+
 export interface TerminalTracerOptions {
-  printRequest?: boolean;
   outputKey?: string;
 }
 
@@ -35,34 +41,70 @@ export class TerminalTracer {
 
   private tasks: { [callId: string]: Task } = {};
 
-  async run(agent: Agent, input: Message) {
+  async run(agent: Agent, input: Message, options?: InvokeOptions) {
+    await this.context.observer?.serve();
+
     const context = this.context.newContext({ reset: true });
 
     const listr = new AIGNEListr(
       {
-        formatRequest: () =>
-          this.options.printRequest ? this.formatRequest(agent, context, input) : undefined,
-        formatResult: (result) => [this.formatResult(agent, context, result)].filter(Boolean),
+        formatRequest: (options?: { running?: boolean }) =>
+          this.formatRequest(agent, context, input, options),
+        formatResult: (result, options?: { running?: boolean }) =>
+          [this.formatResult(agent, context, result, options)].filter(Boolean),
       },
       [],
-      { concurrent: true },
+      { concurrent: true, exitOnError: false },
     );
+    this.listr = listr;
 
-    const onAgentStarted: Listener<"agentStarted", ContextEventMap> = async ({
-      contextId,
-      parentContextId,
-      agent,
-      timestamp,
-    }) => {
+    const collapsedMap = new Map<
+      string,
+      { ancestor: { contextId: string }; usage: ContextUsage; models: Set<string> }
+    >();
+    const hideContextIds = new Set<string>();
+
+    const onStart: AgentHooks["onStart"] = async ({ context, agent, ...event }) => {
+      if (agent instanceof UserAgent) return;
+
+      if (agent.taskRenderMode === "hide") {
+        hideContextIds.add(context.id);
+        return;
+      } else if (agent.taskRenderMode === "collapse") {
+        collapsedMap.set(context.id, {
+          ancestor: { contextId: context.id },
+          usage: newEmptyContextUsage(),
+          models: new Set(),
+        });
+      }
+
+      if (context.parentId) {
+        if (hideContextIds.has(context.parentId)) {
+          hideContextIds.add(context.id);
+          return;
+        }
+
+        const collapsed = collapsedMap.get(context.parentId);
+        if (collapsed) {
+          collapsedMap.set(context.id, collapsed);
+          return;
+        }
+      }
+
+      const contextId = context.id;
+      const parentContextId = context.parentId;
+
       const task: Task = {
         ...promiseWithResolvers(),
+        agent,
+        input: event.input,
         listr: promiseWithResolvers(),
-        startTime: timestamp,
+        startTime: Date.now(),
       };
       this.tasks[contextId] = task;
 
       const listrTask: Parameters<typeof listr.add>[0] = {
-        title: this.formatTaskTitle(agent),
+        title: await this.formatTaskTitle(agent, { ...event }),
         task: (ctx, taskWrapper) => {
           const subtask = taskWrapper.newListr([{ task: () => task.promise }]);
           task.listr.resolve({ subtask, taskWrapper, ctx });
@@ -83,19 +125,51 @@ export class TerminalTracer {
       } else {
         listr.add(listrTask);
       }
+
+      return { options: { prompts: this.proxiedPrompts } };
     };
 
-    const onAgentSucceed: Listener<"agentSucceed", ContextEventMap> = async ({
-      agent,
-      contextId,
-      parentContextId,
-      output,
-      timestamp,
-    }) => {
+    const onSuccess: AgentHooks["onSuccess"] = async ({ context, agent, output, ...event }) => {
+      const contextId = context.id;
+      const parentContextId = context.parentId;
+
+      const collapsed = collapsedMap.get(contextId);
+      if (collapsed) {
+        if (agent instanceof ChatModel) {
+          const { usage, model } = output as ChatModelOutput;
+          if (usage) mergeContextUsage(collapsed.usage, usage);
+          if (model) collapsed.models.add(model);
+        }
+
+        const task = this.tasks[collapsed.ancestor.contextId];
+        if (task) {
+          task.usage = collapsed.usage;
+          task.extraTitleMetadata ??= {};
+          if (collapsed.models.size)
+            task.extraTitleMetadata.model = [...collapsed.models].join(",");
+
+          const { taskWrapper } = await task.listr.promise;
+
+          taskWrapper.title = await this.formatTaskTitle(task.agent, {
+            input: task.input,
+            task,
+            usage: Boolean(
+              task.usage.inputTokens || task.usage.outputTokens || task.usage.aigneHubCredits,
+            ),
+            time: context.id === collapsed.ancestor.contextId,
+          });
+
+          if (context.id === collapsed.ancestor.contextId) {
+            task?.resolve();
+          }
+          return;
+        }
+      }
+
       const task = this.tasks[contextId];
       if (!task) return;
 
-      task.endTime = timestamp;
+      task.endTime = Date.now();
 
       const { taskWrapper, ctx } = await task.listr.promise;
 
@@ -106,7 +180,12 @@ export class TerminalTracer {
         if (model) task.extraTitleMetadata.model = model;
       }
 
-      taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
+      taskWrapper.title = await this.formatTaskTitle(agent, {
+        ...event,
+        task,
+        usage: true,
+        time: true,
+      });
 
       if (!parentContextId || !this.tasks[parentContextId]) {
         Object.assign(ctx, output);
@@ -115,42 +194,124 @@ export class TerminalTracer {
       task.resolve();
     };
 
-    const onAgentFailed: Listener<"agentFailed", ContextEventMap> = async ({
-      agent,
-      contextId,
-      error,
-      timestamp,
-    }) => {
+    const onError: AgentHooks["onError"] = async ({ context, agent, error, ...event }) => {
+      if ("type" in error && error.type === AIGNE_HUB_CREDITS_NOT_ENOUGH_ERROR_TYPE) {
+        if (!Object.hasOwn(error, CREDITS_ERROR_PROCESSED_FLAG)) {
+          Object.defineProperty(error, CREDITS_ERROR_PROCESSED_FLAG, {
+            value: true,
+            enumerable: false,
+          });
+
+          const retry = await this.promptBuyCredits(error);
+
+          console.log("");
+
+          if (retry === "retry") {
+            return { retry: true };
+          }
+        }
+      }
+
+      const contextId = context.id;
+
       const task = this.tasks[contextId];
       if (!task) return;
 
-      task.endTime = timestamp;
+      task.endTime = Date.now();
 
       const { taskWrapper } = await task.listr.promise;
-      taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
+      taskWrapper.title = await this.formatTaskTitle(agent, {
+        ...event,
+        task,
+        usage: true,
+        time: true,
+      });
 
       task.reject(error);
     };
 
-    context.on("agentStarted", onAgentStarted);
-    context.on("agentSucceed", onAgentSucceed);
-    context.on("agentFailed", onAgentFailed);
+    const result = await listr.run(() =>
+      context.invoke(agent, input, {
+        ...options,
+        hooks: flat(
+          {
+            priority: "high",
+            onStart,
+            onSuccess,
+            onError,
+          },
+          options?.hooks,
+        ),
+        streaming: true,
+        newContext: false,
+      }),
+    );
 
-    try {
-      const result = await listr.run(() => context.invoke(agent, input, { streaming: true }));
+    return { result, context };
+  }
 
-      return { result, context };
-    } finally {
-      context.off("agentStarted", onAgentStarted);
-      context.off("agentSucceed", onAgentSucceed);
-      context.off("agentFailed", onAgentFailed);
-    }
+  private listr?: AIGNEListr;
+
+  private proxiedPrompts = new Proxy(
+    {},
+    {
+      get: (_target, prop) => {
+        // biome-ignore lint/performance/noDynamicNamespaceImportAccess: we need to access prompts dynamically
+        const method = prompts[prop as keyof typeof prompts] as (...args: any[]) => any;
+        if (typeof method !== "function") return undefined;
+
+        return async (config: any) => {
+          const renderer =
+            this.listr?.["renderer"] instanceof AIGNEListrRenderer
+              ? this.listr["renderer"]
+              : undefined;
+          await renderer?.pause();
+
+          try {
+            return await method({ ...config });
+          } finally {
+            await renderer?.resume();
+          }
+        };
+      },
+    },
+  ) as typeof prompts;
+
+  private buyCreditsPromptPromise: Promise<"retry" | "exit"> | undefined;
+
+  private async promptBuyCredits(error: Error) {
+    // Avoid multiple agents asking for credits, we will only show the prompt once
+    this.buyCreditsPromptPromise ??= (async () => {
+      const retry = await this.proxiedPrompts.select({
+        message: highlightUrl(error.message),
+        choices: [
+          {
+            name: "I have bought some credits, try again",
+            value: "retry" as const,
+          },
+          {
+            name: "Exit",
+            value: "exit" as const,
+          },
+        ],
+      });
+
+      return retry;
+    })();
+
+    return this.buyCreditsPromptPromise.finally(() => {
+      // Clear the promise so that we can show the prompt again if needed
+      this.buyCreditsPromptPromise = undefined;
+    });
   }
 
   formatTokenUsage(usage: Partial<ContextUsage>, extra?: { [key: string]: string }) {
     const items = [
       [chalk.yellow(usage.inputTokens), chalk.grey("input tokens")],
       [chalk.cyan(usage.outputTokens), chalk.grey("output tokens")],
+      usage.aigneHubCredits
+        ? [chalk.blue(usage.aigneHubCredits.toFixed()), chalk.grey("AIGNE Hub credits")]
+        : undefined,
       usage.agentCalls ? [chalk.magenta(usage.agentCalls), chalk.grey("agent calls")] : undefined,
     ];
 
@@ -172,11 +333,15 @@ export class TerminalTracer {
     return chalk.grey(`[${parseDuration(duration)}]`);
   }
 
-  formatTaskTitle(
+  async formatTaskTitle(
     agent: Agent,
-    { task, usage, time }: { task?: Task; usage?: boolean; time?: boolean } = {},
+    { task, usage, time, input }: { task?: Task; usage?: boolean; time?: boolean; input: Message },
   ) {
-    let title = `invoke agent ${agent.name}`;
+    let title = agent.name;
+
+    if (agent.taskTitle) {
+      title += ` ${chalk.cyan(await agent.renderTaskTitle(input))}`;
+    }
 
     if (usage && task?.usage)
       title += ` ${this.formatTokenUsage(task.usage, task.extraTitleMetadata)}`;
@@ -197,16 +362,21 @@ export class TerminalTracer {
         }
       },
     },
-    markedTerminal({ forceHyperLink: false }),
+    markedTerminal(
+      { forceHyperLink: false },
+      {
+        theme: {
+          string: chalk.green,
+        },
+      },
+    ),
   );
 
   get outputKey() {
     return this.options.outputKey || DEFAULT_OUTPUT_KEY;
   }
 
-  formatRequest(agent: Agent, _context: Context, m: Message = {}) {
-    if (!logger.enabled(LogLevel.INFO)) return;
-
+  formatRequest(agent: Agent, _context: Context, m: Message = {}, { running = false } = {}) {
     const prefix = `${chalk.grey(figures.pointer)} 💬 `;
 
     const inputKey = agent instanceof AIAgent ? agent.inputKey : undefined;
@@ -217,18 +387,22 @@ export class TerminalTracer {
     const text =
       msg && typeof msg === "string" ? this.marked.parse(msg, { async: false }).trim() : undefined;
 
-    const json = Object.keys(message).length > 0 ? inspect(message, { colors: true }) : undefined;
+    const json =
+      Object.keys(message).length > 0
+        ? inspect(message, { colors: true, ...(running ? this.runningInspectOptions : undefined) })
+        : undefined;
 
-    return [prefix, [text, json].filter(Boolean).join(EOL)].join(" ");
+    const r = [text, json].filter(Boolean).join(EOL).trim();
+    if (!r) return undefined;
+
+    return `${prefix}${r}`;
   }
 
-  formatResult(agent: Agent, context: Context, m: Message = {}) {
+  formatResult(agent: Agent, context: Context, m: Message = {}, { running = false } = {}) {
     const { isTTY } = process.stdout;
-    const outputKey = agent instanceof AIAgent ? agent.outputKey : undefined;
+    const outputKey = this.outputKey || (agent instanceof AIAgent ? agent.outputKey : undefined);
 
-    const prefix = logger.enabled(LogLevel.INFO)
-      ? `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`
-      : null;
+    const prefix = `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`;
 
     const msg = outputKey ? m[outputKey] : undefined;
     const message = outputKey ? omit(m, outputKey) : m;
@@ -240,10 +414,18 @@ export class TerminalTracer {
           : msg
         : undefined;
 
-    const json = Object.keys(message).length > 0 ? inspect(message, { colors: isTTY }) : undefined;
+    const json =
+      Object.keys(message).length > 0
+        ? inspect(message, { colors: isTTY, ...(running ? this.runningInspectOptions : undefined) })
+        : undefined;
 
-    return [prefix, text, json].filter(Boolean).join(EOL);
+    return [prefix, text, json].filter(Boolean).join(EOL.repeat(2));
   }
+
+  protected runningInspectOptions: InspectOptions = {
+    maxArrayLength: 3,
+    maxStringLength: 200,
+  };
 }
 
 type Task = ReturnType<typeof promiseWithResolvers<void>> & {
@@ -254,6 +436,8 @@ type Task = ReturnType<typeof promiseWithResolvers<void>> & {
       taskWrapper: AIGNEListrTaskWrapper;
     }>
   >;
+  agent: Agent;
+  input: Message;
   startTime?: number;
   endTime?: number;
   usage?: Partial<ContextUsage>;

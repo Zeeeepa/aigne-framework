@@ -1,7 +1,5 @@
 # Enable Memory for Client Agent
 
-[English](./enable-memory-for-client-agent.md) | [中文](./enable-memory-for-client-agent.zh.md)
-
 Client Agent memory functionality is an important feature of the AIGNE framework that allows storing and managing conversation history locally on the client side. **The biggest advantage is privacy protection** - all memory data is stored locally on the client and never sent to the server.
 
 ## Privacy Protection Features
@@ -53,7 +51,7 @@ If you are using Vite as your client development server, add the following confi
 * `worker.format` set to `es` to support modern browser modularity
 * `optimizeDeps.exclude` to exclude `sqlocal` from dependency optimization
 
-```ts file="../../examples/browser/vite.config.ts"
+```ts file="../../tests/browser/vite.config.ts"
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -87,6 +85,7 @@ const agent = AIAgent.from({
   name: "chatbot",
   instructions: "You are a helpful assistant",
   inputKey: "message",
+  useMemoriesFromContext: true,
 });
 
 const aigne = new AIGNE({
@@ -139,7 +138,7 @@ const client = new AIGNEHTTPClient({
 ### Configure Client Memory and Conduct Conversation
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-client-agent-memory-invoke-agent"
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
+import { DefaultMemory } from "@aigne/default-memory";
 
 const chatbot = await client.getAgent({
   name: "chatbot",

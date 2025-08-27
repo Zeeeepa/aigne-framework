@@ -4,6 +4,7 @@ import {
   checkArguments,
   createAccessorArray,
   duplicates,
+  flat,
   isEmpty,
   isNil,
   isNonNullable,
@@ -12,7 +13,7 @@ import {
   omit,
   omitBy,
   omitDeep,
-  orArrayToArray,
+  pick,
   remove,
   tryOrThrow,
   unique,
@@ -87,6 +88,12 @@ test("type-utils.unique", async () => {
   ]);
 });
 
+test("type-utils.pick", async () => {
+  expect(pick({ foo: 1, bar: 2, baz: "3" }, "foo")).toEqual({ foo: 1 });
+
+  expect(pick({ foo: 1, bar: 2, baz: "3" }, "foo", "bar")).toEqual({ foo: 1, bar: 2 });
+});
+
 test("type-utils.omit", async () => {
   expect(omit({ foo: 1, bar: 2 }, "foo")).toEqual({ bar: 2 });
 
@@ -107,9 +114,9 @@ test("type-utils.omitBy", async () => {
   expect(omitBy({ foo: 1, bar: 2 }, (_, key) => key === "foo")).toEqual({ bar: 2 });
 });
 
-test("type-utils.orArrayToArray", async () => {
-  expect(orArrayToArray(1)).toEqual([1]);
-  expect(orArrayToArray([1, 2, 3])).toEqual([1, 2, 3]);
+test("type-utils.flat", async () => {
+  expect(flat(1)).toEqual([1]);
+  expect(flat([1, 2, 3])).toEqual([1, 2, 3]);
 });
 
 test("type-utils.createAccessorArray", async () => {

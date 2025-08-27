@@ -2,6 +2,7 @@ import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import debug from "debug";
 
 export enum LogLevel {
+  SILENT = "silent",
   ERROR = "error",
   WARN = "warn",
   INFO = "info",
@@ -11,7 +12,7 @@ export enum LogLevel {
 const levels = Object.values(LogLevel);
 
 export function getLevelFromEnv(ns: string): LogLevel | undefined {
-  for (const level of levels.toReversed()) {
+  for (const level of [...levels].reverse()) {
     if (debug.enabled(`${ns}:${level}`)) {
       return level;
     }
@@ -85,5 +86,5 @@ export class Logger {
 
 export const logger = new Logger({
   ns: "aigne:core",
-  level: LogLevel.INFO,
+  level: LogLevel.SILENT,
 });

@@ -1,6 +1,8 @@
 import { type ZodObject, type ZodType, z } from "zod";
 import { PromptBuilder } from "../prompt/prompt-builder.js";
+import { STRUCTURED_STREAM_INSTRUCTIONS } from "../prompt/prompts/structured-stream-instructions.js";
 import { AgentMessageTemplate, ToolMessageTemplate } from "../prompt/template.js";
+import { ExtractMetadataTransform } from "../utils/structured-stream-extractor.js";
 import { checkArguments, isEmpty } from "../utils/type-utils.js";
 import {
   Agent,
@@ -8,16 +10,16 @@ import {
   type AgentOptions,
   type AgentProcessAsyncGenerator,
   type AgentResponseStream,
-  type Message,
   agentOptionsSchema,
   isAgentResponseDelta,
+  type Message,
 } from "./agent.js";
-import {
+import type {
   ChatModel,
-  type ChatModelInput,
-  type ChatModelInputMessage,
-  type ChatModelOutput,
-  type ChatModelOutputToolCall,
+  ChatModelInput,
+  ChatModelInputMessage,
+  ChatModelOutput,
+  ChatModelOutputToolCall,
 } from "./chat-model.js";
 import type { GuideRailAgentOutput } from "./guide-rail-agent.js";
 import { isTransferAgentOutput } from "./types.js";
@@ -78,6 +80,52 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
   catchToolsError?: boolean;
 
   /**
+   * Whether to enable structured stream mode
+   *
+   * When enabled, the AI model's streaming response will be processed to extract
+   * structured metadata. The model needs to include specific format metadata tags
+   * (like <metadata></metadata>) in its response, which will be parsed as JSON
+   * objects and passed through the stream.
+   *
+   * This is useful for scenarios that need to extract structured information
+   * (like classifications, scores, tags, etc.) from AI responses.
+   *
+   * @default false
+   */
+  structuredStreamMode?: boolean;
+
+  ignoreTextOfStructuredStreamMode?: (output: O) => boolean;
+
+  /**
+   * Custom structured stream instructions configuration
+   *
+   * Allows customization of structured stream mode behavior, including:
+   * - instructions: Prompt instructions to guide the AI model on how to output structured data
+   * - metadataStart: Metadata start marker (e.g., "<metadata>")
+   * - metadataEnd: Metadata end marker (e.g., "</metadata>")
+   * - parse: Function to parse metadata content, converting raw string to object
+   *
+   * If not provided, the default STRUCTURED_STREAM_INSTRUCTIONS configuration will be used,
+   * which outputs structured data in YAML format within <metadata> tags.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   instructions: "Output metadata in JSON format at the end of response in markdown code block with json language",
+   *   metadataStart: "```json",
+   *   metadataEnd: "```",
+   *   parse: JSON.parse
+   * }
+   * ```
+   */
+  customStructuredStreamInstructions?: {
+    instructions: string | PromptBuilder;
+    metadataStart: string;
+    metadataEnd: string;
+    parse: (raw: string) => object;
+  };
+
+  /**
    * Whether to include memory agents as tools for the AI model
    *
    * When set to true, memory agents will be made available as tools
@@ -97,6 +145,8 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
    * The template receives a {{memories}} variable containing serialized memory content.
    */
   memoryPromptTemplate?: string;
+
+  useMemoriesFromContext?: boolean;
 }
 
 /**
@@ -134,7 +184,7 @@ export enum AIAgentToolChoice {
  * @hidden
  */
 export const aiAgentToolChoiceSchema = z.union(
-  [z.nativeEnum(AIAgentToolChoice), z.instanceof(Agent)],
+  [z.nativeEnum(AIAgentToolChoice), z.custom<Agent>()],
   {
     message: `aiAgentToolChoice must be ${Object.values(AIAgentToolChoice).join(", ")}, or an Agent`,
   },
@@ -150,8 +200,8 @@ export const aiAgentToolChoiceSchema = z.union(
 export const aiAgentOptionsSchema: ZodObject<{
   [key in keyof AIAgentOptions]: ZodType<AIAgentOptions[key]>;
 }> = agentOptionsSchema.extend({
-  model: z.instanceof(ChatModel).optional(),
-  instructions: z.union([z.string(), z.instanceof(PromptBuilder)]).optional(),
+  model: z.custom<ChatModel>().optional(),
+  instructions: z.union([z.string(), z.custom<PromptBuilder>()]).optional(),
   inputKey: z.string().optional(),
   outputKey: z.string().optional(),
   toolChoice: aiAgentToolChoiceSchema.optional(),
@@ -181,7 +231,9 @@ export const aiAgentOptionsSchema: ZodObject<{
  * Basic AIAgent creation:
  * {@includeCode ../../test/agents/ai-agent.test.ts#example-ai-agent-basic}
  */
-export class AIAgent<I extends Message = Message, O extends Message = Message> extends Agent<I, O> {
+export class AIAgent<I extends Message = any, O extends Message = any> extends Agent<I, O> {
+  override tag = "AIAgent";
+
   /**
    * Create an AIAgent with the specified options
    *
@@ -218,9 +270,19 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     this.toolChoice = options.toolChoice;
     this.memoryAgentsAsTools = options.memoryAgentsAsTools;
     this.memoryPromptTemplate = options.memoryPromptTemplate;
+    this.useMemoriesFromContext = options.useMemoriesFromContext;
 
     if (typeof options.catchToolsError === "boolean")
       this.catchToolsError = options.catchToolsError;
+    this.structuredStreamMode = options.structuredStreamMode;
+    this.ignoreTextOfStructuredStreamMode = options.ignoreTextOfStructuredStreamMode;
+    this.customStructuredStreamInstructions = options.customStructuredStreamInstructions && {
+      ...options.customStructuredStreamInstructions,
+      instructions:
+        typeof options.customStructuredStreamInstructions.instructions === "string"
+          ? PromptBuilder.from(options.customStructuredStreamInstructions.instructions)
+          : options.customStructuredStreamInstructions.instructions,
+    };
 
     if (!this.inputKey && !this.instructions) {
       throw new Error("AIAgent requires either inputKey or instructions to be set");
@@ -292,6 +354,8 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
    */
   memoryPromptTemplate?: string;
 
+  useMemoriesFromContext?: boolean;
+
   /**
    * Whether to catch error from tool execution and continue processing.
    * If set to false, the agent will throw an error if a tool fails
@@ -299,6 +363,42 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
    * @default true
    */
   catchToolsError = true;
+
+  /**
+   * Whether to enable structured stream mode
+   *
+   * When enabled, the AI model's streaming response will be processed to extract
+   * structured metadata. The model needs to include specific format metadata tags
+   * (like <metadata></metadata>) in its response, which will be parsed as JSON
+   * objects and passed through the stream.
+   *
+   * This is useful for scenarios that need to extract structured information
+   * (like classifications, scores, tags, etc.) from AI responses.
+   *
+   * @default false
+   */
+  structuredStreamMode?: boolean;
+
+  ignoreTextOfStructuredStreamMode?: (output: O) => boolean;
+
+  /**
+   * Custom structured stream instructions configuration
+   *
+   * Allows customization of structured stream mode behavior, including:
+   * - instructions: Prompt instructions to guide the AI model on how to output structured data
+   * - metadataStart: Metadata start marker (e.g., "<metadata>")
+   * - metadataEnd: Metadata end marker (e.g., "</metadata>")
+   * - parse: Function to parse metadata content, converting raw string to object
+   *
+   * If not provided, the default STRUCTURED_STREAM_INSTRUCTIONS configuration will be used,
+   * which outputs structured data in YAML format within <metadata> tags.
+   */
+  customStructuredStreamInstructions?: {
+    instructions: PromptBuilder;
+    metadataStart: string;
+    metadataEnd: string;
+    parse: (raw: string) => object;
+  };
 
   /**
    * Process an input message and generate a response
@@ -328,20 +428,37 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     for (;;) {
       const modelOutput: ChatModelOutput = {};
 
-      const stream = await options.context.invoke(
+      let stream = await options.context.invoke(
         model,
         { ...modelInput, messages: modelInput.messages.concat(toolCallMessages) },
-        { streaming: true },
+        { ...options, streaming: true },
       );
+
+      if (this.structuredStreamMode) {
+        const { metadataStart, metadataEnd, parse } =
+          this.customStructuredStreamInstructions || STRUCTURED_STREAM_INSTRUCTIONS;
+
+        stream = stream.pipeThrough(
+          new ExtractMetadataTransform({ start: metadataStart, end: metadataEnd, parse }),
+        );
+      }
+
+      let isTextIgnored = false;
 
       for await (const value of stream) {
         if (isAgentResponseDelta(value)) {
-          if (value.delta.text?.text) {
+          if (!isTextIgnored && value.delta.text?.text) {
             yield { delta: { text: { [outputKey]: value.delta.text.text } } };
           }
 
           if (value.delta.json) {
             Object.assign(modelOutput, value.delta.json);
+            if (this.structuredStreamMode) {
+              yield { delta: { json: value.delta.json.json as Partial<O> } };
+              if (!isTextIgnored && modelOutput.json && this.ignoreTextOfStructuredStreamMode) {
+                isTextIgnored = this.ignoreTextOfStructuredStreamMode(modelOutput.json as O);
+              }
+            }
           }
         }
       }
@@ -388,13 +505,15 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
           toolCallMessages.push(
-            AgentMessageTemplate.from(
+            await AgentMessageTemplate.from(
               undefined,
               executedToolCalls.map(({ call }) => call),
             ).format(),
-            ...executedToolCalls.map(({ call, output }) =>
-              ToolMessageTemplate.from(output, call.id).format(),
-            ),
+            ...(await Promise.all(
+              executedToolCalls.map(({ call, output }) =>
+                ToolMessageTemplate.from(output, call.id).format(),
+              ),
+            )),
           );
 
           continue;
@@ -405,7 +524,8 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
 
       if (json) {
         Object.assign(result, json);
-      } else if (text) {
+      }
+      if (text) {
         Object.assign(result, { [outputKey]: text });
       }
 
@@ -440,9 +560,10 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     options: AgentInvokeOptions,
     toolsMap: Map<string, Agent>,
   ): AgentProcessAsyncGenerator<O> {
-    const {
-      toolCalls: [call] = [],
-    } = await options.context.invoke(model, modelInput);
+    const { toolCalls: [call] = [] } = await options.context.invoke(model, modelInput, {
+      ...options,
+      streaming: false,
+    });
 
     if (!call) {
       throw new Error("Router toolChoice requires exactly one tool to be executed");
@@ -454,7 +575,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     const stream = await options.context.invoke(
       tool,
       { ...call.function.arguments, ...input },
-      { streaming: true, sourceAgent: this },
+      { ...options, streaming: true, sourceAgent: this },
     );
 
     return yield* stream as AgentResponseStream<O>;

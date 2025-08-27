@@ -1,16 +1,19 @@
 {
   "name": "@aigne/publish-docs",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "AIGNE Publish Docs for publishing docs to Discuss Kit",
   "publishConfig": {
     "access": "public"
   },
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
-  "homepage": "https://github.com/AIGNE-io/aigne-framework",
+  "homepage": "https://www.aigne.io/framework",
   "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
+  },
+  "bugs": {
+    "url": "https://github.com/AIGNE-io/aigne-framework/issues"
   },
   "files": [
     "lib/cjs",
@@ -38,27 +41,33 @@
     "prepublishOnly": "run-s clean build",
     "test": "bun test",
     "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
-    "postbuild": "echo '{\"type\": \"module\"}' > lib/esm/package.json && echo '{\"type\": \"commonjs\"}' > lib/cjs/package.json"
+    "postbuild": "node ../../scripts/post-build-lib.mjs"
   },
   "dependencies": {
-    "@lexical/code": "^0.31.2",
-    "@lexical/headless": "^0.31.2",
-    "@lexical/html": "^0.31.2",
-    "@lexical/link": "^0.31.2",
-    "@lexical/list": "^0.31.2",
-    "@lexical/react": "^0.31.2",
-    "@lexical/rich-text": "^0.31.2",
-    "@lexical/table": "^0.31.2",
+    "@lexical/code": "^0.33.0",
+    "@lexical/headless": "^0.33.0",
+    "@lexical/html": "^0.33.0",
+    "@lexical/link": "^0.33.0",
+    "@lexical/list": "^0.33.0",
+    "@lexical/react": "^0.33.0",
+    "@lexical/rich-text": "^0.33.0",
+    "@lexical/table": "^0.33.0",
+    "chalk": "^5.4.1",
     "gray-matter": "^4.0.3",
     "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
-    "lexical": "^0.31.2",
-    "marked": "^15.0.12",
+    "lexical": "^0.33.0",
+    "marked": "^16.0.0",
     "open": "^10.1.2",
-    "ufo": "^1.6.1"
+    "p-limit": "^7.1.0",
+    "terminal-link": "^4.0.0",
+    "ufo": "^1.6.1",
+    "yaml": "^2.8.0",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
+    "@types/jsonwebtoken": "^9.0.10",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"

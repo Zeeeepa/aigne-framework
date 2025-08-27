@@ -1,28 +1,34 @@
+import type { AIGNEObserver } from "@aigne/observability-api";
+import type { Span } from "@opentelemetry/api";
+import { context, SpanStatusCode, trace } from "@opentelemetry/api";
 import equal from "fast-deep-equal";
 import { Emitter } from "strict-event-emitter";
 import { v7 } from "uuid";
-import { type ZodType, z } from "zod";
+import { z } from "zod";
 import {
-  Agent,
+  type Agent,
+  type AgentHooks,
   type AgentInvokeOptions,
   type AgentProcessAsyncGenerator,
   type AgentResponse,
   type AgentResponseChunk,
   type AgentResponseStream,
   type FunctionAgentFn,
-  type Message,
   isAgentResponseDelta,
   isEmptyChunk,
+  type Message,
 } from "../agents/agent.js";
 import type { ChatModel } from "../agents/chat-model.js";
+import type { ImageModel } from "../agents/image-model.js";
 import {
-  type TransferAgentOutput,
   isTransferAgentOutput,
+  type TransferAgentOutput,
   transferAgentOutputKey,
 } from "../agents/types.js";
 import { UserAgent } from "../agents/user-agent.js";
 import type { Memory } from "../memory/memory.js";
 import { AgentResponseProgressStream } from "../utils/event-stream.js";
+import { logger } from "../utils/logger.js";
 import { promiseWithResolvers } from "../utils/promise.js";
 import {
   agentResponseStreamToObject,
@@ -31,19 +37,20 @@ import {
   onAgentResponseStreamEnd,
 } from "../utils/stream-utils.js";
 import {
-  type OmitPropertiesFromArrayFirstElement,
   checkArguments,
+  flat,
   isEmpty,
   isNil,
+  type OmitPropertiesFromArrayFirstElement,
   omit,
 } from "../utils/type-utils.js";
-import type { Args, Listener, TypedEventEmitter } from "../utils/typed-event-emtter.js";
+import type { Args, Listener, TypedEventEmitter } from "../utils/typed-event-emitter.js";
 import {
   type MessagePayload,
   MessageQueue,
   type MessageQueueListener,
-  type Unsubscribe,
   toMessagePayload,
+  type Unsubscribe,
 } from "./message-queue.js";
 import { type ContextLimits, type ContextUsage, newEmptyContextUsage } from "./usage.js";
 
@@ -61,7 +68,7 @@ export interface AgentEvent {
  * @hidden
  */
 export interface ContextEventMap {
-  agentStarted: [AgentEvent & { input: Message }];
+  agentStarted: [AgentEvent & { input: Message; taskTitle?: string }];
   agentSucceed: [AgentEvent & { output: Message }];
   agentFailed: [AgentEvent & { error: Error }];
 }
@@ -86,12 +93,27 @@ export interface InvokeOptions<U extends UserContext = UserContext>
   returnMetadata?: boolean;
   disableTransfer?: boolean;
   sourceAgent?: Agent;
+
+  /**
+   * Whether to create a new context for this invocation.
+   * If false, the invocation will use the current context.
+   *
+   * @default true
+   */
+  newContext?: boolean;
+
+  userContext?: U;
+
+  memories?: Pick<Memory, "content">[];
 }
 
 /**
  * @hidden
  */
-export interface UserContext extends Record<string, unknown> {}
+export interface UserContext extends Record<string, unknown> {
+  userId?: string;
+  sessionId?: string;
+}
 
 /**
  * @hidden
@@ -102,9 +124,19 @@ export interface Context<U extends UserContext = UserContext>
 
   parentId?: string;
 
+  rootId: string;
+
   model?: ChatModel;
 
+  imageModel?: ImageModel;
+
   skills?: Agent[];
+
+  agents: Agent[];
+
+  observer?: AIGNEObserver;
+
+  span?: Span;
 
   usage: ContextUsage;
 
@@ -113,6 +145,8 @@ export interface Context<U extends UserContext = UserContext>
   status?: "normal" | "timeout";
 
   userContext: U;
+
+  hooks?: AgentHooks[];
 
   memories: Pick<Memory, "content">[];
 
@@ -201,27 +235,71 @@ export interface Context<U extends UserContext = UserContext>
  * @hidden
  */
 export class AIGNEContext implements Context {
-  constructor(...[parent, ...args]: ConstructorParameters<typeof AIGNEContextShared>) {
-    if (parent instanceof AIGNEContext) {
-      this.parentId = parent.id;
+  constructor(
+    parent?: ConstructorParameters<typeof AIGNEContextShared>[0],
+    { reset }: { reset?: boolean } = {},
+  ) {
+    const tracer = parent?.observer?.tracer;
+
+    if (parent instanceof AIGNEContext && !reset) {
       this.internal = parent.internal;
+      this.parentId = parent.id;
+      this.rootId = parent.rootId;
+
+      if (parent.span) {
+        const parentContext = trace.setSpan(context.active(), parent.span);
+        this.span = tracer?.startSpan("childAIGNEContext", undefined, parentContext);
+      } else {
+        if (parent.observer && !process.env.AIGNE_OBSERVABILITY_DISABLED) {
+          throw new Error("parent span is not set");
+        }
+      }
     } else {
-      this.internal = new AIGNEContextShared(parent, ...args);
+      this.span = tracer?.startSpan("AIGNEContext");
+
+      this.internal = new AIGNEContextShared(
+        parent instanceof AIGNEContext ? parent.internal : parent,
+      );
+
+      // 修改了 rootId 是否会之前的有影响？，之前为 this.id
+      this.rootId = this.span?.spanContext?.().traceId ?? v7();
     }
+
+    this.id = this.span?.spanContext()?.spanId ?? v7();
   }
+
+  id: string;
 
   parentId?: string;
 
-  id = v7();
+  rootId: string;
+
+  span?: Span;
 
   readonly internal: AIGNEContextShared;
+
+  get messageQueue() {
+    return this.internal.messageQueue;
+  }
 
   get model() {
     return this.internal.model;
   }
 
+  get imageModel() {
+    return this.internal.imageModel;
+  }
+
   get skills() {
     return this.internal.skills;
+  }
+
+  get agents() {
+    return this.internal.agents;
+  }
+
+  get observer() {
+    return this.internal.observer;
   }
 
   get limits() {
@@ -250,9 +328,15 @@ export class AIGNEContext implements Context {
     this.internal.memories = memories;
   }
 
+  get hooks() {
+    return this.internal.hooks;
+  }
+  set hooks(hooks: AgentHooks[]) {
+    this.internal.hooks = hooks;
+  }
+
   newContext({ reset }: { reset?: boolean } = {}) {
-    if (reset) return new AIGNEContext(this, { userContext: {} });
-    return new AIGNEContext(this);
+    return new AIGNEContext(this, { reset });
   }
 
   invoke = ((agent, message, options) => {
@@ -261,14 +345,8 @@ export class AIGNEContext implements Context {
       message,
       options,
     });
-    if (options?.userContext) {
-      Object.assign(this.userContext, options.userContext);
-      options.userContext = undefined;
-    }
-    if (options?.memories?.length) {
-      this.memories.push(...options.memories);
-      options.memories = undefined;
-    }
+
+    this.processOptions(options);
 
     if (isNil(message)) {
       return UserAgent.from({
@@ -277,7 +355,7 @@ export class AIGNEContext implements Context {
       });
     }
 
-    const newContext = this.newContext();
+    const newContext = options?.newContext === false ? this : this.newContext();
 
     return Promise.resolve(newContext.internal.invoke(agent, message, newContext, options)).then(
       async (response) => {
@@ -346,7 +424,7 @@ export class AIGNEContext implements Context {
     };
   }
 
-  publish = ((topic, payload, options) => {
+  private processOptions(options?: InvokeOptions) {
     if (options?.userContext) {
       Object.assign(this.userContext, options.userContext);
       options.userContext = undefined;
@@ -355,10 +433,20 @@ export class AIGNEContext implements Context {
       this.memories.push(...options.memories);
       options.memories = undefined;
     }
+    if (options?.hooks) {
+      this.hooks.push(...flat(options.hooks));
+      options.hooks = undefined;
+    }
+  }
+
+  publish = ((topic, payload, options) => {
+    this.processOptions(options);
+
+    const newContext = options?.newContext === false ? this : this.newContext();
 
     return this.internal.messageQueue.publish(topic, {
       ...toMessagePayload(payload),
-      context: this,
+      context: newContext,
     });
   }) as Context["publish"];
 
@@ -383,7 +471,79 @@ export class AIGNEContext implements Context {
 
     const newArgs = [b, ...args.slice(1)] as Args<K, ContextEventMap>;
 
+    this.trace(eventName, args, b);
     return this.internal.events.emit(eventName, ...newArgs);
+  }
+
+  private async trace<K extends keyof ContextEmitEventMap>(
+    eventName: K,
+    args: Args<K, ContextEmitEventMap>,
+    b: AgentEvent,
+  ): Promise<void> {
+    const span = this.span;
+    if (!span) return;
+
+    try {
+      switch (eventName) {
+        case "agentStarted": {
+          const { agent, input } = args[0] as ContextEventMap["agentStarted"][0];
+          span.updateName(agent.name);
+
+          span.setAttribute("custom.trace_id", this.rootId);
+          span.setAttribute("custom.span_id", this.id);
+
+          if (this.parentId) {
+            span.setAttribute("custom.parent_id", this.parentId);
+          }
+
+          span.setAttribute("custom.started_at", b.timestamp);
+          span.setAttribute("input", JSON.stringify(input));
+          span.setAttribute("agentTag", agent.tag ?? "UnknownAgent");
+
+          try {
+            span.setAttribute("userContext", JSON.stringify(this.userContext));
+          } catch (_e) {
+            logger.error("parse userContext error", _e.message);
+            span.setAttribute("userContext", JSON.stringify({}));
+          }
+
+          try {
+            span.setAttribute("memories", JSON.stringify(this.memories));
+          } catch (_e) {
+            logger.error("parse memories error", _e.message);
+            span.setAttribute("memories", JSON.stringify([]));
+          }
+
+          await this.observer?.flush(span);
+
+          break;
+        }
+        case "agentSucceed": {
+          const { output } = args[0] as ContextEventMap["agentSucceed"][0];
+
+          try {
+            span.setAttribute("output", JSON.stringify(output));
+          } catch (_e) {
+            logger.error("parse output error", _e.message);
+            span.setAttribute("output", JSON.stringify({}));
+          }
+
+          span.setStatus({ code: SpanStatusCode.OK });
+          span.end();
+
+          break;
+        }
+        case "agentFailed": {
+          const { error } = args[0] as ContextEventMap["agentFailed"][0];
+          span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+          span.end();
+
+          break;
+        }
+      }
+    } catch (err) {
+      logger.error("AIGNEContext.trace observer error", { eventName, error: err });
+    }
   }
 
   on<K extends keyof ContextEventMap>(eventName: K, listener: Listener<K, ContextEventMap>): this {
@@ -407,26 +567,40 @@ export class AIGNEContext implements Context {
 
 class AIGNEContextShared {
   constructor(
-    private readonly parent?: Pick<Context, "model" | "skills" | "limits"> & {
+    private readonly parent?: Pick<
+      Context,
+      "model" | "imageModel" | "agents" | "skills" | "limits" | "observer"
+    > & {
       messageQueue?: MessageQueue;
+      events?: Emitter<any>;
     },
-    overrides?: Partial<Context>,
   ) {
     this.messageQueue = this.parent?.messageQueue ?? new MessageQueue();
-    this.userContext = overrides?.userContext ?? {};
-    this.memories = overrides?.memories ?? [];
+    this.events = this.parent?.events ?? new Emitter<any>();
   }
 
   readonly messageQueue: MessageQueue;
 
-  readonly events = new Emitter<any>();
+  readonly events: Emitter<any>;
 
   get model() {
     return this.parent?.model;
   }
 
+  get imageModel() {
+    return this.parent?.imageModel;
+  }
+
   get skills() {
     return this.parent?.skills;
+  }
+
+  get agents() {
+    return this.parent?.agents ?? [];
+  }
+
+  get observer() {
+    return this.parent?.observer;
   }
 
   get limits() {
@@ -435,9 +609,11 @@ class AIGNEContextShared {
 
   usage: ContextUsage = newEmptyContextUsage();
 
-  userContext: Context["userContext"];
+  userContext: Context["userContext"] = {};
 
-  memories: Context["memories"];
+  memories: Context["memories"] = [];
+
+  hooks: AgentHooks[] = [];
 
   private abortController = new AbortController();
 
@@ -475,7 +651,7 @@ class AIGNEContextShared {
     agent: Agent<I, O>,
     input: I & Message,
     context: Context,
-    options?: InvokeOptions,
+    options: InvokeOptions = {},
   ): AgentProcessAsyncGenerator<O & { __activeAgent__: Agent }> {
     const startedAt = Date.now();
     try {
@@ -485,15 +661,28 @@ class AIGNEContextShared {
         const result: Message = {};
 
         if (options?.sourceAgent && activeAgent !== options.sourceAgent) {
-          options.sourceAgent.hooks.onHandoff?.({
-            context,
-            source: options.sourceAgent,
-            target: activeAgent,
-            input,
-          });
+          for (const { onHandoff } of flat(options.hooks, options.sourceAgent.hooks)) {
+            if (!onHandoff) continue;
+            await (typeof onHandoff === "function"
+              ? onHandoff({
+                  context,
+                  source: options.sourceAgent,
+                  target: activeAgent,
+                  input,
+                })
+              : context.invoke(onHandoff, {
+                  source: options.sourceAgent,
+                  target: activeAgent,
+                  input,
+                }));
+          }
         }
 
-        const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
+        const stream = await activeAgent.invoke(input, {
+          hooks: options.hooks,
+          context,
+          streaming: true,
+        });
         for await (const value of stream) {
           if (isAgentResponseDelta(value)) {
             if (value.delta.json) {
@@ -568,7 +757,7 @@ async function* withAbortSignal<T extends Message>(
 }
 
 const aigneContextInvokeArgsSchema = z.object({
-  agent: z.union([z.function() as ZodType<FunctionAgentFn>, z.instanceof(Agent)]),
-  message: z.union([z.record(z.unknown()), z.string()]).optional(),
+  agent: z.union([z.custom<FunctionAgentFn>(), z.custom<Agent>()]),
+  message: z.union([z.record(z.string(), z.unknown()), z.string()]).optional(),
   options: z.object({ returnActiveAgent: z.boolean().optional() }).optional(),
 });

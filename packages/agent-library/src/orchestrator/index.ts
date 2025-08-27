@@ -1,8 +1,8 @@
 import {
-  AIAgent,
   Agent,
   type AgentInvokeOptions,
   type AgentOptions,
+  AIAgent,
   type Context,
   type Message,
   PromptTemplate,
@@ -14,15 +14,15 @@ import {
   FULL_PLAN_PROMPT_TEMPLATE,
   type FullPlanInput,
   type FullPlanOutput,
-  SYNTHESIZE_PLAN_USER_PROMPT_TEMPLATE,
-  SYNTHESIZE_STEP_PROMPT_TEMPLATE,
+  getFullPlanSchema,
   type Step,
   type StepWithResult,
+  SYNTHESIZE_PLAN_USER_PROMPT_TEMPLATE,
+  SYNTHESIZE_STEP_PROMPT_TEMPLATE,
   type SynthesizeStepPromptInput,
   TASK_PROMPT_TEMPLATE,
   type Task,
   type TaskPromptInput,
-  getFullPlanSchema,
 } from "./orchestrator-prompts.js";
 
 /**
@@ -110,6 +110,8 @@ export class OrchestratorAgent<
   I extends Message = Message,
   O extends Message = Message,
 > extends Agent<I, O> {
+  override tag = "OrchestratorAgent";
+
   /**
    * Factory method to create an OrchestratorAgent instance
    * @param options - Configuration options for the Orchestrator Agent
@@ -257,7 +259,7 @@ export class OrchestratorAgent<
       const agent = this.skills.find((skill) => skill.name === task.agent);
       if (!agent) throw new Error(`Agent ${task.agent} not found`);
 
-      const prompt = PromptTemplate.from(TASK_PROMPT_TEMPLATE).format(<TaskPromptInput>{
+      const prompt = await PromptTemplate.from(TASK_PROMPT_TEMPLATE).format(<TaskPromptInput>{
         objective: planResult.objective,
         step,
         task,

@@ -1,5 +1,636 @@
 # Changelog
 
+## [1.15.51](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.50...example-chat-bot-v1.15.51) (2025-08-27)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.41.2
+
+## [1.15.50](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.49...example-chat-bot-v1.15.50) (2025-08-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.41.1
+
+## [1.15.49](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.48...example-chat-bot-v1.15.49) (2025-08-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.41.0
+
+## [1.15.48](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.47...example-chat-bot-v1.15.48) (2025-08-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.40.0
+
+## [1.15.47](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.46...example-chat-bot-v1.15.47) (2025-08-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.39.1
+
+## [1.15.46](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.45...example-chat-bot-v1.15.46) (2025-08-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.39.0
+
+## [1.15.45](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.44...example-chat-bot-v1.15.45) (2025-08-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.38.1
+
+## [1.15.44](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.43...example-chat-bot-v1.15.44) (2025-08-20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.38.0
+
+## [1.15.43](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.42...example-chat-bot-v1.15.43) (2025-08-20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.37.1
+
+## [1.15.42](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.41...example-chat-bot-v1.15.42) (2025-08-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.37.0
+
+## [1.15.41](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.40...example-chat-bot-v1.15.41) (2025-08-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.36.4
+
+## [1.15.40](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.39...example-chat-bot-v1.15.40) (2025-08-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.36.3
+
+## [1.15.39](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.38...example-chat-bot-v1.15.39) (2025-08-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.36.2
+
+## [1.15.38](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.37...example-chat-bot-v1.15.38) (2025-08-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.36.1
+
+## [1.15.37](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.36...example-chat-bot-v1.15.37) (2025-08-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.36.0
+
+## [1.15.36](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.35...example-chat-bot-v1.15.36) (2025-08-13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.35.1
+
+## [1.15.35](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.34...example-chat-bot-v1.15.35) (2025-08-13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.35.0
+
+## [1.15.34](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.33...example-chat-bot-v1.15.34) (2025-08-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.34.1
+
+## [1.15.33](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.32...example-chat-bot-v1.15.33) (2025-08-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.34.0
+
+## [1.15.32](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.31...example-chat-bot-v1.15.32) (2025-08-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.33.1
+
+## [1.15.31](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.30...example-chat-bot-v1.15.31) (2025-08-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.33.0
+
+## [1.15.30](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.29...example-chat-bot-v1.15.30) (2025-08-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.32.2
+
+## [1.15.29](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.28...example-chat-bot-v1.15.29) (2025-08-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.32.1
+
+## [1.15.28](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.27...example-chat-bot-v1.15.28) (2025-08-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.32.0
+
+## [1.15.27](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.26...example-chat-bot-v1.15.27) (2025-08-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.31.0
+
+## [1.15.26](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.25...example-chat-bot-v1.15.26) (2025-08-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.30.4
+
+## [1.15.25](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.24...example-chat-bot-v1.15.25) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.30.3
+
+## [1.15.24](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.23...example-chat-bot-v1.15.24) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.30.2
+
+## [1.15.23](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.22...example-chat-bot-v1.15.23) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.30.1
+
+## [1.15.22](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.21...example-chat-bot-v1.15.22) (2025-08-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.30.0
+
+## [1.15.21](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.20...example-chat-bot-v1.15.21) (2025-07-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.29.0
+
+## [1.15.20](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.19...example-chat-bot-v1.15.20) (2025-07-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.28.0
+
+## [1.15.19](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.18...example-chat-bot-v1.15.19) (2025-07-30)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.27.0
+
+## [1.15.18](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.17...example-chat-bot-v1.15.18) (2025-07-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.26.0
+
+## [1.15.17](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.16...example-chat-bot-v1.15.17) (2025-07-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.25.1
+
+## [1.15.16](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.15...example-chat-bot-v1.15.16) (2025-07-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.25.0
+
+## [1.15.15](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.14...example-chat-bot-v1.15.15) (2025-07-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.24.1
+
+## [1.15.14](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.13...example-chat-bot-v1.15.14) (2025-07-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.24.0
+
+## [1.15.13](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.12...example-chat-bot-v1.15.13) (2025-07-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.23.1
+
+## [1.15.12](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.11...example-chat-bot-v1.15.12) (2025-07-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.23.0
+
+## [1.15.11](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.10...example-chat-bot-v1.15.11) (2025-07-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.8
+
+## [1.15.10](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.9...example-chat-bot-v1.15.10) (2025-07-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.7
+
+## [1.15.9](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.8...example-chat-bot-v1.15.9) (2025-07-10)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.6
+
+## [1.15.8](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.7...example-chat-bot-v1.15.8) (2025-07-10)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.5
+
+## [1.15.7](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.6...example-chat-bot-v1.15.7) (2025-07-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.4
+
+## [1.15.6](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.5...example-chat-bot-v1.15.6) (2025-07-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.3
+
+## [1.15.5](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.4...example-chat-bot-v1.15.5) (2025-07-09)
+
+
+### Bug Fixes
+
+* **model:** ensure last message is not system role for gemini ([#231](https://github.com/AIGNE-io/aigne-framework/issues/231)) ([1b72e1e](https://github.com/AIGNE-io/aigne-framework/commit/1b72e1e6be98060aa32e68585142b2eea401d109))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.2
+
+## [1.15.4](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.3...example-chat-bot-v1.15.4) (2025-07-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.1
+
+## [1.15.3](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.2...example-chat-bot-v1.15.3) (2025-07-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.22.0
+
+## [1.15.2](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.1...example-chat-bot-v1.15.2) (2025-07-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.21.0
+
+## [1.15.1](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.15.0...example-chat-bot-v1.15.1) (2025-07-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.20.1
+
+## [1.15.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.14.1...example-chat-bot-v1.15.0) (2025-07-02)
+
+
+### Features
+
+* **cli:** support executing aigne.yaml via shebang (#!/usr/bin/env aigne) ([#211](https://github.com/AIGNE-io/aigne-framework/issues/211)) ([2a82c27](https://github.com/AIGNE-io/aigne-framework/commit/2a82c2754b5eab5c3d6e45a5cbe7f0c76d927967))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.20.0
+
+## [1.14.1](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.14.0...example-chat-bot-v1.14.1) (2025-07-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.19.0
+
+## [1.14.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.13.1...example-chat-bot-v1.14.0) (2025-07-01)
+
+
+### Features
+
+* **example:** add serve agent as mcp-server example ([#204](https://github.com/AIGNE-io/aigne-framework/issues/204)) ([d51793b](https://github.com/AIGNE-io/aigne-framework/commit/d51793b919c7c3316e4bcf73ab9af3dc38900e94))
+
+## [1.13.1](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.13.0...example-chat-bot-v1.13.1) (2025-07-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.18.1
+
+## [1.13.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.12.0...example-chat-bot-v1.13.0) (2025-07-01)
+
+
+### Features
+
+* **example:** use AIGNE cli to run chat-bot example ([#198](https://github.com/AIGNE-io/aigne-framework/issues/198)) ([7085541](https://github.com/AIGNE-io/aigne-framework/commit/708554100692f2a557f7329ea78e46c3c870ce10))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.18.0
+
+## [1.12.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.11.0...example-chat-bot-v1.12.0) (2025-07-01)
+
+
+### Features
+
+* **cli:** support HTTPS_PROXY and named path param ([#196](https://github.com/AIGNE-io/aigne-framework/issues/196)) ([04e684e](https://github.com/AIGNE-io/aigne-framework/commit/04e684ee26bc2d79924b0e3cb541cd07a7191804))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.17.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.11
+
+## [1.11.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.5...example-chat-bot-v1.11.0) (2025-06-30)
+
+
+### Features
+
+* **ux:** polish tracing ux and update docs ([#193](https://github.com/AIGNE-io/aigne-framework/issues/193)) ([f80b63e](https://github.com/AIGNE-io/aigne-framework/commit/f80b63ecb1cfb00daa9b68330026da839d33f8a2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.16.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.10
+
+## [1.10.5](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.4...example-chat-bot-v1.10.5) (2025-06-29)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.15.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.9
+
+## [1.10.4](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.3...example-chat-bot-v1.10.4) (2025-06-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.14.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.8
+
+## [1.10.3](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.2...example-chat-bot-v1.10.3) (2025-06-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.14.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.7
+
+## [1.10.2](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.1...example-chat-bot-v1.10.2) (2025-06-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.13.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.6
+
+## [1.10.1](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.10.0...example-chat-bot-v1.10.1) (2025-06-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.13.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.5
+
+## [1.10.0](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.9.12...example-chat-bot-v1.10.0) (2025-06-24)
+
+
+### Features
+
+* support observability for cli and blocklet ([#155](https://github.com/AIGNE-io/aigne-framework/issues/155)) ([5baa705](https://github.com/AIGNE-io/aigne-framework/commit/5baa705a33cfdba1efc5ccbe18674c27513ca97d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.13.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.4
+
+## [1.9.12](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.9.11...example-chat-bot-v1.9.12) (2025-06-20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.12.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.4.3
+
 ## [1.9.11](https://github.com/AIGNE-io/aigne-framework/compare/example-chat-bot-v1.9.10...example-chat-bot-v1.9.11) (2025-06-19)
 
 

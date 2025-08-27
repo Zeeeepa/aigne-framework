@@ -1,7 +1,5 @@
 # Serving Agents as APIs
 
-[English](./serve-agent-as-api.md) | [中文](./serve-agent-as-api.zh.md)
-
 After creating an Agent, you may want to serve it as a Web API, making it callable by various client applications (such as websites, mobile apps, or desktop software). The AIGNE framework provides a simple way to expose Agents through HTTP interfaces, enabling developers to easily build AI-based service architectures. This guide will introduce how to serve Agents as APIs.
 
 ## Basic Process
@@ -100,8 +98,8 @@ const httpServer = app.listen(port);
 The following example shows how to create an API server to provide Agent services:
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-serve-agent-as-api-service"
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 import { OpenAIChatModel } from "@aigne/openai";
 import { AIGNEHTTPServer } from "@aigne/transport/http-server/index.js";
 import express from "express";

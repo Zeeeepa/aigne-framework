@@ -1,11 +1,8 @@
+import { AIGNEObserver } from "@aigne/observability-api";
 import { z } from "zod";
-import {
-  Agent,
-  type AgentResponse,
-  type AgentResponseStream,
-  type Message,
-} from "../agents/agent.js";
-import { ChatModel } from "../agents/chat-model.js";
+import type { Agent, AgentResponse, AgentResponseStream, Message } from "../agents/agent.js";
+import type { ChatModel } from "../agents/chat-model.js";
+import type { ImageModel } from "../agents/image-model.js";
 import type { UserAgent } from "../agents/user-agent.js";
 import { type LoadOptions, load } from "../loader/index.js";
 import { checkArguments, createAccessorArray } from "../utils/type-utils.js";
@@ -23,6 +20,12 @@ import type { ContextLimits } from "./usage.js";
  */
 export interface AIGNEOptions {
   /**
+   * Optional root directory for this AIGNE instance.
+   * This is used to resolve relative paths for agents and skills.
+   */
+  rootDir?: string;
+
+  /**
    * The name of the AIGNE instance.
    */
   name?: string;
@@ -38,6 +41,11 @@ export interface AIGNEOptions {
   model?: ChatModel;
 
   /**
+   * Optional image model to use for image processing tasks.
+   */
+  imageModel?: ImageModel;
+
+  /**
    * Skills to use for the AIGNE instance.
    */
   skills?: Agent[];
@@ -47,10 +55,25 @@ export interface AIGNEOptions {
    */
   agents?: Agent[];
 
+  mcpServer?: {
+    agents?: Agent[];
+  };
+
+  cli?: {
+    chat?: Agent;
+
+    agents?: Agent[];
+  };
+
   /**
    * Limits for the AIGNE instance, such as timeout, max tokens, max invocations, etc.
    */
   limits?: ContextLimits;
+
+  /**
+   * Observer for the AIGNE instance.
+   */
+  observer?: AIGNEObserver;
 }
 
 /**
@@ -76,14 +99,14 @@ export class AIGNE<U extends UserContext = UserContext> {
    */
   static async load(
     path: string,
-    options: AIGNEOptions & Omit<LoadOptions, "path">,
+    options: Omit<AIGNEOptions, keyof LoadOptions> & LoadOptions = {},
   ): Promise<AIGNE> {
-    const { model, agents, skills, ...aigne } = await load({ ...options, path });
+    const { agents = [], skills = [], model, imageModel, ...aigne } = await load(path, options);
     return new AIGNE({
+      ...aigne,
       ...options,
-      model: options?.model || model,
-      name: options?.name || aigne.name || undefined,
-      description: options?.description || aigne.description || undefined,
+      model,
+      imageModel,
       agents: agents.concat(options?.agents ?? []),
       skills: skills.concat(options?.skills ?? []),
     });
@@ -97,15 +120,30 @@ export class AIGNE<U extends UserContext = UserContext> {
   constructor(options?: AIGNEOptions) {
     if (options) checkArguments("AIGNE", aigneOptionsSchema, options);
 
+    this.rootDir = options?.rootDir;
     this.name = options?.name;
     this.description = options?.description;
     this.model = options?.model;
+    this.imageModel = options?.imageModel;
     this.limits = options?.limits;
+    this.observer =
+      process.env.AIGNE_OBSERVABILITY_DISABLED === "true"
+        ? undefined
+        : (options?.observer ?? new AIGNEObserver());
     if (options?.skills?.length) this.skills.push(...options.skills);
     if (options?.agents?.length) this.addAgent(...options.agents);
+    if (options?.mcpServer?.agents?.length) this.mcpServer.agents.push(...options.mcpServer.agents);
+    if (options?.cli?.agents?.length) this.cli.agents.push(...options.cli.agents);
+    if (options?.cli?.chat) this.cli.chat = options.cli.chat;
 
+    this.observer?.serve();
     this.initProcessExitHandler();
   }
+
+  /**
+   * Optional root directory for this AIGNE instance.
+   */
+  rootDir?: string;
 
   /**
    * Optional name identifier for this AIGNE instance.
@@ -121,6 +159,11 @@ export class AIGNE<U extends UserContext = UserContext> {
    * Global model to use for all agents that don't specify their own model.
    */
   model?: ChatModel;
+
+  /**
+   * Optional image model to use for image processing tasks.
+   */
+  imageModel?: ImageModel;
 
   /**
    * Usage limits applied to this AIGNE instance's execution.
@@ -146,6 +189,21 @@ export class AIGNE<U extends UserContext = UserContext> {
    */
   readonly agents = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
 
+  readonly mcpServer = {
+    agents: createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name)),
+  };
+
+  readonly cli = {
+    chat: undefined as Agent | undefined,
+
+    agents: createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name)),
+  };
+
+  /**
+   * Observer for the AIGNE instance.
+   */
+  readonly observer?: AIGNEObserver;
+
   /**
    * Adds one or more agents to this AIGNE instance.
    * Each agent is attached to this AIGNE instance, allowing it to access the AIGNE's resources.
@@ -168,8 +226,13 @@ export class AIGNE<U extends UserContext = UserContext> {
    *
    * @returns A new AIGNEContext instance bound to this AIGNE.
    */
-  newContext(options?: Partial<Context>) {
-    return new AIGNEContext(this, options);
+  newContext(options?: Partial<Pick<Context, "userContext" | "memories">>) {
+    const context = new AIGNEContext(this);
+
+    if (options?.userContext) context.userContext = options.userContext;
+    if (options?.memories) context.memories = options.memories;
+
+    return context;
   }
 
   /**
@@ -276,7 +339,9 @@ export class AIGNE<U extends UserContext = UserContext> {
     message?: I & Message,
     options?: InvokeOptions<U>,
   ): UserAgent<I, O> | Promise<AgentResponse<O> | [AgentResponse<O>, Agent]> {
-    return new AIGNEContext(this).invoke(agent, message, options);
+    this.observer?.serve();
+    const context = new AIGNEContext(this);
+    return context.invoke(agent, message, { ...options, newContext: false });
   }
 
   /**
@@ -297,6 +362,7 @@ export class AIGNE<U extends UserContext = UserContext> {
     payload: Omit<MessagePayload, "context"> | Message,
     options?: InvokeOptions<U>,
   ) {
+    this.observer?.serve();
     return new AIGNEContext(this).publish(topic, payload, options);
   }
 
@@ -406,9 +472,11 @@ export class AIGNE<U extends UserContext = UserContext> {
 }
 
 const aigneOptionsSchema = z.object({
-  model: z.instanceof(ChatModel).optional(),
-  skills: z.array(z.instanceof(Agent)).optional(),
-  agents: z.array(z.instanceof(Agent)).optional(),
+  model: z.custom<ChatModel>().optional(),
+  imageModel: z.custom<ImageModel>().optional(),
+  skills: z.array(z.custom<Agent>()).optional(),
+  agents: z.array(z.custom<Agent>()).optional(),
+  observer: z.custom<AIGNEObserver>().optional(),
 });
 
-const aigneAddAgentArgsSchema = z.array(z.instanceof(Agent));
+const aigneAddAgentArgsSchema = z.array(z.custom<Agent>());

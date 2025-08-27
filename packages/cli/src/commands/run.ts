@@ -2,55 +2,67 @@ import assert from "node:assert";
 import { cp, mkdir, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
-import { AIGNE, type Agent } from "@aigne/core";
-import { loadModel } from "@aigne/core/loader/index.js";
+import type { Agent, AIGNE } from "@aigne/core";
 import { logger } from "@aigne/core/utils/logger.js";
 import { isNonNullable } from "@aigne/core/utils/type-utils.js";
 import { Listr, PRESET_TIMER } from "@aigne/listr2";
-import type { Command } from "commander";
-import { availableMemories, availableModels } from "../constants.js";
+import { input as inputInquirer, select as selectInquirer } from "@inquirer/prompts";
+import { ListrInquirerPromptAdapter } from "@listr2/prompt-adapter-inquirer";
+import { config } from "dotenv-flow";
+import type { CommandModule } from "yargs";
 import { isV1Package, toAIGNEPackage } from "../utils/agent-v1.js";
 import { downloadAndExtract } from "../utils/download.js";
+import { loadAIGNE, type RunOptions } from "../utils/load-aigne.js";
 import {
-  type RunAIGNECommandOptions,
   createRunAIGNECommand,
   parseAgentInputByCommander,
-  parseModelOption,
   runAgentWithAIGNE,
 } from "../utils/run-with-aigne.js";
 
-interface RunOptions extends RunAIGNECommandOptions {
-  path: string;
-  entryAgent?: string;
-  cacheDir?: string;
-}
-
-export function createRunCommand(): Command {
-  return createRunAIGNECommand()
-    .description("Run AIGNE from the specified agent")
-    .option(
-      "--url, --path <path_or_url>",
-      "Path to the agents directory or URL to aigne project",
-      ".",
-    )
-    .option(
-      "--entry-agent <entry-agent>",
-      "Name of the agent to run (defaults to the first agent found)",
-    )
-    .option(
-      "--cache-dir <dir>",
-      "Directory to download the package to (defaults to the ~/.aigne/xxx)",
-    )
-    .action(async (options: RunOptions) => {
-      const { path } = options;
+export function createRunCommand({
+  aigneFilePath,
+}: {
+  aigneFilePath?: string;
+} = {}): CommandModule {
+  return {
+    command: "run [path]",
+    describe: "Run AIGNE from the specified agent",
+    builder: (yargs) => {
+      return createRunAIGNECommand(yargs)
+        .positional("path", {
+          describe: "Path to the agents directory or URL to aigne project",
+          type: "string",
+          default: ".",
+          alias: ["url"],
+        })
+        .option("entry-agent", {
+          describe: "Name of the agent to run (defaults to the first agent found)",
+          type: "string",
+        })
+        .option("cache-dir", {
+          describe: "Directory to download the package to (defaults to the ~/.aigne/xxx)",
+          type: "string",
+        })
+        .option("aigne-hub-url", {
+          describe:
+            "Custom AIGNE Hub service URL. Used to fetch remote agent definitions or models. ",
+          type: "string",
+        })
+        .strict(false);
+    },
+    handler: async (argv) => {
+      const options = argv as unknown as RunOptions;
+      const path = aigneFilePath || options.path;
 
       if (options.logLevel) logger.level = options.logLevel;
 
       const { cacheDir, dir } = prepareDirs(path, options);
+      const originalLog: Record<string, (...args: any[]) => void> = {};
 
       const { aigne, agent } = await new Listr<{
         aigne: AIGNE;
         agent: Agent;
+        logs: string[];
       }>(
         [
           {
@@ -72,8 +84,43 @@ export function createRunCommand(): Command {
           },
           {
             title: "Initialize AIGNE",
-            task: async (ctx) => {
-              const aigne = await loadAIGNE(dir, options);
+            task: async (ctx, task) => {
+              // Load env files in the aigne directory
+              config({ path: dir, silent: true });
+
+              ctx.logs = [];
+
+              for (const method of ["debug", "log", "info", "warn", "error"] as const) {
+                originalLog[method] = console[method];
+
+                console[method] = (...args) => {
+                  ctx.logs.push(...args);
+                  task.output = args.join(" ");
+                };
+              }
+
+              const aigne = await loadAIGNE({
+                path: dir,
+                modelOptions: {
+                  ...options,
+                  inquirerPromptFn: (prompt) => {
+                    if (prompt.type === "input") {
+                      return task
+                        .prompt(ListrInquirerPromptAdapter as any)
+                        .run(inputInquirer, prompt)
+                        .then((res: boolean) => ({ [prompt.name]: res }));
+                    }
+
+                    return task
+                      .prompt(ListrInquirerPromptAdapter as any)
+                      .run(selectInquirer, prompt)
+                      .then((res: boolean) => ({ [prompt.name]: res }));
+                  },
+                },
+              });
+
+              Object.assign(console, originalLog);
+
               ctx.aigne = aigne;
             },
           },
@@ -87,16 +134,16 @@ export function createRunCommand(): Command {
               if (options.entryAgent) {
                 entryAgent = aigne.agents[options.entryAgent];
                 if (!entryAgent) {
-                  console.error(`Agent "${options.entryAgent}" not found in ${path}`);
-                  console.log("Available agents:");
-                  for (const agent of aigne.agents) {
-                    console.log(`- ${agent.name}`);
-                  }
-                  throw new Error(`Agent "${options.entryAgent}" not found in ${path}`);
+                  throw new Error(`\
+Agent "${options.entryAgent}" not found in ${aigne.rootDir}
+
+Available agents:
+${aigne.agents.map((agent) => `  - ${agent.name}`).join("\n")}
+`);
                 }
               } else {
                 entryAgent = aigne.agents[0];
-                if (!entryAgent) throw new Error(`No agents found in ${path}`);
+                if (!entryAgent) throw new Error(`No any agent found in ${aigne.rootDir}`);
               }
 
               ctx.agent = entryAgent;
@@ -106,10 +153,16 @@ export function createRunCommand(): Command {
         {
           rendererOptions: {
             collapseSubtasks: false,
+            showErrorMessage: false,
             timer: PRESET_TIMER,
           },
         },
-      ).run();
+      )
+        .run()
+        .then((ctx) => {
+          ctx.logs.forEach((log) => console.log(log));
+          return ctx;
+        });
 
       assert(aigne);
       assert(agent);
@@ -121,17 +174,8 @@ export function createRunCommand(): Command {
       } finally {
         await aigne.shutdown();
       }
-    })
-    .showHelpAfterError(true)
-    .showSuggestionAfterError(true);
-}
-
-async function loadAIGNE(path: string, options: RunOptions) {
-  const model = options.model
-    ? await loadModel(availableModels, parseModelOption(options.model))
-    : undefined;
-
-  return await AIGNE.load(path, { models: availableModels, memories: availableMemories, model });
+    },
+  };
 }
 
 async function downloadPackage(url: string, cacheDir: string) {

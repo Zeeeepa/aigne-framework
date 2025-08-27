@@ -1,18 +1,30 @@
 # @aigne/bedrock
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/bedrock)](https://www.npmjs.com/package/@aigne/bedrock)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/bedrock)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE.md)
 
-**English** | [中文](README.zh.md)
-
 AIGNE AWS Bedrock SDK for integrating with AWS foundation models within the [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework).
 
 ## Introduction
 
 `@aigne/bedrock` provides a seamless integration between the AIGNE Framework and AWS Bedrock foundation models. This package enables developers to easily leverage various AI models available through AWS Bedrock in their AIGNE applications, providing a consistent interface across the framework while taking advantage of AWS's secure and scalable infrastructure.
+
+<picture>
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-bedrock-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-bedrock.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-bedrock.png" alt="AIGNE Arch" />
+</picture>
 
 ## Features
 
@@ -52,8 +64,8 @@ import { BedrockChatModel } from "@aigne/bedrock";
 
 const model = new BedrockChatModel({
   // Provide API key directly or use environment variable AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-  accessKeyId: "",
-  secretAccessKey: "",
+  accessKeyId: "YOUR_ACCESS_KEY_ID",
+  secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
   model: "us.amazon.nova-premier-v1:0",
   modelOptions: {
     temperature: 0.7,
@@ -81,11 +93,12 @@ console.log(result);
 
 ```typescript file="test/bedrock-chat-model.test.ts" region="example-bedrock-chat-model-streaming"
 import { BedrockChatModel } from "@aigne/bedrock";
+import { isAgentResponseDelta } from "@aigne/core";
 
 const model = new BedrockChatModel({
   // Provide API key directly or use environment variable AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-  accessKeyId: "",
-  secretAccessKey: "",
+  accessKeyId: "YOUR_ACCESS_KEY_ID",
+  secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
   model: "us.amazon.nova-premier-v1:0",
   modelOptions: {
     temperature: 0.7,
@@ -96,7 +109,6 @@ const stream = await model.invoke(
   {
     messages: [{ role: "user", content: "Hello, who are you?" }],
   },
-  undefined,
   { streaming: true },
 );
 
@@ -104,9 +116,11 @@ let fullText = "";
 const json = {};
 
 for await (const chunk of stream) {
-  const text = chunk.delta.text?.text;
-  if (text) fullText += text;
-  if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  if (isAgentResponseDelta(chunk)) {
+    const text = chunk.delta.text?.text;
+    if (text) fullText += text;
+    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+  }
 }
 
 console.log(fullText); // Output: "Hello! How can I assist you today?"

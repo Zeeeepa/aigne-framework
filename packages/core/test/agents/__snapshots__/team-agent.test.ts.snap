@@ -1,28 +1,7 @@
-// Bun Snapshot v1, https://goo.gl/fbAQLP
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`TeamAgent should return streaming response with sequential process method (multiple agent with different output keys) 1`] = `
 [
-  {
-    "delta": {
-      "text": {
-        "first": "Hello",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "first": ",",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "first": " ",
-      },
-    },
-  },
   {
     "delta": {
       "text": {
@@ -148,27 +127,6 @@ exports[`TeamAgent should return streaming response with sequential process meth
   {
     "delta": {
       "text": {
-        "text": "Hello",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "text": ",",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "text": " ",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
         "text": "world",
       },
     },
@@ -211,23 +169,6 @@ exports[`TeamAgent should return streaming response with parallel process method
 
 exports[`TeamAgent with sequential mode should yield output chunks correctly 1`] = `
 [
-  {
-    "delta": {
-      "json": {
-        "question": "What is AIGNE?",
-        "result": [
-          {
-            "link": "https://example.com/1",
-            "title": "First Result",
-          },
-          {
-            "link": "https://example.com/2",
-            "title": "Second Result",
-          },
-        ],
-      },
-    },
-  },
   {
     "delta": {
       "text": {
@@ -281,6 +222,371 @@ exports[`TeamAgent with sequential mode should yield output chunks correctly 1`]
     "delta": {
       "text": {
         "summary": "Result",
+      },
+    },
+  },
+]
+`;
+
+exports[`TeamAgent with iterateOn should process array input correctly {
+  concurrency: 1,
+} 1`] = `
+{
+  "sections": [
+    {
+      "description": "Description for Test title 0",
+    },
+    {
+      "description": "Description for Test title 1",
+    },
+    {
+      "description": "Description for Test title 2",
+    },
+  ],
+}
+`;
+
+exports[`TeamAgent with iterateOn should process array input correctly {
+  concurrency: 1,
+} 2`] = `
+[
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 0",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 1",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 2",
+  },
+]
+`;
+
+exports[`TeamAgent with iterateOn should process array input correctly {
+  concurrency: 2,
+} 1`] = `
+{
+  "sections": [
+    {
+      "description": "Description for Test title 0",
+    },
+    {
+      "description": "Description for Test title 1",
+    },
+    {
+      "description": "Description for Test title 2",
+    },
+  ],
+}
+`;
+
+exports[`TeamAgent with iterateOn should process array input correctly {
+  concurrency: 2,
+} 2`] = `
+[
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 0",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 1",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 2",
+  },
+]
+`;
+
+exports[`TeamAgent with iterateOn should iterate with previous step's output 1`] = `
+{
+  "sections": [
+    {
+      "description": "Description for Test title 0",
+    },
+    {
+      "description": "Description for Test title 1",
+    },
+    {
+      "description": "Description for Test title 2",
+    },
+  ],
+}
+`;
+
+exports[`TeamAgent with iterateOn should iterate with previous step's output 2`] = `
+[
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 0",
+  },
+  {
+    "sections": [
+      {
+        "description": "Description for Test title 0",
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 1",
+  },
+  {
+    "sections": [
+      {
+        "description": "Description for Test title 0",
+        "title": "Test title 0",
+      },
+      {
+        "description": "Description for Test title 1",
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 2",
+  },
+]
+`;
+
+exports[`TeamAgent should process reflection mode correctly 1`] = `
+[
+  {
+    "messages": [
+      {
+        "content": 
+"Write a article about AIGNE in 2025
+
+<previous-content>
+
+</previous-content>
+
+<feedback>
+
+</feedback>
+"
+,
+        "name": undefined,
+        "role": "system",
+      },
+    ],
+    "modelOptions": undefined,
+    "responseFormat": undefined,
+    "toolChoice": undefined,
+    "tools": undefined,
+  },
+  {
+    "messages": [
+      {
+        "content": 
+"You are a reviewer. Please review the following article and provide feedback.
+
+topic: AIGNE in 2025
+
+generated content:
+AIGNE in 2025 is a framework for building AI agents.
+"
+,
+        "name": undefined,
+        "role": "system",
+      },
+    ],
+    "modelOptions": undefined,
+    "responseFormat": {
+      "jsonSchema": {
+        "name": "output",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "approved": {
+              "type": "boolean",
+            },
+            "feedback": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "approved",
+          ],
+          "type": "object",
+        },
+        "strict": true,
+      },
+      "type": "json_schema",
+    },
+    "toolChoice": undefined,
+    "tools": undefined,
+  },
+  {
+    "messages": [
+      {
+        "content": 
+"Write a article about AIGNE in 2025
+
+<previous-content>
+AIGNE in 2025 is a framework for building AI agents.
+</previous-content>
+
+<feedback>
+The article is well-written and informative. However, it could use more examples.
+</feedback>
+"
+,
+        "name": undefined,
+        "role": "system",
+      },
+    ],
+    "modelOptions": undefined,
+    "responseFormat": undefined,
+    "toolChoice": undefined,
+    "tools": undefined,
+  },
+  {
+    "messages": [
+      {
+        "content": 
+"You are a reviewer. Please review the following article and provide feedback.
+
+topic: AIGNE in 2025
+
+generated content:
+AIGNE in 2025 is a framework for building AI agents. For example, it allows developers to create agents that can interact with users in a natural way, using natural language processing and machine learning techniques.
+"
+,
+        "name": undefined,
+        "role": "system",
+      },
+    ],
+    "modelOptions": undefined,
+    "responseFormat": {
+      "jsonSchema": {
+        "name": "output",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "approved": {
+              "type": "boolean",
+            },
+            "feedback": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "approved",
+          ],
+          "type": "object",
+        },
+        "strict": true,
+      },
+      "type": "json_schema",
+    },
+    "toolChoice": undefined,
+    "tools": undefined,
+  },
+]
+`;
+
+exports[`TeamAgent with includeAllStepsOutput should yield all intermediate steps 1`] = `
+[
+  {
+    "delta": {
+      "json": {
+        "step1Result": "Step 1 processed: test data",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "step2Result": "Step 2 processed: Step 1 processed: test data",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "finalResult": "Step 3 final: Step 2 processed: Step 1 processed: test data",
       },
     },
   },

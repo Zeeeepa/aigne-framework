@@ -8,26 +8,30 @@ import {
   type ChatModelInputTool,
   type ChatModelOptions,
   type ChatModelOutput,
-  type Role,
+  createRoleMapper,
+  STANDARD_ROLE_MAP,
+  safeParseJSON,
 } from "@aigne/core";
-import { parseJSON } from "@aigne/core/utils/json-schema.js";
+import { logger } from "@aigne/core/utils/logger.js";
 import { mergeUsage } from "@aigne/core/utils/model-utils.js";
 import { getJsonOutputPrompt } from "@aigne/core/utils/prompts.js";
 import { agentResponseStreamToObject } from "@aigne/core/utils/stream-utils.js";
 import {
-  type PromiseOrValue,
   checkArguments,
   isNonNullable,
+  type PromiseOrValue,
 } from "@aigne/core/utils/type-utils.js";
-import { nanoid } from "nanoid";
-import OpenAI from "openai";
+import { Ajv } from "ajv";
+import type { ClientOptions, OpenAI } from "openai";
 import type {
   ChatCompletionMessageParam,
   ChatCompletionTool,
   ResponseFormatJSONSchema,
 } from "openai/resources";
 import type { Stream } from "openai/streaming.js";
+import { v7 } from "uuid";
 import { z } from "zod";
+import { CustomOpenAI } from "./openai.js";
 
 const CHAT_MODEL_OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
@@ -75,6 +79,11 @@ export interface OpenAIChatModelOptions {
    * Additional model options to control behavior
    */
   modelOptions?: ChatModelOptions;
+
+  /**
+   * Client options for OpenAI API
+   */
+  clientOptions?: Partial<ClientOptions>;
 }
 
 /**
@@ -132,22 +141,33 @@ export class OpenAIChatModel extends ChatModel {
   protected apiKeyEnvName = "OPENAI_API_KEY";
   protected apiKeyDefault: string | undefined;
   protected supportsNativeStructuredOutputs = true;
-  protected supportsEndWithSystemMessage = true;
   protected supportsToolsUseWithJsonSchema = true;
-  protected supportsParallelToolCalls = true;
+  protected override supportsParallelToolCalls = true;
   protected supportsToolsEmptyParameters = true;
   protected supportsToolStreaming = true;
   protected supportsTemperature = true;
 
   get client() {
-    const apiKey = this.options?.apiKey || process.env[this.apiKeyEnvName] || this.apiKeyDefault;
-    if (!apiKey) throw new Error(`Api Key is required for ${this.name}`);
+    const { apiKey, url } = this.credential;
+    if (!apiKey)
+      throw new Error(
+        `${this.name} requires an API key. Please provide it via \`options.apiKey\`, or set the \`${this.apiKeyEnvName}\` environment variable`,
+      );
 
-    this._client ??= new OpenAI({
-      baseURL: this.options?.baseURL,
+    this._client ??= new CustomOpenAI({
+      baseURL: url,
       apiKey,
+      ...this.options?.clientOptions,
     });
     return this._client;
+  }
+
+  override get credential() {
+    return {
+      url: this.options?.baseURL || process.env.OPENAI_BASE_URL,
+      apiKey: this.options?.apiKey || process.env[this.apiKeyEnvName] || this.apiKeyDefault,
+      model: this.options?.model || CHAT_MODEL_OPENAI_DEFAULT_MODEL,
+    };
   }
 
   get modelOptions() {
@@ -163,10 +183,14 @@ export class OpenAIChatModel extends ChatModel {
     return this._process(input);
   }
 
+  private ajv = new Ajv();
+
   private async _process(input: ChatModelInput): Promise<AgentResponse<ChatModelOutput>> {
     const messages = await this.getRunMessages(input);
+    const model = input.modelOptions?.model || this.credential.model;
+
     const body: OpenAI.Chat.ChatCompletionCreateParams = {
-      model: this.options?.model || CHAT_MODEL_OPENAI_DEFAULT_MODEL,
+      model,
       temperature: this.supportsTemperature
         ? (input.modelOptions?.temperature ?? this.modelOptions?.temperature)
         : undefined,
@@ -181,8 +205,14 @@ export class OpenAIChatModel extends ChatModel {
       stream: true,
     };
 
+    // For models that do not support tools use with JSON schema in same request,
+    // so we need to handle the case where tools are not used and responseFormat is json
+    if (!input.tools?.length && input.responseFormat?.type === "json_schema") {
+      return await this.requestStructuredOutput(body, input.responseFormat);
+    }
+
     const { jsonMode, responseFormat } = await this.getRunResponseFormat(input);
-    const stream = await this.client.chat.completions.create({
+    const stream = (await this.client.chat.completions.create({
       ...body,
       tools: toolsFromInputTools(input.tools, {
         addTypeToEmptyParameters: !this.supportsToolsEmptyParameters,
@@ -190,25 +220,31 @@ export class OpenAIChatModel extends ChatModel {
       tool_choice: input.toolChoice,
       parallel_tool_calls: this.getParallelToolCalls(input),
       response_format: responseFormat,
-    });
+    })) as unknown as Stream<OpenAI.Chat.Completions.ChatCompletionChunk>;
 
     if (input.responseFormat?.type !== "json_schema") {
       return await this.extractResultFromStream(stream, false, true);
     }
 
     const result = await this.extractResultFromStream(stream, jsonMode);
+    // Just return the result if it has tool calls
+    if (result.toolCalls?.length || result.json) return result;
 
-    if (
-      !this.supportsToolsUseWithJsonSchema &&
-      !result.toolCalls?.length &&
-      input.responseFormat?.type === "json_schema" &&
-      result.text
-    ) {
-      const output = await this.requestStructuredOutput(body, input.responseFormat);
-      return { ...output, usage: mergeUsage(result.usage, output.usage) };
+    // Try to parse the text response as JSON
+    // If it matches the json_schema, return it as json
+    const json = safeParseJSON(result.text || "");
+    if (this.ajv.validate(input.responseFormat.jsonSchema.schema, json)) {
+      return { ...result, json, text: undefined };
     }
+    logger.warn(
+      `${this.name}: Text response does not match JSON schema, trying to use tool to extract json `,
+      {
+        text: result.text,
+      },
+    );
 
-    return result;
+    const output = await this.requestStructuredOutput(body, input.responseFormat);
+    return { ...output, usage: mergeUsage(result.usage, output.usage) };
   }
 
   private getParallelToolCalls(input: ChatModelInput): boolean | undefined {
@@ -217,21 +253,19 @@ export class OpenAIChatModel extends ChatModel {
     return input.modelOptions?.parallelToolCalls ?? this.modelOptions?.parallelToolCalls;
   }
 
-  private async getRunMessages(input: ChatModelInput): Promise<ChatCompletionMessageParam[]> {
+  protected async getRunMessages(input: ChatModelInput): Promise<ChatCompletionMessageParam[]> {
     const messages = await contentsFromInputMessages(input.messages);
 
-    if (!this.supportsEndWithSystemMessage && messages.at(-1)?.role !== "user") {
-      messages.push({ role: "user", content: "" });
-    }
-
-    if (!this.supportsToolsUseWithJsonSchema && input.tools?.length) return messages;
-    if (this.supportsNativeStructuredOutputs) return messages;
-
     if (input.responseFormat?.type === "json_schema") {
-      messages.unshift({
-        role: "system",
-        content: getJsonOutputPrompt(input.responseFormat.jsonSchema.schema),
-      });
+      if (
+        !this.supportsNativeStructuredOutputs ||
+        (!this.supportsToolsUseWithJsonSchema && input.tools?.length)
+      ) {
+        messages.unshift({
+          role: "system",
+          content: getJsonOutputPrompt(input.responseFormat.jsonSchema.schema),
+        });
+      }
     }
     return messages;
   }
@@ -245,7 +279,10 @@ export class OpenAIChatModel extends ChatModel {
 
     if (!this.supportsNativeStructuredOutputs) {
       const jsonMode = input.responseFormat?.type === "json_schema";
-      return { jsonMode, responseFormat: jsonMode ? { type: "json_object" } : undefined };
+      return {
+        jsonMode,
+        responseFormat: jsonMode ? { type: "json_object" } : undefined,
+      };
     }
 
     if (input.responseFormat?.type === "json_schema") {
@@ -275,10 +312,10 @@ export class OpenAIChatModel extends ChatModel {
     const { jsonMode, responseFormat: resolvedResponseFormat } = await this.getRunResponseFormat({
       responseFormat,
     });
-    const res = await this.client.chat.completions.create({
+    const res = (await this.client.chat.completions.create({
       ...body,
       response_format: resolvedResponseFormat,
-    });
+    })) as unknown as Stream<OpenAI.Chat.Completions.ChatCompletionChunk>;
 
     return this.extractResultFromStream(res, jsonMode);
   }
@@ -374,7 +411,7 @@ export class OpenAIChatModel extends ChatModel {
             controller.enqueue({
               delta: {
                 json: {
-                  json: parseJSON(text),
+                  json: safeParseJSON(text),
                 },
               },
             });
@@ -386,7 +423,7 @@ export class OpenAIChatModel extends ChatModel {
                 json: {
                   toolCalls: toolCalls.map(({ args, ...c }) => ({
                     ...c,
-                    function: { ...c.function, arguments: parseJSON(args) },
+                    function: { ...c.function, arguments: args ? safeParseJSON(args) : {} },
                   })),
                 },
               },
@@ -403,15 +440,8 @@ export class OpenAIChatModel extends ChatModel {
   }
 }
 
-/**
- * @hidden
- */
-export const ROLE_MAP: { [key in Role]: ChatCompletionMessageParam["role"] } = {
-  system: "system",
-  user: "user",
-  agent: "assistant",
-  tool: "tool",
-} as const;
+// Create role mapper for OpenAI (uses standard mapping)
+const mapRole = createRoleMapper(STANDARD_ROLE_MAP);
 
 /**
  * @hidden
@@ -422,7 +452,7 @@ export async function contentsFromInputMessages(
   return messages.map(
     (i) =>
       ({
-        role: ROLE_MAP[i.role],
+        role: mapRole(i.role),
         content:
           typeof i.content === "string"
             ? i.content
@@ -519,11 +549,15 @@ export function jsonSchemaToOpenAIJsonSchema(
 }
 
 function handleToolCallDelta(
-  toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & { args: string })[],
-  call: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall & { index: number },
+  toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
+    args: string;
+  })[],
+  call: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall & {
+    index: number;
+  },
 ) {
   toolCalls[call.index] ??= {
-    id: call.id || nanoid(),
+    id: call.id || v7(),
     type: "function" as const,
     function: { name: "", arguments: {} },
     args: "",
@@ -538,16 +572,20 @@ function handleToolCallDelta(
 }
 
 function handleCompleteToolCall(
-  toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & { args: string })[],
+  toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
+    args: string;
+  })[],
   call: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall,
 ) {
   toolCalls.push({
-    id: call.id || nanoid(),
+    id: call.id || v7(),
     type: "function" as const,
     function: {
       name: call.function?.name || "",
-      arguments: parseJSON(call.function?.arguments || "{}"),
+      arguments: safeParseJSON(call.function?.arguments || "{}"),
     },
     args: call.function?.arguments || "",
   });
 }
+
+// safeParseJSON is now imported from @aigne/core

@@ -1,16 +1,19 @@
 {
   "name": "@aigne/cli",
-  "version": "1.11.9",
-  "description": "cli for AIGNE framework",
+  "version": "1.41.2",
+  "description": "Your command center for agent development",
   "publishConfig": {
     "access": "public"
   },
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
-  "homepage": "https://github.com/AIGNE-io/aigne-framework",
+  "homepage": "https://www.aigne.io/cli",
   "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
+  },
+  "bugs": {
+    "url": "https://github.com/AIGNE-io/aigne-framework/issues"
   },
   "files": [
     "dist",
@@ -24,11 +27,18 @@
     "bunwrapper": "dist/bunwrapper.js"
   },
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
+    ".": "./dist/index.js",
     "./*": "./dist/*"
   },
   "typesVersions": {
     "*": {
+      ".": [
+        "./lib/dts/index.d.ts"
+      ],
       "*": [
         "./dist/*"
       ]
@@ -48,41 +58,54 @@
   },
   "dependencies": {
     "@aigne/agent-library": "workspace:^",
-    "@aigne/anthropic": "workspace:^",
-    "@aigne/bedrock": "workspace:^",
+    "@aigne/agentic-memory": "workspace:^",
+    "@aigne/aigne-hub": "workspace:^",
     "@aigne/core": "workspace:^",
-    "@aigne/deepseek": "workspace:^",
-    "@aigne/gemini": "workspace:^",
+    "@aigne/default-memory": "workspace:^",
     "@aigne/listr2": "^1.0.10",
-    "@aigne/marked-terminal": "^7.3.1",
-    "@aigne/ollama": "workspace:^",
-    "@aigne/open-router": "workspace:^",
+    "@aigne/marked-terminal": "^7.3.2",
+    "@aigne/observability-api": "workspace:^",
     "@aigne/openai": "workspace:^",
-    "@aigne/xai": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@inquirer/prompts": "^7.6.0",
+    "@inquirer/type": "^3.0.8",
+    "@listr2/prompt-adapter-inquirer": "^3.0.1",
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "@ocap/mcrypto": "^1.21.0",
+    "@smithy/node-http-handler": "^4.1.0",
+    "boxen": "^8.0.1",
     "chalk": "^5.4.1",
-    "commander": "^13.1.0",
+    "cli-table3": "^0.6.5",
+    "detect-port": "^2.1.0",
+    "dotenv-flow": "^4.1.0",
     "express": "^5.1.0",
-    "glob": "^11.0.2",
+    "glob": "^11.0.3",
     "gradient-string": "^3.0.0",
-    "inquirer": "^12.6.0",
-    "marked": "^15.0.11",
-    "prettier": "^3.5.3",
-    "pretty-error": "^4.0.0",
+    "https-proxy-agent": "^7.0.6",
+    "inquirer": "^12.7.0",
+    "log-update": "^6.1.0",
+    "marked": "^16.0.0",
+    "nunjucks": "^3.2.4",
+    "open": "^10.2.0",
+    "openai": "^5.8.3",
+    "p-wait-for": "^5.0.2",
+    "prettier": "^3.6.2",
     "tar": "^7.4.3",
     "wrap-ansi": "^9.0.0",
-    "yaml": "^2.7.1",
-    "zod": "^3.24.4"
+    "yaml": "^2.8.0",
+    "yargs": "^18.0.0",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@aigne/test-utils": "workspace:^",
     "@types/archiver": "^6.0.3",
-    "@types/bun": "^1.2.12",
-    "@types/express": "^5.0.1",
-    "@types/glob": "^8.1.0",
+    "@types/bun": "^1.2.18",
+    "@types/express": "^5.0.3",
+    "@types/glob": "^9.0.0",
     "@types/gradient-string": "^1.1.6",
-    "@types/node": "^22.15.15",
+    "@types/node": "^24.0.12",
+    "@types/yargs": "^17.0.33",
     "archiver": "^7.0.1",
-    "detect-port": "^2.1.0",
+    "hono": "4.8.4",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",

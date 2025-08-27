@@ -1,9 +1,9 @@
 #!/usr/bin/env bunwrapper
 
 import { join } from "node:path";
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { runWithAIGNE } from "@aigne/cli/utils/run-with-aigne.js";
 import { AIAgent, MCPAgent, PromptBuilder } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 
 await runWithAIGNE(
   async () => {
@@ -17,13 +17,17 @@ await runWithAIGNE(
       ],
     });
 
-    const prompt = await sqlite.prompts["mcp-demo"]?.invoke({ topic: "product service" });
+    const prompt = await sqlite.prompts["mcp-demo"]?.invoke({
+      topic: "product service",
+    });
     if (!prompt) throw new Error("Prompt mcp-demo not found");
 
     const agent = AIAgent.from({
+      name: "example_sqlite",
       instructions: PromptBuilder.from(prompt),
       skills: [sqlite],
       memory: new DefaultMemory(),
+      inputKey: "message",
     });
 
     return agent;

@@ -1,21 +1,32 @@
 name: Test Node.js
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  approval-gate:
+    if: github.event.pull_request.head.ref == 'release-please--branches--main'
+    environment: release-test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Approval received."
+
   test-nodejs:
+    needs: approval-gate
+
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [20, 22, 23, 24]
+        node-version: ["20.0", "22.0", "23.0", "24.0", "24"]
 
     steps:
       - name: Checkout repository
@@ -36,7 +47,10 @@ jobs:
         run: pnpm install
 
       - name: Build project
-        run: pnpm build
+        # @aigne/test-browser deps vite that is not support node 20.0, skip it
+        run: |
+          pnpm --filter='!test-browser' build
+          pnpm install
 
       - name: Run Node.js tests
         working-directory: tests/nodejs

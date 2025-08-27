@@ -1,9 +1,587 @@
-## [1.17.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.16.0...core-v1.17.0) (2025-05-25)
+# Changelog
+
+## [1.55.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.55.0...core-v1.55.1) (2025-08-26)
+
+
+### Bug Fixes
+
+* **cli:** reduce memory usage of AIGNE CLI ([#411](https://github.com/AIGNE-io/aigne-framework/issues/411)) ([9c36969](https://github.com/AIGNE-io/aigne-framework/commit/9c369699d966d37abf2d6a1624eac3d2fda4123b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.1
+
+## [1.55.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.54.0...core-v1.55.0) (2025-08-21)
 
 
 ### Features
 
-* add user context support ([#131](https://github.com/AIGNE-io/aigne-framework/issues/131)) ([4dd9d20](https://github.com/AIGNE-io/aigne-framework/commit/4dd9d20953f6ac33933723db56efd9b44bafeb02))
+* **blocklet:** support agent runtime blocklet ([#396](https://github.com/AIGNE-io/aigne-framework/issues/396)) ([baaae69](https://github.com/AIGNE-io/aigne-framework/commit/baaae691d552b7c7d313c4964a135a1b245943f9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.0
+
+## [1.54.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.53.0...core-v1.54.0) (2025-08-21)
+
+
+### Features
+
+* **cli:** add chat mode support for cli ([#389](https://github.com/AIGNE-io/aigne-framework/issues/389)) ([d7dc138](https://github.com/AIGNE-io/aigne-framework/commit/d7dc138719dd638ddb12c4625abdf42746baf35d))
+
+
+### Bug Fixes
+
+* **cli:** force reimport of agent modules with cache busting ([#392](https://github.com/AIGNE-io/aigne-framework/issues/392)) ([c372cb9](https://github.com/AIGNE-io/aigne-framework/commit/c372cb9600a9d78ad1808a045bcddfc285e9c6f0))
+
+## [1.53.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.52.0...core-v1.53.0) (2025-08-20)
+
+
+### Features
+
+* add ImageModel/ImageAgent support ([#383](https://github.com/AIGNE-io/aigne-framework/issues/383)) ([96a2093](https://github.com/AIGNE-io/aigne-framework/commit/96a209368d91d98f47db6de1e404640368a86fa8))
+
+## [1.52.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.51.0...core-v1.52.0) (2025-08-20)
+
+
+### Features
+
+* **agents:** add async memory recording option ([#385](https://github.com/AIGNE-io/aigne-framework/issues/385)) ([573acdb](https://github.com/AIGNE-io/aigne-framework/commit/573acdb617434e6699b2e07db942e6336706d27f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.9.1
+
+## [1.51.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.50.1...core-v1.51.0) (2025-08-18)
+
+
+### Features
+
+* **cli:** support hide or collapse task for agents in CLI ([#381](https://github.com/AIGNE-io/aigne-framework/issues/381)) ([05b372d](https://github.com/AIGNE-io/aigne-framework/commit/05b372d431a862f7cdfa2a90bb4b7b2379bf97ab))
+
+## [1.50.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.50.0...core-v1.50.1) (2025-08-16)
+
+
+### Bug Fixes
+
+* **core:** make getCredential async for aigne-hub mount point retrieval ([#372](https://github.com/AIGNE-io/aigne-framework/issues/372)) ([34ce7a6](https://github.com/AIGNE-io/aigne-framework/commit/34ce7a645fa83994d3dfe0f29ca70098cfecac9c))
+
+## [1.50.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.49.1...core-v1.50.0) (2025-08-14)
+
+
+### Features
+
+* **core:** add priority support for agent hooks ([#358](https://github.com/AIGNE-io/aigne-framework/issues/358)) ([9196141](https://github.com/AIGNE-io/aigne-framework/commit/91961413aea171048a6afae87ffc8dc53e20fca8))
+
+
+### Bug Fixes
+
+* **cli:** log only once in loadAIGNE ([#357](https://github.com/AIGNE-io/aigne-framework/issues/357)) ([6e6d968](https://github.com/AIGNE-io/aigne-framework/commit/6e6d96814fbc87f210522ae16daf94c1f84f311a))
+* **cli:** prevent multiple simultaneous buy credits prompts ([#363](https://github.com/AIGNE-io/aigne-framework/issues/363)) ([b8fb459](https://github.com/AIGNE-io/aigne-framework/commit/b8fb459261fe327bcc9bfb4d163e66863cb797ec))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.2
+
+## [1.49.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.49.0...core-v1.49.1) (2025-08-12)
+
+
+### Bug Fixes
+
+* **core:** add optional memory context toggle for AI agent ([#350](https://github.com/AIGNE-io/aigne-framework/issues/350)) ([92322cc](https://github.com/AIGNE-io/aigne-framework/commit/92322ccaf6f2b6e4440d47a7631589061c351d64))
+
+## [1.49.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.48.0...core-v1.49.0) (2025-08-12)
+
+
+### Features
+
+* **cli:** add retry functionality and improve error handling for AIGNE Hub ([#348](https://github.com/AIGNE-io/aigne-framework/issues/348)) ([672c93a](https://github.com/AIGNE-io/aigne-framework/commit/672c93abbba8b4b234f6d810536ff4b603a97e1e))
+
+
+### Bug Fixes
+
+* **core:** examples cases that failed when using aigne-hub ([#337](https://github.com/AIGNE-io/aigne-framework/issues/337)) ([0d4a31c](https://github.com/AIGNE-io/aigne-framework/commit/0d4a31c24d9e7d26f00d1accb80719d9ad79a4c6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.1
+
+## [1.48.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.47.0...core-v1.48.0) (2025-08-12)
+
+
+### Features
+
+* enhance task title functionality to support dynamic generation ([#346](https://github.com/AIGNE-io/aigne-framework/issues/346)) ([fff098c](https://github.com/AIGNE-io/aigne-framework/commit/fff098c9828beca9d99e4b2ebaebdf6b92efb84e))
+
+## [1.47.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.46.1...core-v1.47.0) (2025-08-11)
+
+
+### Features
+
+* enhance AI agent streaming with thinking mode support ([#343](https://github.com/AIGNE-io/aigne-framework/issues/343)) ([bea2a39](https://github.com/AIGNE-io/aigne-framework/commit/bea2a39a2610c2fe58e46ad612b5103726159ab9))
+
+## [1.46.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.46.0...core-v1.46.1) (2025-08-08)
+
+
+### Bug Fixes
+
+* **core:** auto trim trailing whitespace for AIAgent with structuredStreamMode enabled ([#334](https://github.com/AIGNE-io/aigne-framework/issues/334)) ([342eb49](https://github.com/AIGNE-io/aigne-framework/commit/342eb493995809f01da02fca6975ea6e52ecbd3a))
+* **core:** hide internal prop toolsMap from trace logs ([#335](https://github.com/AIGNE-io/aigne-framework/issues/335)) ([bcec317](https://github.com/AIGNE-io/aigne-framework/commit/bcec317bf436988e5f43af05f649196bdbd6ac55))
+
+## [1.46.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.45.0...core-v1.46.0) (2025-08-06)
+
+
+### Features
+
+* **cli:** support custom task title of agent in cli ([#328](https://github.com/AIGNE-io/aigne-framework/issues/328)) ([128d75f](https://github.com/AIGNE-io/aigne-framework/commit/128d75fb42ca470b47a2793d79c92d7bb64cfedb))
+
+
+### Bug Fixes
+
+* **core:** improve hook handling in agent and context ([#325](https://github.com/AIGNE-io/aigne-framework/issues/325)) ([c858fec](https://github.com/AIGNE-io/aigne-framework/commit/c858fecb08453c2daca9708f4b8a9c135fac40b0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.0
+
+## [1.45.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.44.0...core-v1.45.0) (2025-08-06)
+
+
+### Features
+
+* **core:** add concurrency support for team agent ([#323](https://github.com/AIGNE-io/aigne-framework/issues/323)) ([5743260](https://github.com/AIGNE-io/aigne-framework/commit/57432603a45208ad3503b9fc4c64f07c8151f9ee))
+
+
+### Bug Fixes
+
+* **core:** remove lodash dependency ensure core support both esm and cjs ([#324](https://github.com/AIGNE-io/aigne-framework/issues/324)) ([d6c2452](https://github.com/AIGNE-io/aigne-framework/commit/d6c2452b660a163c73f2c628ffdc2a12949360b0))
+* **models:** aigne-hub adapter not working in node.js v21 ([#320](https://github.com/AIGNE-io/aigne-framework/issues/320)) ([2884d00](https://github.com/AIGNE-io/aigne-framework/commit/2884d00b83e153ae7465ef1369fcd22d7c6d43e0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.5.1
+
+## [1.44.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.43.1...core-v1.44.0) (2025-08-05)
+
+
+### Features
+
+* allow inserting agent-hub credits manually ([#315](https://github.com/AIGNE-io/aigne-framework/issues/315)) ([e3e4d1f](https://github.com/AIGNE-io/aigne-framework/commit/e3e4d1ff0d9d3fef33bb41d85e99735d4dd76cb7))
+
+
+### Bug Fixes
+
+* **cli:** improve CLI prompts and output handling ([#318](https://github.com/AIGNE-io/aigne-framework/issues/318)) ([681ee79](https://github.com/AIGNE-io/aigne-framework/commit/681ee79e9b18aed5a977a0a418c2d9df20a7297c))
+
+## [1.43.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.43.0...core-v1.43.1) (2025-08-05)
+
+
+### Bug Fixes
+
+* **core:** filter empty memory content ([#312](https://github.com/AIGNE-io/aigne-framework/issues/312)) ([39dd77a](https://github.com/AIGNE-io/aigne-framework/commit/39dd77a68154d51c7a132adccd9f21b8bc461be0))
+
+## [1.43.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.42.0...core-v1.43.0) (2025-08-04)
+
+
+### Features
+
+* add includeAllStepsOutput option to control TeamAgent sequential streaming behavior ([#305](https://github.com/AIGNE-io/aigne-framework/issues/305)) ([0817475](https://github.com/AIGNE-io/aigne-framework/commit/08174751316b940a70463e71971a19a18b92667b))
+
+
+### Bug Fixes
+
+* **core:** share skills/agents from context ([#309](https://github.com/AIGNE-io/aigne-framework/issues/309)) ([88dd849](https://github.com/AIGNE-io/aigne-framework/commit/88dd849954c6f3fb68df238be22be3371c734e6e))
+
+## [1.42.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.41.0...core-v1.42.0) (2025-08-01)
+
+
+### Features
+
+* **cli:** add `--model` option for aigne applications ([#302](https://github.com/AIGNE-io/aigne-framework/issues/302)) ([5d63743](https://github.com/AIGNE-io/aigne-framework/commit/5d63743b8a47be64fd49245983f4f2f9da3197a0))
+* support google model and skip check mode when connected to Hub ([#300](https://github.com/AIGNE-io/aigne-framework/issues/300)) ([e992c0f](https://github.com/AIGNE-io/aigne-framework/commit/e992c0f3335a7c512fa807d5b8ad10c9c3bf2351))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.9.0
+    * @aigne/platform-helpers bumped to 0.5.0
+
+## [1.41.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.40.0...core-v1.41.0) (2025-07-31)
+
+
+### Features
+
+* **cli:** add alias support for agent ([#297](https://github.com/AIGNE-io/aigne-framework/issues/297)) ([fa166ab](https://github.com/AIGNE-io/aigne-framework/commit/fa166ab66d19e89ddd32c34e1470450eb4fbdbbd))
+
+## [1.40.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.39.0...core-v1.40.0) (2025-07-31)
+
+
+### Features
+
+* **cli:** support dynamic download and execution of doc-smith app ([#293](https://github.com/AIGNE-io/aigne-framework/issues/293)) ([4c40077](https://github.com/AIGNE-io/aigne-framework/commit/4c40077bacef076bc4b098879e948ef866218e39))
+
+## [1.39.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.38.1...core-v1.39.0) (2025-07-28)
+
+
+### Features
+
+* **cli:** add inquirer/prompts integrations for cli ([#286](https://github.com/AIGNE-io/aigne-framework/issues/286)) ([33af756](https://github.com/AIGNE-io/aigne-framework/commit/33af7567fe2e7f9fb4b1633127e1d54fd65cb2a8))
+
+
+### Bug Fixes
+
+* **observability:** uniq index on insert and perf on trace query ([#268](https://github.com/AIGNE-io/aigne-framework/issues/268)) ([bd02d2e](https://github.com/AIGNE-io/aigne-framework/commit/bd02d2ef4dadc3df7e4806746fede2faa5cc50bb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.8.2
+
+## [1.38.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.38.0...core-v1.38.1) (2025-07-24)
+
+
+### Bug Fixes
+
+* add missing dependencies ([#280](https://github.com/AIGNE-io/aigne-framework/issues/280)) ([5da315e](https://github.com/AIGNE-io/aigne-framework/commit/5da315e29dc02818293e74ad159294f137e2c7f7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.8.1
+
+## [1.38.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.37.0...core-v1.38.0) (2025-07-24)
+
+
+### Features
+
+* **cli:** support aigne hub connect and model use ([#267](https://github.com/AIGNE-io/aigne-framework/issues/267)) ([8e5a32a](https://github.com/AIGNE-io/aigne-framework/commit/8e5a32afc64593137153d7407bde13837312ac70))
+* **core:** support config reflection for TeamAgent in yaml file ([#276](https://github.com/AIGNE-io/aigne-framework/issues/276)) ([e6296a8](https://github.com/AIGNE-io/aigne-framework/commit/e6296a8aff313e8209c4fbb2878e7869cc672576))
+
+## [1.37.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.36.0...core-v1.37.0) (2025-07-22)
+
+
+### Features
+
+* **core:** add reflection mode support to TeamAgent ([#273](https://github.com/AIGNE-io/aigne-framework/issues/273)) ([4e2dad6](https://github.com/AIGNE-io/aigne-framework/commit/4e2dad687c1caefa231c7a7620651d060f8c8b9d))
+
+
+### Bug Fixes
+
+* **core:** function agent should use common schema from yaml definition ([#270](https://github.com/AIGNE-io/aigne-framework/issues/270)) ([076a489](https://github.com/AIGNE-io/aigne-framework/commit/076a4896948c397518e99df46c1a443ea43daa64))
+
+## [1.36.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.35.0...core-v1.36.0) (2025-07-17)
+
+
+### Features
+
+* **core:** support define hooks for agent in yaml ([#260](https://github.com/AIGNE-io/aigne-framework/issues/260)) ([c388e82](https://github.com/AIGNE-io/aigne-framework/commit/c388e8216134271af4d9c7def70862ea3c354c7f))
+
+## [1.35.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.34.0...core-v1.35.0) (2025-07-17)
+
+
+### Features
+
+* **core:** support custom default input value for agent ([#258](https://github.com/AIGNE-io/aigne-framework/issues/258)) ([352ac70](https://github.com/AIGNE-io/aigne-framework/commit/352ac70400fb7e28cc36c4f6dc9c591b0d64e546))
+
+## [1.34.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.33.2...core-v1.34.0) (2025-07-15)
+
+
+### Features
+
+* **memory:** support did space memory adapter ([#229](https://github.com/AIGNE-io/aigne-framework/issues/229)) ([6f69b64](https://github.com/AIGNE-io/aigne-framework/commit/6f69b64e98b963db9d6ab5357306b445385eaa68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.8.0
+    * @aigne/platform-helpers bumped to 0.4.0
+
+## [1.33.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.33.1...core-v1.33.2) (2025-07-14)
+
+
+### Bug Fixes
+
+* **core:** fix error of external schema with array type ([#251](https://github.com/AIGNE-io/aigne-framework/issues/251)) ([bd80921](https://github.com/AIGNE-io/aigne-framework/commit/bd80921bbbe8385645eb7c52fd719ce48d672da9))
+
+## [1.33.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.33.0...core-v1.33.1) (2025-07-14)
+
+
+### Bug Fixes
+
+* **cli:** print pretty error message for cli ([#249](https://github.com/AIGNE-io/aigne-framework/issues/249)) ([d68e0f7](https://github.com/AIGNE-io/aigne-framework/commit/d68e0f7151259a05696de77d9f00793b6f5b36b2))
+* **core:** check if skills is empty before TeamAgent processes ([#250](https://github.com/AIGNE-io/aigne-framework/issues/250)) ([f0fff7e](https://github.com/AIGNE-io/aigne-framework/commit/f0fff7e41512cf06f106a0d7fe03a7d98206f136))
+* **deps:** update deps to latest version ([#247](https://github.com/AIGNE-io/aigne-framework/issues/247)) ([3972f88](https://github.com/AIGNE-io/aigne-framework/commit/3972f887a9abff20c26da6b51c1071cbd54c0bf1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.7.2
+    * @aigne/platform-helpers bumped to 0.3.1
+
+## [1.33.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.32.2...core-v1.33.0) (2025-07-10)
+
+
+### Features
+
+* **core:** support external files as agent input/output schema ([#242](https://github.com/AIGNE-io/aigne-framework/issues/242)) ([58f8de6](https://github.com/AIGNE-io/aigne-framework/commit/58f8de63008b78ea1b404ba7721c3a242c330113))
+
+## [1.32.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.32.1...core-v1.32.2) (2025-07-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.7.1
+
+## [1.32.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.32.0...core-v1.32.1) (2025-07-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.7.0
+
+## [1.32.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.31.0...core-v1.32.0) (2025-07-08)
+
+
+### Features
+
+* **core:** add jinja syntax support for prompt builder ([#230](https://github.com/AIGNE-io/aigne-framework/issues/230)) ([74436a7](https://github.com/AIGNE-io/aigne-framework/commit/74436a7faac0c59a32b0153481386162649f4357))
+* support setting component id to different component data ([#226](https://github.com/AIGNE-io/aigne-framework/issues/226)) ([c7b3224](https://github.com/AIGNE-io/aigne-framework/commit/c7b32240e6660f34974615bcb9b91978a1191e3e))
+
+
+### Bug Fixes
+
+* **core:** ensure output is a record type ([#228](https://github.com/AIGNE-io/aigne-framework/issues/228)) ([dfd9104](https://github.com/AIGNE-io/aigne-framework/commit/dfd910451e5f1f9edd94a719857e36d34fadbe45))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.6.0
+
+## [1.31.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.30.0...core-v1.31.0) (2025-07-04)
+
+
+### Features
+
+* **core:** add standard userId/sessionId in userContext ([#219](https://github.com/AIGNE-io/aigne-framework/issues/219)) ([58e5804](https://github.com/AIGNE-io/aigne-framework/commit/58e5804cf08b1d2fa6e232646fadd70b5db2e007))
+* **core:** add strucutredStreamMode option for AIAgent to support text and json output in one-shot ([#222](https://github.com/AIGNE-io/aigne-framework/issues/222)) ([c0af92b](https://github.com/AIGNE-io/aigne-framework/commit/c0af92b6a020453b047e5bb3782239795839baa8))
+* **memory:** add support for AgenticMemory & some improvements for DefaultMemory ([#224](https://github.com/AIGNE-io/aigne-framework/issues/224)) ([f4a08af](https://github.com/AIGNE-io/aigne-framework/commit/f4a08aff935205c62615c060763c835a9579607d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.5.0
+    * @aigne/platform-helpers bumped to 0.3.0
+
+## [1.30.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.29.1...core-v1.30.0) (2025-07-03)
+
+
+### Features
+
+* upgrade dependencies and adapt code to breaking changes ([#216](https://github.com/AIGNE-io/aigne-framework/issues/216)) ([f215ced](https://github.com/AIGNE-io/aigne-framework/commit/f215cedc1a57e321164064c33316e496eae8d25f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.4.0
+    * @aigne/platform-helpers bumped to 0.2.0
+
+## [1.29.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.29.0...core-v1.29.1) (2025-07-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.3.3
+
+## [1.29.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.28.2...core-v1.29.0) (2025-07-02)
+
+
+### Features
+
+* support iterate special input call skills for TeamAgent ([#188](https://github.com/AIGNE-io/aigne-framework/issues/188)) ([8cf06d3](https://github.com/AIGNE-io/aigne-framework/commit/8cf06d39172ed59ca93f34d893486f2bb7bd2e5a))
+
+## [1.28.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.28.1...core-v1.28.2) (2025-07-01)
+
+
+### Bug Fixes
+
+* fix: compatible with node 20.0 & polish example defintions ([#209](https://github.com/AIGNE-io/aigne-framework/issues/209)) ([9752b96](https://github.com/AIGNE-io/aigne-framework/commit/9752b96dc54a44c6f710f056fe9205c0f2b0a73e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.3.2
+
+## [1.28.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.28.0...core-v1.28.1) (2025-07-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.3.1
+
+## [1.28.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.27.0...core-v1.28.0) (2025-07-01)
+
+
+### Features
+
+* **example:** use AIGNE cli to run chat-bot example ([#198](https://github.com/AIGNE-io/aigne-framework/issues/198)) ([7085541](https://github.com/AIGNE-io/aigne-framework/commit/708554100692f2a557f7329ea78e46c3c870ce10))
+
+## [1.27.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.26.0...core-v1.27.0) (2025-07-01)
+
+
+### Features
+
+* **cli:** support HTTPS_PROXY and named path param ([#196](https://github.com/AIGNE-io/aigne-framework/issues/196)) ([04e684e](https://github.com/AIGNE-io/aigne-framework/commit/04e684ee26bc2d79924b0e3cb541cd07a7191804))
+
+## [1.26.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.25.0...core-v1.26.0) (2025-06-30)
+
+
+### Features
+
+* **ux:** polish tracing ux and update docs ([#193](https://github.com/AIGNE-io/aigne-framework/issues/193)) ([f80b63e](https://github.com/AIGNE-io/aigne-framework/commit/f80b63ecb1cfb00daa9b68330026da839d33f8a2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.3.0
+
+## [1.25.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.24.1...core-v1.25.0) (2025-06-29)
+
+
+### Features
+
+* **observability:** tune trace ux and supoort incremental exporting ([#184](https://github.com/AIGNE-io/aigne-framework/issues/184)) ([d174188](https://github.com/AIGNE-io/aigne-framework/commit/d174188459c77acb09b5ca040972f83abb067587))
+
+
+### Bug Fixes
+
+* **core:** enable proper tracing for agent calls via message queue ([#191](https://github.com/AIGNE-io/aigne-framework/issues/191)) ([f8a4ce5](https://github.com/AIGNE-io/aigne-framework/commit/f8a4ce5fa54e0e01113b31fefcbd248b163980b2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.2.0
+
+## [1.24.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.24.0...core-v1.24.1) (2025-06-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.1.3
+
+## [1.24.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.23.1...core-v1.24.0) (2025-06-26)
+
+
+### Features
+
+* **transport:** support invoke server side chat model ([#182](https://github.com/AIGNE-io/aigne-framework/issues/182)) ([f81a1bf](https://github.com/AIGNE-io/aigne-framework/commit/f81a1bf883abda1845ccee09b270e5f583e287ab))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.1.2
+
+## [1.23.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.23.0...core-v1.23.1) (2025-06-25)
+
+
+### Bug Fixes
+
+* **core:** pass input/output to MemoryAgent directily ([#178](https://github.com/AIGNE-io/aigne-framework/issues/178)) ([3b20e33](https://github.com/AIGNE-io/aigne-framework/commit/3b20e33f1eefc81ac1e009b1afff14fca46644b1))
+
+## [1.23.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.22.0...core-v1.23.0) (2025-06-25)
+
+
+### Features
+
+* support remember custom fields from message ([#174](https://github.com/AIGNE-io/aigne-framework/issues/174)) ([664069d](https://github.com/AIGNE-io/aigne-framework/commit/664069d343137f69d0c103b2b5eff545ab0051fb))
+
+
+### Bug Fixes
+
+* **blocklet:** ensure only admins can access traces ([#173](https://github.com/AIGNE-io/aigne-framework/issues/173)) ([9c5cc06](https://github.com/AIGNE-io/aigne-framework/commit/9c5cc06c5841b9684d16c5c60af764d8c98c9c3e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.1.1
+
+## [1.22.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.21.0...core-v1.22.0) (2025-06-24)
+
+
+### Features
+
+* support observability for cli and blocklet ([#155](https://github.com/AIGNE-io/aigne-framework/issues/155)) ([5baa705](https://github.com/AIGNE-io/aigne-framework/commit/5baa705a33cfdba1efc5ccbe18674c27513ca97d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability bumped to 0.1.0
+
+
+## [1.21.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.20.1...core-v1.21.0) (2025-06-20)
+
+
+### Features
+
+* **cli:** support pass named input to agent by --input-xxx ([#167](https://github.com/AIGNE-io/aigne-framework/issues/167)) ([cda5bb6](https://github.com/AIGNE-io/aigne-framework/commit/cda5bb6baab680787de1a042664fe34c17a84bb1))
 
 ## [1.20.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.20.0...core-v1.20.1) (2025-06-19)
 
@@ -96,6 +674,15 @@
 * The following workspace dependencies were updated
   * dependencies
     * @aigne/platform-helpers bumped to 0.1.0
+
+
+## [1.17.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.16.0...core-v1.17.0) (2025-05-25)
+
+
+### Features
+
+* add user context support ([#131](https://github.com/AIGNE-io/aigne-framework/issues/131)) ([4dd9d20](https://github.com/AIGNE-io/aigne-framework/commit/4dd9d20953f6ac33933723db56efd9b44bafeb02))
+
 
 ## [1.16.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.15.0...core-v1.16.0) (2025-05-23)
 
@@ -299,85 +886,3 @@
 * **MCP:** catch list resource error treat as empty list ([1885fab](https://github.com/AIGNE-io/aigne-framework/commit/1885fab3585e0dd1467b127e5b47cd0b98282bab))
 * rename @aigne/core-next to @aigne/core ([3a81009](https://github.com/AIGNE-io/aigne-framework/commit/3a8100962c81813217b687ae28e8de604419c622))
 * use text resource from MCP correctly ([8b9eba8](https://github.com/AIGNE-io/aigne-framework/commit/8b9eba83352ec096a2a5d4f410d4c4bde7420bce))
-
-## [1.2.0](https://github.com/AIGNE-io/aigne-framework/compare/core-next-v1.1.0...core-next-v1.2.0) (2025-03-18)
-
-- chore: release v1.2.0
-
-## 1.1.0-beta.17 (2025-3-18)
-
-- chore: add support for esm module
-
-
-## 1.1.0-beta.16 (2025-3-18)
-
-- chore: add puppeteer in linux need docker_container
-
-## 1.1.0-beta.15 (2025-3-18)
-
-- chore: make coverage report as text to terminal
-- chore: update contributing docs
-
-## 1.1.0-beta.14 (2025-3-18)
-
-- chore(example): add code-execution example
-
-## 1.1.0-beta.13 (2025-3-18)
-
-- feat: add OrchestratorAgent in agent library
-
-## 1.1.0-beta.12 (2025-3-14)
-
-- chore(example): add concurrency reflection handoff workflow examples
-
-## 1.1.0-beta.11 (2025-3-14)
-
-- feat(core): add sequential and parallel helper function
-- chore(examples): add workflow-sequential example
-
-## 1.1.0-beta.10 (2025-3-13)
-
-- chore: ensure required environment variables have values
-
-## 1.1.0-beta.9 (2025-3-13)
-
-- fix(MCP): catch list resource error treat as empty list
-
-## 1.1.0-beta.8 (2025-3-13)
-
-- fix(AIAgent): should pass both arguments (model generated) and input (user input) to tool
-- chore(examples): add workflow-router example
-- chore(examples): rename examples puppeteer-mcp-server and sqlite-mcp-server to mcp-server-puppeteer and mcp-server-sqlite
-
-## 1.1.0-beta.7 (2025-3-13)
-
-- chore: rename @aigne/core to @aigne/core
-
-## 1.1.0-beta.6 (2025-3-13)
-
-- chore(examples): default enable mcp debug message for examples
-
-## 1.1.0-beta.5 (2025-3-13)
-
-- feat: support chat history in PromptBuilder
-- feat: add `prompts` for MCPAgent to consume prompts from MCP server
-- chore: add sqlite-mcp-server example
-- test: add more unit test cases
-
-## 1.1.0-beta.4 (2025-3-12)
-
-- feat: support run puppeteer example chat loop in terminal
-
-## 1.1.0-beta.3 (2025-3-11)
-
-- chore: set module type for core package
-
-## 1.1.0-beta.2 (2025-3-11)
-
-- feat: use PromptBuilder instead of string instructions
-- refactor: use tools instead of skills
-- chore(examples): add puppeteer-mcp-server example
-
-## 1.1.0-beta.1 (2025-3-11)
-
-- feat: add Agent FunctionAgent AIAgent MCPAgent and ExecutionEngine

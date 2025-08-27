@@ -9,18 +9,19 @@ import {
   type ChatModelOutput,
   type ChatModelOutputUsage,
   type Message,
+  safeParseJSON,
 } from "@aigne/core";
 import { parseJSON } from "@aigne/core/utils/json-schema.js";
+import { logger } from "@aigne/core/utils/logger.js";
 import { mergeUsage } from "@aigne/core/utils/model-utils.js";
 import { agentResponseStreamToObject } from "@aigne/core/utils/stream-utils.js";
 import {
-  type PromiseOrValue,
   checkArguments,
   isEmpty,
   isNonNullable,
+  type PromiseOrValue,
 } from "@aigne/core/utils/type-utils.js";
-import Anthropic from "@anthropic-ai/sdk";
-import type { MessageStream } from "@anthropic-ai/sdk/lib/MessageStream.js";
+import Anthropic, { type ClientOptions } from "@anthropic-ai/sdk";
 import type {
   ContentBlockParam,
   MessageParam,
@@ -29,6 +30,7 @@ import type {
   ToolUnion,
   ToolUseBlockParam,
 } from "@anthropic-ai/sdk/resources/index.js";
+import { Ajv } from "ajv";
 import { z } from "zod";
 
 const CHAT_MODEL_CLAUDE_DEFAULT_MODEL = "claude-3-7-sonnet-latest";
@@ -55,6 +57,11 @@ export interface AnthropicChatModelOptions {
    * Additional model options to control behavior
    */
   modelOptions?: ChatModelOptions;
+
+  /**
+   * Optional client options for the Anthropic SDK
+   */
+  clientOptions?: Partial<ClientOptions>;
 }
 
 /**
@@ -99,22 +106,58 @@ export class AnthropicChatModel extends ChatModel {
     super();
   }
 
+  protected apiKeyEnvName = "ANTHROPIC_API_KEY";
+
   /**
    * @hidden
    */
   protected _client?: Anthropic;
 
   get client() {
-    const apiKey =
-      this.options?.apiKey || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-    if (!apiKey) throw new Error("Api Key is required for AnthropicChatModel");
+    const { apiKey } = this.credential;
+    if (!apiKey)
+      throw new Error(
+        "AnthropicChatModel requires an API key. Please provide it via `options.apiKey`, or set the `ANTHROPIC_API_KEY` or `CLAUDE_API_KEY` environment variable",
+      );
 
-    this._client ??= new Anthropic({ apiKey });
+    this._client ??= new Anthropic({
+      apiKey,
+      ...this.options?.clientOptions,
+      timeout: this.options?.clientOptions?.timeout ?? 600e3,
+    });
     return this._client;
   }
 
   get modelOptions() {
     return this.options?.modelOptions;
+  }
+
+  override get credential() {
+    const apiKey =
+      this.options?.apiKey || process.env[this.apiKeyEnvName] || process.env.CLAUDE_API_KEY;
+
+    return {
+      apiKey,
+      model: this.options?.model || CHAT_MODEL_CLAUDE_DEFAULT_MODEL,
+    };
+  }
+
+  private getMaxTokens(model: string): number {
+    const matchers = [
+      [/claude-opus-4-/, 32000],
+      [/claude-sonnet-4-/, 64000],
+      [/claude-3-7-sonnet-/, 64000],
+      [/claude-3-5-sonnet-/, 8192],
+      [/claude-3-5-haiku-/, 8192],
+    ] as const;
+
+    for (const [regex, maxTokens] of matchers) {
+      if (regex.test(model)) {
+        return maxTokens;
+      }
+    }
+
+    return 4096;
   }
 
   /**
@@ -126,8 +169,11 @@ export class AnthropicChatModel extends ChatModel {
     return this._process(input);
   }
 
+  private ajv = new Ajv();
+
   private async _process(input: ChatModelInput): Promise<AgentResponse<ChatModelOutput>> {
-    const model = this.options?.model || CHAT_MODEL_CLAUDE_DEFAULT_MODEL;
+    const model = input.modelOptions?.model || this.credential.model;
+
     const disableParallelToolUse =
       input.modelOptions?.parallelToolCalls === false ||
       this.modelOptions?.parallelToolCalls === false;
@@ -137,10 +183,16 @@ export class AnthropicChatModel extends ChatModel {
       temperature: input.modelOptions?.temperature ?? this.modelOptions?.temperature,
       top_p: input.modelOptions?.topP ?? this.modelOptions?.topP,
       // TODO: make dynamic based on model https://docs.anthropic.com/en/docs/about-claude/models/all-models
-      max_tokens: /claude-3-[5|7]/.test(model) ? 8192 : 4096,
+      max_tokens: this.getMaxTokens(model),
       ...convertMessages(input),
       ...convertTools({ ...input, disableParallelToolUse }),
     };
+
+    // Claude does not support json_schema response and tool calls in the same request,
+    // so we need to handle the case where tools are not used and responseFormat is json
+    if (!input.tools?.length && input.responseFormat?.type === "json_schema") {
+      return this.requestStructuredOutput(body, input.responseFormat);
+    }
 
     const stream = this.client.messages.stream({
       ...body,
@@ -152,36 +204,42 @@ export class AnthropicChatModel extends ChatModel {
     }
 
     const result = await this.extractResultFromAnthropicStream(stream);
+    // Just return the result if it has tool calls
+    if (result.toolCalls?.length) return result;
+
+    // Try to parse the text response as JSON
+    // If it matches the json_schema, return it as json
+    const json = safeParseJSON(result.text || "");
+    if (this.ajv.validate(input.responseFormat.jsonSchema.schema, json)) {
+      return { ...result, json, text: undefined };
+    }
+    logger.warn(
+      `AnthropicChatModel: Text response does not match JSON schema, trying to use tool to extract json `,
+      { text: result.text },
+    );
 
     // Claude doesn't support json_schema response and tool calls in the same request,
     // so we need to make a separate request for json_schema response when the tool calls is empty
-    if (!result.toolCalls?.length && input.responseFormat?.type === "json_schema") {
-      const output = await this.requestStructuredOutput(body, input.responseFormat);
+    const output = await this.requestStructuredOutput(body, input.responseFormat);
 
-      return {
-        ...output,
-        // merge usage from both requests
-        usage: mergeUsage(result.usage, output.usage),
-      };
-    }
-
-    return result;
+    return {
+      ...output,
+      // merge usage from both requests
+      usage: mergeUsage(result.usage, output.usage),
+    };
   }
-
   private async extractResultFromAnthropicStream(
-    stream: MessageStream,
+    stream: ReturnType<Anthropic["messages"]["stream"]>,
     streaming?: false,
   ): Promise<ChatModelOutput>;
   private async extractResultFromAnthropicStream(
-    stream: MessageStream,
+    stream: ReturnType<Anthropic["messages"]["stream"]>,
     streaming: true,
   ): Promise<ReadableStream<AgentResponseChunk<ChatModelOutput>>>;
   private async extractResultFromAnthropicStream(
-    stream: MessageStream,
+    stream: ReturnType<Anthropic["messages"]["stream"]>,
     streaming?: boolean,
   ): Promise<ReadableStream<AgentResponseChunk<ChatModelOutput>> | ChatModelOutput> {
-    const logs: string[] = [];
-
     const result = new ReadableStream<AgentResponseChunk<ChatModelOutput>>({
       async start(controller) {
         try {
@@ -209,11 +267,11 @@ export class AnthropicChatModel extends ChatModel {
               usage.outputTokens = chunk.usage.output_tokens;
             }
 
-            logs.push(JSON.stringify(chunk));
-
             // handle streaming text
             if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-              controller.enqueue({ delta: { text: { text: chunk.delta.text } } });
+              controller.enqueue({
+                delta: { text: { text: chunk.delta.text } },
+              });
             }
 
             if (chunk.type === "content_block_start" && chunk.content_block.type === "tool_use") {
@@ -305,7 +363,7 @@ export class AnthropicChatModel extends ChatModel {
   }
 }
 
-function convertMessages({ messages, responseFormat }: ChatModelInput): {
+function convertMessages({ messages, responseFormat, tools }: ChatModelInput): {
   messages: MessageParam[];
   system?: string;
 } {
@@ -323,7 +381,13 @@ function convertMessages({ messages, responseFormat }: ChatModelInput): {
 
       msgs.push({
         role: "user",
-        content: [{ type: "tool_result", tool_use_id: msg.toolCallId, content: msg.content }],
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: msg.toolCallId,
+            content: msg.content,
+          },
+        ],
       });
     } else if (msg.role === "user") {
       if (!msg.content) throw new Error("User message must have content");
@@ -348,7 +412,9 @@ function convertMessages({ messages, responseFormat }: ChatModelInput): {
     }
   }
 
-  if (responseFormat?.type === "json_schema") {
+  // If there are tools and responseFormat is json_schema, we need to add a system message
+  // to inform the model about the expected json schema, then trying to parse the response as json
+  if (tools?.length && responseFormat?.type === "json_schema") {
     systemMessages.push(
       `You should provide a json response with schema: ${JSON.stringify(responseFormat.jsonSchema.schema)}`,
     );
@@ -396,7 +462,10 @@ function convertTools({
   } else if (toolChoice === "required") {
     choice = { type: "any", disable_parallel_tool_use: disableParallelToolUse };
   } else if (toolChoice === "auto") {
-    choice = { type: "auto", disable_parallel_tool_use: disableParallelToolUse };
+    choice = {
+      type: "auto",
+      disable_parallel_tool_use: disableParallelToolUse,
+    };
   } else if (toolChoice === "none") {
     choice = { type: "none" };
   }
@@ -414,3 +483,5 @@ function convertTools({
     tool_choice: choice,
   };
 }
+
+// safeParseJSON is now imported from @aigne/core

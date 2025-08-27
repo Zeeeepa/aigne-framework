@@ -10,14 +10,36 @@
     "packages/cli": {},
     "packages/test-utils": {},
     "packages/transport": {},
+    "packages/publish-docs": {},
     "models/anthropic": {},
     "models/bedrock": {},
     "models/deepseek": {},
+    "models/doubao": {},
+    "models/poe": {},
     "models/gemini": {},
+    "models/ideogram": {},
     "models/ollama": {},
     "models/open-router": {},
     "models/openai": {},
     "models/xai": {},
+    "models/aigne-hub": {},
+    "memory/default": {},
+    "memory/agentic": {},
+    "memory/fs": {},
+    "memory/did-space": {},
+    "observability/blocklet": {
+      "package-name": "blocklet-observability",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "blocklet.yml",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "observability/api": {},
+    "observability/ui": {},
+    "examples/mcp-server": {},
     "examples/mcp-github": {},
     "examples/mcp-puppeteer": {},
     "examples/mcp-sqlite": {},
@@ -31,7 +53,17 @@
     "examples/workflow-router": {},
     "examples/workflow-sequential": {},
     "examples/chat-bot": {},
-    "examples/memory": {}
+    "examples/memory": {},
+    "blocklets/aigne-runtime": {
+      "package-name": "aigne-runtime",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "blocklet.yml",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
   },
   "plugins": [
     {

@@ -5,7 +5,9 @@ import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { mergeAgentResponseChunk } from "@aigne/core/utils/stream-utils.js";
 import type { PromiseOrValue } from "@aigne/core/utils/type-utils";
 import {
+  color,
   DefaultRenderer,
+  figures,
   Listr,
   ListrDefaultRendererLogLevels,
   type ListrDefaultRendererOptions,
@@ -30,6 +32,7 @@ export class AIGNEListr extends Listr<
   typeof AIGNEListrFallbackRenderer
 > {
   private result: Message = {};
+  private error?: Error;
 
   private logs: string[] = [];
 
@@ -38,7 +41,7 @@ export class AIGNEListr extends Listr<
   constructor(
     public myOptions: {
       formatRequest: () => string | undefined;
-      formatResult: (result: Message) => string[];
+      formatResult: (result: Message, options?: { running?: boolean }) => string[];
     },
     ...[task, options, parentTask]: ConstructorParameters<
       typeof Listr<object, typeof AIGNEListrRenderer, typeof AIGNEListrFallbackRenderer>
@@ -48,8 +51,8 @@ export class AIGNEListr extends Listr<
       getStdoutLogs: () => {
         return this.logs.splice(0);
       },
-      getBottomBarLogs: () => {
-        return this.myOptions.formatResult(this.result);
+      getBottomBarLogs: (options?: { running?: boolean }) => {
+        return this.myOptions.formatResult(this.result, options);
       },
     };
 
@@ -62,6 +65,11 @@ export class AIGNEListr extends Listr<
           collapseSubtasks: false,
           icon: {
             [ListrDefaultRendererLogLevels.PENDING]: () => this.spinner.fetch(),
+            [ListrDefaultRendererLogLevels.COMPLETED_WITH_FAILED_SUBTASKS]: figures.cross,
+          },
+          color: {
+            [ListrDefaultRendererLogLevels.COMPLETED_WITH_FAILED_SUBTASKS]: (m) =>
+              m ? color.red(m) : "",
           },
           aigne: aigneOptions,
         },
@@ -88,76 +96,123 @@ export class AIGNEListr extends Listr<
 
   override async run(stream: () => PromiseOrValue<AgentResponseStream<Message>>): Promise<Message> {
     const originalLog = logger.logMessage;
+    const originalConsole = { ...console };
 
     try {
       this.ctx = {};
       this.spinner.start();
-
-      logger.logMessage = (...args) => this.logs.push(format(...args));
 
       if (logger.enabled(LogLevel.INFO)) {
         const request = this.myOptions.formatRequest();
         if (request) console.log(request);
       }
 
+      logger.logMessage = (...args) => this.logs.push(format(...args));
+      for (const method of ["debug", "log", "info", "warn", "error"] as const) {
+        console[method] = (...args) => {
+          const renderer =
+            this["renderer"] instanceof AIGNEListrRenderer ? this["renderer"] : undefined;
+          const msg = format(...args);
+
+          renderer ? renderer.log(msg) : this.logs.push(msg);
+        };
+      }
+
       const _stream = await stream();
 
       this.add({ task: () => this.extractStream(_stream) });
 
-      return await super.run().then(() => ({ ...this.result }));
+      return await super.run().then(() => {
+        if (this.error) throw this.error;
+        return { ...this.result };
+      });
     } finally {
       logger.logMessage = originalLog;
+      Object.assign(console, originalConsole);
 
       this.spinner.stop();
     }
   }
 
   private async extractStream(stream: AgentResponseStream<Message>) {
-    this.result = {};
+    try {
+      this.result = {};
 
-    for await (const value of stream) {
-      mergeAgentResponseChunk(this.result, value);
+      for await (const value of stream) {
+        mergeAgentResponseChunk(this.result, value);
+      }
+
+      return this.result;
+    } catch (error) {
+      this.error = error;
+      throw error;
     }
-
-    return this.result;
   }
 }
 
 export interface AIGNEListrRendererOptions extends ListrDefaultRendererOptions {
   aigne?: {
     getStdoutLogs?: () => string[];
-    getBottomBarLogs?: () => string[];
+    getBottomBarLogs?: (options?: { running?: boolean }) => string[];
   };
 }
 
 export class AIGNEListrRenderer extends DefaultRenderer {
-  public static rendererOptions: AIGNEListrRendererOptions = {
+  public static override rendererOptions: AIGNEListrRendererOptions = {
     ...DefaultRenderer.rendererOptions,
   };
 
   get _updater() {
-    // @ts-ignore `updater` is a private property
-    return this.updater as ReturnType<typeof createLogUpdate>;
+    return this["updater"] as ReturnType<typeof createLogUpdate>;
   }
 
   get _logger() {
-    // @ts-ignore `logger` is a private property
-    return this.logger as ListrLogger;
+    return this["logger"] as ListrLogger;
   }
 
   get _options() {
-    // @ts-ignore `options` is a private property
-    return this.options as AIGNEListrRendererOptions;
+    return this["options"] as AIGNEListrRendererOptions;
   }
 
   get _spinner() {
-    // @ts-ignore `spinner` is a private property
-    return this.spinner as Spinner;
+    return this["spinner"] as Spinner;
   }
 
   override update(): void {
+    if (this.paused || this.ended) {
+      return;
+    }
     this._updater(this.create({ running: true }));
   }
+
+  private paused = false;
+
+  private ended = false;
+
+  override end(): void {
+    this.ended = true;
+    super.end();
+  }
+
+  async pause() {
+    this.paused = true;
+    this._updater?.clear();
+    this._updater?.done();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    this._logger.process.release();
+  }
+
+  async resume() {
+    this._logger.process.hijack();
+    this.paused = false;
+  }
+
+  log(message: string) {
+    this._updater?.clear();
+    this._logger.toStdout(message);
+  }
+
+  private isPreviousPrompt = false;
 
   override create({
     running = false,
@@ -169,16 +224,41 @@ export class AIGNEListrRenderer extends DefaultRenderer {
       this._logger.toStdout(logs.join(EOL));
     }
 
-    const tasks = [super.create(options)];
+    let buffer = "";
 
-    const bottomBar = this._options.aigne?.getBottomBarLogs?.();
-    if (bottomBar?.length) {
-      tasks.push(
-        [...bottomBar, running ? this._spinner.fetch() : ""].map((i) => this._wrap(i)).join(EOL),
-      );
+    const prompt: string[] = super["renderPrompt"]();
+    if (prompt.length) {
+      buffer += prompt.join(EOL);
+      this.isPreviousPrompt = true;
+    }
+    // Skip a frame if previous render was a prompt, and reset the flag
+    else if (this.isPreviousPrompt) {
+      this.isPreviousPrompt = false;
+    } else {
+      buffer += super.create({ ...options, prompt: false });
+
+      const bottomBar = this._options.aigne?.getBottomBarLogs?.({ running });
+      if (bottomBar?.length) {
+        buffer += EOL.repeat(2);
+
+        const output = [...bottomBar, running ? this._spinner.fetch() : ""]
+          .map((i) => this._wrap(i))
+          .join(EOL);
+
+        // If the task is not running, we show all lines
+        if (!running) {
+          buffer += output;
+        }
+        // For running tasks, we only show the last few lines
+        else {
+          const { rows } = process.stdout;
+          const lines = rows - buffer.split(EOL).length - 2;
+          buffer += output.split(EOL).slice(-Math.max(4, lines)).join(EOL);
+        }
+      }
     }
 
-    return tasks.join(EOL.repeat(2));
+    return buffer;
   }
 
   _wrap(str: string) {
@@ -194,18 +274,16 @@ export interface AIGNEListrFallbackRendererOptions
     Pick<AIGNEListrRendererOptions, "aigne"> {}
 
 export class AIGNEListrFallbackRenderer extends SimpleRenderer {
-  static rendererOptions: AIGNEListrFallbackRendererOptions = {
+  static override rendererOptions: AIGNEListrFallbackRendererOptions = {
     ...SimpleRenderer.rendererOptions,
   };
 
   get _logger() {
-    // @ts-ignore `logger` is a private property
-    return this.logger as ListrLogger;
+    return this["logger"] as ListrLogger;
   }
 
   get _options() {
-    // @ts-ignore `options` is a private property
-    return this.options as AIGNEListrFallbackRendererOptions;
+    return this["options"] as AIGNEListrFallbackRendererOptions;
   }
 
   override end(): void {

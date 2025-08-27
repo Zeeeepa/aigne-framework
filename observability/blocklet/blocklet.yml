@@ -1,0 +1,69 @@
+name: z2qa2GCqPJkufzqF98D8o7PWHrRRSHpYkNhEh
+title: AIGNE Observability
+description: >-
+  See Inside Your AI Agents—in Real Time, Trace, debug, and monitor every
+  agent's decision. Built for developers to ship with confidence
+group: dapp
+main: api/dist/index.js
+author:
+  name: Arcblock
+  email: blocklet@arcblock.io
+specVersion: 1.2.8
+version: 1.13.1
+repository:
+  type: git
+  url: git+https://github.com/AIGNE-io/aigne-framework.git
+files:
+  - blocklet.md
+  - screenshots
+  - dist
+  - screenshots
+  - api/dist
+  - logo.svg
+interfaces:
+  - type: web
+    name: publicUrl
+    path: /
+    prefix: '*'
+    port: BLOCKLET_PORT
+    protocol: http
+    proxyBehavior: service
+did: z2qa2GCqPJkufzqF98D8o7PWHrRRSHpYkNhEh
+scripts:
+  dev: npm run start
+logo: logo.svg
+community: https://community.arcblock.io/discussions/boards/aigne
+documentation: https://www.arcblock.io/docs/aigne-framework
+homepage: https://www.aigne.io/observability
+license: ''
+payment:
+  price: []
+  share: []
+timeout:
+  start: 60
+requirements:
+  server: '>=1.7.0'
+  os: '*'
+  cpu: '*'
+  nodejs: '*'
+environments: []
+capabilities:
+  navigation: true
+  component: true
+screenshots:
+  - 5621f112b2493f73592e2c43c9700233.png
+  - d8a9b45108c4ec0d77af9c173279ead6.png
+components: []
+egress: true
+navigation:
+  - id: observability
+    title:
+      en: Traces
+      zh: Traces
+    icon: mdi:vote-outline
+    link: /
+    section:
+      - dashboard
+    role:
+      - owner
+      - admin

@@ -1,16 +1,47 @@
+import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import { isAbsolute, resolve } from "node:path";
-import { Command } from "commander";
+import type { CommandModule } from "yargs";
+import { loadAIGNE } from "../utils/load-aigne.js";
 
-export function createTestCommand(): Command {
-  return new Command("test")
-    .description("Run tests in the specified agents directory")
-    .argument("[path]", "Path to the agents directory", ".")
-    .action(async (path: string) => {
+interface TestOptions {
+  path: string;
+  aigneHubUrl?: string;
+}
+
+export function createTestCommand({
+  aigneFilePath,
+}: {
+  aigneFilePath?: string;
+} = {}): CommandModule<unknown, TestOptions> {
+  return {
+    command: "test",
+    describe: "Run tests in the specified agents directory",
+    builder: (yargs) => {
+      return yargs
+        .option("path", {
+          describe: "Path to the agents directory or URL to aigne project",
+          type: "string",
+          default: ".",
+          alias: ["url"],
+        })
+        .option("aigne-hub-url", {
+          describe:
+            "Custom AIGNE Hub service URL. Used to fetch remote agent definitions or models. ",
+          type: "string",
+        });
+    },
+    handler: async (options) => {
+      const path = aigneFilePath || options.path;
       const absolutePath = isAbsolute(path) ? path : resolve(process.cwd(), path);
 
-      spawnSync("node", ["--test"], { cwd: absolutePath, stdio: "inherit" });
-    })
-    .showHelpAfterError(true)
-    .showSuggestionAfterError(true);
+      const aigne = await loadAIGNE({
+        path: absolutePath,
+        modelOptions: { aigneHubUrl: options?.aigneHubUrl },
+      });
+      assert(aigne.rootDir);
+
+      spawnSync("node", ["--test"], { cwd: aigne.rootDir, stdio: "inherit" });
+    },
+  };
 }

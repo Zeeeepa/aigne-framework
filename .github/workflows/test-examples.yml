@@ -5,8 +5,21 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  approval-gate:
+    if: github.event.pull_request.head.ref == 'release-please--branches--main'
+    environment: release-test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Approval received."
+
   test-examples:
+    needs: approval-gate
+
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -98,11 +111,11 @@ jobs:
           if [ "${{ matrix.provider }}" = "OpenAI" ]; then
             MODELS="gpt-4.1-mini gpt-4o-mini o4-mini o3-mini"
           elif [ "${{ matrix.provider }}" = "Anthropic" ]; then
-            MODELS="claude-3-7-sonnet-latest claude-3-5-haiku-latest"
+            MODELS="claude-opus-4-0 claude-sonnet-4-0 claude-3-7-sonnet-latest claude-3-5-sonnet-latest claude-3-5-haiku-latest"
           elif [ "${{ matrix.provider }}" = "XAI" ]; then
-            MODELS="grok-3 grok-2"
+            MODELS="grok-4 grok-3 grok-2"
           elif [ "${{ matrix.provider }}" = "Gemini" ]; then
-            MODELS="gemini-2.5-flash-preview-04-17 gemini-2.0-flash gemini-1.5-flash"
+            MODELS="gemini-2.5-pro gemini-2.5-flash gemini-2.0-flash gemini-1.5-pro gemini-1.5-flash"
           elif [ "${{ matrix.provider }}" = "DeepSeek" ]; then
             MODELS="deepseek-chat"
           elif [ "${{ matrix.provider }}" = "OpenRouter" ]; then
@@ -111,7 +124,7 @@ jobs:
             MODELS="us.amazon.nova-premier-v1:0 us.amazon.nova-pro-v1:0 us.amazon.nova-lite-v1:0"
           fi
 
-          DEFAULT_EXCLUDE_PATTERN="browser|mcp-blocklet|workflow-group-chat|workflow-orchestrator"
+          DEFAULT_EXCLUDE_PATTERN="browser|mcp-blocklet|workflow-group-chat|workflow-orchestrator|workflow-router"
 
           declare -A PROVIDER_EXCLUDE_PATTERNS
           # PROVIDER_EXCLUDE_PATTERNS["Bedrock"]="mcp-sqlite"
@@ -124,6 +137,10 @@ jobs:
           for MODEL in $MODELS; do
             SLEEP_SECONDS=${PROVIDER_SLEEP_SECONDS[${{ matrix.provider }}]:-$DEFAULT_SLEEP_SECONDS}
             for dir in examples/*; do
+              if [ ! -d "$dir" ]; then
+                continue
+              fi
+
               echo "=========================================="
               if echo "$dir" | grep -E -q "$DEFAULT_EXCLUDE_PATTERN"; then
                 echo "Skipping $dir (default exclude)"
@@ -139,8 +156,8 @@ jobs:
                 echo "Testing $dir with ${{ matrix.provider }}:$MODEL"
                 start_time=$(date +%s)
                 cd $dir
-                echo "MODEL_PROVIDER=${{ matrix.provider }} MODEL_NAME=$MODEL pnpm test:llm"
-                MODEL_PROVIDER=${{ matrix.provider }} MODEL_NAME=$MODEL pnpm test:llm || exit 1
+                echo "MODEL=${{ matrix.provider }}:$MODEL pnpm test:llm"
+                MODEL="${{ matrix.provider }}:$MODEL" pnpm test:llm || exit 1
                 cd ../..
                 end_time=$(date +%s)
                 duration=$((end_time - start_time))

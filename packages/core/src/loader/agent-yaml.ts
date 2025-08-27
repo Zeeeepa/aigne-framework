@@ -1,104 +1,230 @@
 import { jsonSchemaToZod } from "@aigne/json-schema-to-zod";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { parse } from "yaml";
-import { type ZodObject, type ZodType, z } from "zod";
+import { type ZodType, z } from "zod";
+import type { AgentHooks, FunctionAgentFn, TaskRenderMode } from "../agents/agent.js";
 import { AIAgentToolChoice } from "../agents/ai-agent.js";
-import { ProcessMode } from "../agents/team-agent.js";
-import { customCamelize } from "../utils/camelize.js";
+import { ProcessMode, type ReflectionMode } from "../agents/team-agent.js";
 import { tryOrThrow } from "../utils/type-utils.js";
-import { inputOutputSchema } from "./schema.js";
+import { camelizeSchema, defaultInputSchema, inputOutputSchema, optionalize } from "./schema.js";
 
-const agentFileSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("ai"),
-    name: z.string(),
-    description: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    instructions: z
+export interface HooksSchema {
+  priority?: AgentHooks["priority"];
+  onStart?: NestAgentSchema;
+  onSuccess?: NestAgentSchema;
+  onError?: NestAgentSchema;
+  onEnd?: NestAgentSchema;
+  onSkillStart?: NestAgentSchema;
+  onSkillEnd?: NestAgentSchema;
+  onHandoff?: NestAgentSchema;
+}
+
+export type NestAgentSchema =
+  | string
+  | { url: string; defaultInput?: Record<string, any>; hooks?: HooksSchema | HooksSchema[] }
+  | AgentSchema;
+
+export interface BaseAgentSchema {
+  name?: string;
+  description?: string;
+  taskTitle?: string;
+  taskRenderMode?: TaskRenderMode;
+  inputSchema?: ZodType<Record<string, any>>;
+  defaultInput?: Record<string, any>;
+  outputSchema?: ZodType<Record<string, any>>;
+  skills?: NestAgentSchema[];
+  hooks?: HooksSchema | HooksSchema[];
+  memory?:
+    | boolean
+    | {
+        provider: string;
+        subscribeTopic?: string[];
+      };
+}
+
+export interface AIAgentSchema extends BaseAgentSchema {
+  type: "ai";
+  instructions?: string;
+  inputKey?: string;
+  outputKey?: string;
+  toolChoice?: AIAgentToolChoice;
+}
+
+export interface ImageAgentSchema extends BaseAgentSchema {
+  type: "image";
+  instructions: string;
+  modelOptions?: Record<string, any>;
+}
+
+export interface MCPAgentSchema extends BaseAgentSchema {
+  type: "mcp";
+  url?: string;
+  command?: string;
+  args?: string[];
+}
+
+export interface TeamAgentSchema extends BaseAgentSchema {
+  type: "team";
+  mode?: ProcessMode;
+  iterateOn?: string;
+  concurrency?: number;
+  iterateWithPreviousOutput?: boolean;
+  includeAllStepsOutput?: boolean;
+  reflection?: Omit<ReflectionMode, "reviewer"> & { reviewer: NestAgentSchema };
+}
+
+export interface TransformAgentSchema extends BaseAgentSchema {
+  type: "transform";
+  jsonata: string;
+}
+
+export interface FunctionAgentSchema extends BaseAgentSchema {
+  type: "function";
+  process: FunctionAgentFn;
+}
+
+export type AgentSchema =
+  | AIAgentSchema
+  | ImageAgentSchema
+  | MCPAgentSchema
+  | TeamAgentSchema
+  | TransformAgentSchema
+  | FunctionAgentSchema;
+
+export async function parseAgentFile(path: string, data: object): Promise<AgentSchema> {
+  const agentSchema: ZodType<AgentSchema> = z.lazy(() => {
+    const nestAgentSchema: ZodType<NestAgentSchema> = z.lazy(() =>
+      z.union([
+        agentSchema,
+        z.string(),
+        camelizeSchema(
+          z.object({
+            url: z.string(),
+            defaultInput: optionalize(defaultInputSchema),
+            hooks: optionalize(z.union([hooksSchema, z.array(hooksSchema)])),
+          }),
+        ),
+      ]),
+    );
+
+    const hooksSchema: ZodType<HooksSchema> = camelizeSchema(
+      z.object({
+        priority: optionalize(z.union([z.literal("low"), z.literal("medium"), z.literal("high")])),
+        onStart: optionalize(nestAgentSchema),
+        onSuccess: optionalize(nestAgentSchema),
+        onError: optionalize(nestAgentSchema),
+        onEnd: optionalize(nestAgentSchema),
+        onSkillStart: optionalize(nestAgentSchema),
+        onSkillEnd: optionalize(nestAgentSchema),
+        onHandoff: optionalize(nestAgentSchema),
+      }),
+    );
+
+    const baseAgentSchema = z.object({
+      name: optionalize(z.string()),
+      alias: optionalize(z.array(z.string())),
+      description: optionalize(z.string()),
+      taskTitle: optionalize(z.string()),
+      taskRenderMode: optionalize(z.union([z.literal("hide"), z.literal("collapse")])),
+      inputSchema: optionalize(inputOutputSchema({ path })).transform((v) =>
+        v ? jsonSchemaToZod(v) : undefined,
+      ) as unknown as ZodType<BaseAgentSchema["inputSchema"]>,
+      defaultInput: optionalize(defaultInputSchema),
+      outputSchema: optionalize(inputOutputSchema({ path })).transform((v) =>
+        v ? jsonSchemaToZod(v) : undefined,
+      ) as unknown as ZodType<BaseAgentSchema["outputSchema"]>,
+      hooks: optionalize(z.union([hooksSchema, z.array(hooksSchema)])),
+      skills: optionalize(z.array(nestAgentSchema)),
+      memory: optionalize(
+        z.union([
+          z.boolean(),
+          camelizeSchema(
+            z.object({
+              provider: z.string(),
+              subscribeTopic: optionalize(z.array(z.string())),
+            }),
+          ),
+        ]),
+      ),
+    });
+
+    const instructionsSchema = z
       .union([
         z.string(),
         z.object({
           url: z.string(),
         }),
       ])
-      .nullish()
-      .transform((v) => v ?? undefined),
-    input_key: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    input_schema: inputOutputSchema
-      .nullish()
-      .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-    output_schema: inputOutputSchema
-      .nullish()
-      .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-    output_key: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    skills: z
-      .array(z.string())
-      .nullish()
-      .transform((v) => v ?? undefined),
-    tool_choice: z
-      .nativeEnum(AIAgentToolChoice)
-      .nullish()
-      .transform((v) => v ?? undefined),
-    memory: z
-      .union([
-        z.boolean(),
-        z.object({
-          provider: z.string(),
-          subscribe_topic: z
-            .array(z.string())
-            .nullish()
-            .transform((v) => v ?? undefined),
-        }),
-      ])
-      .nullish()
-      .transform((v) => v || undefined),
-  }),
-  z.object({
-    type: z.literal("mcp"),
-    url: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    command: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    args: z
-      .array(z.string())
-      .nullish()
-      .transform((v) => v ?? undefined),
-  }),
-  z.object({
-    type: z.literal("team"),
-    name: z.string(),
-    description: z
-      .string()
-      .nullish()
-      .transform((v) => v ?? undefined),
-    input_schema: inputOutputSchema
-      .nullish()
-      .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-    output_schema: inputOutputSchema
-      .nullish()
-      .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-    skills: z
-      .array(z.string())
-      .nullish()
-      .transform((v) => v ?? undefined),
-    mode: z
-      .nativeEnum(ProcessMode)
-      .nullish()
-      .transform((v) => v ?? undefined),
-  }),
-]);
+      .transform((v) =>
+        typeof v === "string"
+          ? v
+          : v && nodejs.fs.readFile(nodejs.path.join(nodejs.path.dirname(path), v.url), "utf8"),
+      ) as ZodType<string>;
+
+    return camelizeSchema(
+      z.discriminatedUnion("type", [
+        z
+          .object({
+            type: z.literal("ai"),
+            instructions: optionalize(instructionsSchema),
+            inputKey: optionalize(z.string()),
+            outputKey: optionalize(z.string()),
+            toolChoice: optionalize(z.nativeEnum(AIAgentToolChoice)),
+          })
+          .extend(baseAgentSchema.shape),
+        z
+          .object({
+            type: z.literal("image"),
+            instructions: instructionsSchema,
+            modelOptions: optionalize(camelizeSchema(z.record(z.any()))),
+          })
+          .extend(baseAgentSchema.shape),
+        z
+          .object({
+            type: z.literal("mcp"),
+            url: optionalize(z.string()),
+            command: optionalize(z.string()),
+            args: optionalize(z.array(z.string())),
+          })
+          .extend(baseAgentSchema.shape),
+        z
+          .object({
+            type: z.literal("team"),
+            mode: optionalize(z.nativeEnum(ProcessMode)),
+            iterateOn: optionalize(z.string()),
+            concurrency: optionalize(z.number().int().min(1)),
+            iterateWithPreviousOutput: optionalize(z.boolean()),
+            includeAllStepsOutput: optionalize(z.boolean()),
+            reflection: camelizeSchema(
+              optionalize(
+                z.object({
+                  reviewer: nestAgentSchema,
+                  isApproved: z.string(),
+                  maxIterations: optionalize(z.number().int().min(1)),
+                  returnLastOnMaxIterations: optionalize(z.boolean()),
+                }),
+              ),
+            ),
+          })
+          .extend(baseAgentSchema.shape),
+        z
+          .object({
+            type: z.literal("transform"),
+            jsonata: z.string(),
+          })
+          .extend(baseAgentSchema.shape),
+        z
+          .object({
+            type: z.literal("function"),
+            process: z.custom<FunctionAgentFn>(),
+          })
+          .extend(baseAgentSchema.shape),
+      ]),
+    );
+  });
+
+  return agentSchema.parseAsync(data);
+}
 
 export async function loadAgentFromYamlFile(path: string) {
   const raw = await tryOrThrow(
@@ -106,38 +232,21 @@ export async function loadAgentFromYamlFile(path: string) {
     (error) => new Error(`Failed to load agent definition from ${path}: ${error.message}`),
   );
 
-  const json = await tryOrThrow(
+  const json = tryOrThrow(
     () => parse(raw),
     (error) => new Error(`Failed to parse agent definition from ${path}: ${error.message}`),
   );
 
   const agent = await tryOrThrow(
     async () =>
-      customCamelize(
-        await agentFileSchema.parseAsync({
-          ...json,
-          type: json.type ?? "ai",
-          skills: json.skills ?? json.tools,
-        }),
-        {
-          shallowKeys: ["input_schema", "output_schema"],
-        },
-      ),
+      await parseAgentFile(path, {
+        ...json,
+        type: json.type ?? "ai",
+        skills: json.skills ?? json.tools,
+      }),
+
     (error) => new Error(`Failed to validate agent definition from ${path}: ${error.message}`),
   );
-
-  if (agent.type === "ai") {
-    return {
-      ...agent,
-      instructions:
-        typeof agent.instructions === "object" && "url" in agent.instructions
-          ? await nodejs.fs.readFile(
-              nodejs.path.join(nodejs.path.dirname(path), agent.instructions.url),
-              "utf8",
-            )
-          : agent.instructions,
-    };
-  }
 
   return agent;
 }

@@ -1,5 +1,13 @@
 import { type ZodType, z } from "zod";
-import { Agent, type AgentOptions, type Message } from "../agents/agent.js";
+import {
+  Agent,
+  type AgentInvokeOptions,
+  type AgentOptions,
+  type AgentProcessResult,
+  type FunctionAgentFn,
+  type Message,
+} from "../agents/agent.js";
+import type { PromiseOrValue } from "../utils/type-utils.js";
 import type { Memory } from "./memory.js";
 
 /**
@@ -10,18 +18,24 @@ import type { Memory } from "./memory.js";
  * should be stored as memories.
  */
 export interface MemoryRecorderInput extends Message {
-  /**
-   * Array of content items to record as memories.
-   * Each item in this array will typically be converted into a separate memory entry.
-   */
-  content: unknown[];
+  content: {
+    input?: Message;
+    output?: Message;
+    source?: string;
+  }[];
 }
 
 /**
  * @hidden
  */
 export const memoryRecorderInputSchema: ZodType<MemoryRecorderInput> = z.object({
-  content: z.array(z.unknown()),
+  content: z.array(
+    z.object({
+      input: z.record(z.string(), z.unknown()).optional(),
+      output: z.record(z.string(), z.unknown()).optional(),
+      source: z.string().optional(),
+    }),
+  ),
 });
 
 /**
@@ -51,6 +65,14 @@ export const memoryRecorderOutputSchema = z.object({
   ),
 });
 
+export interface MemoryRecorderOptions
+  extends Omit<
+    AgentOptions<MemoryRecorderInput, MemoryRecorderOutput>,
+    "inputSchema" | "outputSchema"
+  > {
+  process?: FunctionAgentFn<MemoryRecorderInput, MemoryRecorderOutput>;
+}
+
 /**
  * Abstract base class for agents that record and store memories.
  *
@@ -65,22 +87,32 @@ export const memoryRecorderOutputSchema = z.object({
  * Custom implementations should extend this class and provide concrete
  * implementations of the process method to handle the actual storage logic.
  */
-export abstract class MemoryRecorder extends Agent<MemoryRecorderInput, MemoryRecorderOutput> {
+export class MemoryRecorder extends Agent<MemoryRecorderInput, MemoryRecorderOutput> {
+  override tag = "MemoryRecorderAgent";
+
   /**
    * Creates a new MemoryRecorder instance with predefined input and output schemas.
    *
    * @param options - Configuration options for the memory recorder agent
    */
-  constructor(
-    options: Omit<
-      AgentOptions<MemoryRecorderInput, MemoryRecorderOutput>,
-      "inputSchema" | "outputSchema"
-    >,
-  ) {
+  constructor(options: MemoryRecorderOptions) {
     super({
       ...options,
       inputSchema: memoryRecorderInputSchema,
       outputSchema: memoryRecorderOutputSchema,
     });
+    this._process = options.process;
+  }
+
+  private _process?: FunctionAgentFn<MemoryRecorderInput, MemoryRecorderOutput>;
+
+  override process(
+    input: MemoryRecorderInput,
+    options: AgentInvokeOptions,
+  ): PromiseOrValue<AgentProcessResult<MemoryRecorderOutput>> {
+    if (!this._process) {
+      throw new Error("MemoryRecorder process function is not defined.");
+    }
+    return this._process(input, options);
   }
 }

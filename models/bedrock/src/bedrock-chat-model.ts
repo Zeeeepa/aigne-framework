@@ -14,12 +14,13 @@ import { mergeUsage } from "@aigne/core/utils/model-utils.js";
 import { getJsonToolInputPrompt } from "@aigne/core/utils/prompts.js";
 import { agentResponseStreamToObject } from "@aigne/core/utils/stream-utils.js";
 import {
-  type PromiseOrValue,
   checkArguments,
   isNonNullable,
+  type PromiseOrValue,
 } from "@aigne/core/utils/type-utils.js";
 import {
   BedrockRuntimeClient,
+  type BedrockRuntimeClientConfig,
   type ContentBlock,
   ConverseCommand,
   ConverseStreamCommand,
@@ -32,7 +33,7 @@ import {
   type ToolConfiguration,
   type ToolInputSchema,
 } from "@aws-sdk/client-bedrock-runtime";
-import { nanoid } from "nanoid";
+import { v7 } from "uuid";
 import { z } from "zod";
 
 /**
@@ -50,6 +51,7 @@ export interface BedrockChatModelOptions {
   region?: string;
   model?: string;
   modelOptions?: ChatModelOptions;
+  clientOptions?: Partial<BedrockRuntimeClientConfig>;
 }
 
 /**
@@ -82,22 +84,40 @@ export class BedrockChatModel extends ChatModel {
   protected _client?: BedrockRuntimeClient;
 
   get client() {
-    const credentials =
-      this.options?.accessKeyId && this.options?.secretAccessKey
-        ? {
-            accessKeyId: this.options.accessKeyId,
-            secretAccessKey: this.options.secretAccessKey,
-          }
-        : undefined;
+    const { accessKeyId, secretAccessKey, region } = this.credential;
+
+    if (!accessKeyId || !secretAccessKey)
+      throw new Error(
+        `\
+${this.name} requires access key id and secret. Please provide it via \`options.accessKeyId\` and \`options.secretAccessKey\`, \
+or set the \`AWS_ACCESS_KEY_ID\` and \`AWS_SECRET_ACCESS_KEY\` environment variables`,
+      );
+
     this._client ??= new BedrockRuntimeClient({
-      region: this.options?.region,
-      credentials,
+      region: region,
+      credentials: { accessKeyId, secretAccessKey },
+      ...this.options?.clientOptions,
     });
+
     return this._client;
   }
 
   get modelOptions() {
     return this.options?.modelOptions;
+  }
+
+  override get credential() {
+    const accessKeyId = this.options?.accessKeyId || process.env["AWS_ACCESS_KEY_ID"];
+    const secretAccessKey = this.options?.secretAccessKey || process.env["AWS_SECRET_ACCESS_KEY"];
+    const region = this.options?.region || process.env["AWS_REGION"];
+
+    return {
+      accessKeyId,
+      secretAccessKey,
+      region,
+      apiKey: secretAccessKey,
+      model: this.modelOptions?.model ?? BEDROCK_DEFAULT_CHAT_MODEL,
+    };
   }
 
   /**
@@ -110,8 +130,7 @@ export class BedrockChatModel extends ChatModel {
   }
 
   private async _process(input: ChatModelInput): Promise<AgentResponse<ChatModelOutput>> {
-    const modelId =
-      input.modelOptions?.model ?? this.modelOptions?.model ?? BEDROCK_DEFAULT_CHAT_MODEL;
+    const modelId = input.modelOptions?.model ?? this.credential.model;
 
     const { messages, system } = getRunMessages(input);
     const toolConfig = convertTools(input);
@@ -179,7 +198,7 @@ export class BedrockChatModel extends ChatModel {
 
               toolCalls[chunk.contentBlockStart.contentBlockIndex] = {
                 type: "function",
-                id: toolUse.toolUseId || nanoid(),
+                id: toolUse.toolUseId || v7(),
                 function: {
                   name: toolUse.name,
                   arguments: {},

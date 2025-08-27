@@ -1,7 +1,5 @@
 # Custom User Context
 
-[English](./custom-user-context.md) | [中文](./custom-user-context.zh.md)
-
 In multi-user applications, maintaining independent conversation memory for different users is an important requirement. The AIGNE framework provides a flexible user context mechanism that allows you to create independent session spaces for each user, ensuring that conversation memories between users do not interfere with each other. This guide will introduce how to configure and use custom user context functionality.
 
 ## Basic Process
@@ -62,8 +60,8 @@ console.log(result);
 The following code demonstrates how to create an Agent and extract session ID from user context to implement multi-user isolated memory functionality:
 
 ```ts file="../../docs-examples/test/build-first-agent.test.ts" region="example-custom-user-context"
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { AIAgent, AIGNE } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 import { OpenAIChatModel } from "@aigne/openai";
 
 const aigne = new AIGNE({

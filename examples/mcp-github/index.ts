@@ -1,9 +1,9 @@
 #!/usr/bin/env bunwrapper
 
 import assert from "node:assert";
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { runWithAIGNE } from "@aigne/cli/utils/run-with-aigne.js";
 import { AIAgent, MCPAgent } from "@aigne/core";
+import { DefaultMemory } from "@aigne/default-memory";
 
 const { GITHUB_TOKEN } = process.env;
 
@@ -20,6 +20,7 @@ await runWithAIGNE(
     });
 
     const agent = AIAgent.from({
+      name: "example_github",
       instructions: `\
   ## GitHub Interaction Assistant
   You are an assistant that helps users interact with GitHub repositories.
@@ -34,6 +35,7 @@ await runWithAIGNE(
   `,
       skills: [github],
       memory: new DefaultMemory(),
+      inputKey: "message",
     });
 
     return agent;

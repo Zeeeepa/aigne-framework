@@ -1,12 +1,16 @@
-import { nanoid } from "nanoid";
+import { v7 } from "uuid";
 import { createMockEventStream } from "../_utils/event-stream.js";
 
 export function mockOpenAIStreaming<T>({
   text,
   inputTokens,
   outputTokens,
-}: { text: string; inputTokens?: number; outputTokens?: number }): T {
-  const id = nanoid();
+}: {
+  text: string;
+  inputTokens?: number;
+  outputTokens?: number;
+}): T {
+  const id = v7();
   const segments = Array.from(new Intl.Segmenter(undefined, { granularity: "word" }).segment(text));
   const events: unknown[] = [];
 
@@ -51,5 +55,5 @@ export function mockOpenAIStreaming<T>({
 }
 
 function getUnixTimestamp() {
-  return Math.round(new Date().getTime() / 1000);
+  return Math.round(Date.now() / 1000);
 }

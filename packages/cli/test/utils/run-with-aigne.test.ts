@@ -1,4 +1,4 @@
-import { expect, mock, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
@@ -16,6 +16,19 @@ import { OpenAIChatModel } from "@aigne/openai";
 import { parse } from "yaml";
 import { z } from "zod";
 import { mockModule } from "../_mocks_/mock-module.js";
+
+let originalEnv: NodeJS.ProcessEnv;
+
+beforeEach(() => {
+  originalEnv = { MODEL: process.env.MODEL, OPENAI_API_KEY: process.env.OPENAI_API_KEY };
+
+  process.env.MODEL = "openai:gpt-4o-mini";
+  process.env.OPENAI_API_KEY = "test-openai-api-key";
+});
+
+afterEach(() => {
+  Object.assign(process.env, originalEnv);
+});
 
 test("runWithAIGNE should run agent correctly", async () => {
   await runWithAIGNE(
@@ -46,6 +59,7 @@ test("runWithAIGNE should run agent correctly", async () => {
 test("runWithAIGNE should exit with error code when run --chat in non-tty environment", async () => {
   const error = spyOn(console, "error").mockReturnValueOnce(undefined as never);
   const exit = spyOn(process, "exit").mockReturnValueOnce(undefined as never);
+  spyOn(process, "exit").mockReturnValueOnce(undefined as never);
 
   await using _ = await mockModule("node:tty", () => ({
     isatty: () => false,
@@ -58,7 +72,7 @@ test("runWithAIGNE should exit with error code when run --chat in non-tty enviro
       return agent;
     },
     {
-      argv: ["", "", "--chat"],
+      argv: ["aigne", "run", "--chat"],
     },
   );
 
@@ -140,6 +154,7 @@ test("parseAgentInputByCommander should parse input correctly", async () => {
       name: z.string(),
       age: z.number().int(),
     }),
+    inputKey: "message",
   });
 
   const testInputFile = join(import.meta.dirname, "run-with-aigne-test-input.txt");
@@ -160,11 +175,11 @@ test("parseAgentInputByCommander should parse input correctly", async () => {
     parseAgentInputByCommander(agent, {
       input: ["Hello!"],
       inputKey: "message",
-      argv: ["", "", "--input-name", `@${testInputFile}`, "--input-age", "30"],
+      argv: ["", "", "--name", `@${testInputFile}`, "--age", "30"],
     }),
   ).resolves.toEqual({
     name: testInputContent,
-    age: "30",
+    age: 30,
     message: "Hello!",
   });
 
@@ -174,9 +189,9 @@ test("parseAgentInputByCommander should parse input correctly", async () => {
       argv: [
         "",
         "",
-        "--input-name",
+        "--name",
         `@${join(import.meta.dirname, "run-with-aigne-test-input-not-exists.txt")}`,
-        "--input-age",
+        "--age",
         "30",
       ],
     }),

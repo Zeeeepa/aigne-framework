@@ -1,28 +1,16 @@
-import { jsonSchemaToZod } from "@aigne/json-schema-to-zod";
-import { type ZodFunction, type ZodObject, type ZodTuple, type ZodType, z } from "zod";
-import { Agent, type Message } from "../agents/agent.js";
-import { customCamelize } from "../utils/camelize.js";
+import { withQuery } from "ufo";
+import { Agent } from "../agents/agent.js";
 import { tryOrThrow } from "../utils/type-utils.js";
-import { inputOutputSchema } from "./schema.js";
+import { parseAgentFile } from "./agent-yaml.js";
+import type { LoadOptions } from "./index.js";
 
-const agentJsFileSchema = z.object({
-  name: z.string(),
-  description: z
-    .string()
-    .nullish()
-    .transform((v) => v ?? undefined),
-  input_schema: inputOutputSchema
-    .nullish()
-    .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-  output_schema: inputOutputSchema
-    .nullish()
-    .transform((v) => (v ? jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(v) : undefined)),
-  process: z.function() as unknown as ZodFunction<ZodTuple<[ZodType<Message>]>, ZodType<Message>>,
-});
+const importFn = new Function("path", "return import(path)");
 
-export async function loadAgentFromJsFile(path: string) {
+export async function loadAgentFromJsFile(path: string, options?: LoadOptions) {
+  if (options?.key) path = withQuery(path, { key: options?.key });
+
   const { default: agent } = await tryOrThrow(
-    () => import(path),
+    () => importFn(path),
     (error) => new Error(`Failed to load agent definition from ${path}: ${error.message}`),
   );
 
@@ -34,14 +22,12 @@ export async function loadAgentFromJsFile(path: string) {
 
   return tryOrThrow(
     () =>
-      customCamelize(
-        agentJsFileSchema.parse({
-          ...agent,
-          name: agent.agent_name || agent.name,
-          process: agent,
-        }),
-        { shallowKeys: ["input_schema", "output_schema"] },
-      ),
+      parseAgentFile(path, {
+        ...agent,
+        type: "function",
+        name: agent.agent_name || agent.agentName || agent.name,
+        process: agent,
+      }),
     (error) => new Error(`Failed to parse agent from ${path}: ${error.message}`),
   );
 }

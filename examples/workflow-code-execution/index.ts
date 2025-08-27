@@ -1,8 +1,9 @@
 #!/usr/bin/env bunwrapper
 
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
 import { runWithAIGNE } from "@aigne/cli/utils/run-with-aigne.js";
 import { AIAgent, FunctionAgent } from "@aigne/core";
+import { logger } from "@aigne/core/utils/logger.js";
+import { DefaultMemory } from "@aigne/default-memory";
 import { z } from "zod";
 
 const sandbox = FunctionAgent.from({
@@ -20,7 +21,10 @@ This agent generates a JavaScript code snippet that is suitable to be passed dir
   }),
   process: async (input: { jsCode: string }) => {
     const { jsCode } = input;
-    // biome-ignore lint/security/noGlobalEval: <explanation>
+
+    logger.info(`Evaluating JavaScript code: ${jsCode}`);
+
+    // biome-ignore lint/security/noGlobalEval: just for demonstration purposes
     const result = eval(jsCode);
     return { result };
   },
@@ -34,6 +38,7 @@ Work with the sandbox to execute your code.
 `,
   skills: [sandbox],
   memory: new DefaultMemory(),
+  inputKey: "message",
 });
 
 await runWithAIGNE(coder, {

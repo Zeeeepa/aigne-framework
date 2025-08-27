@@ -1,10 +1,11 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import type { AIGNE, AgentInvokeOptions, InvokeOptions, UserContext } from "@aigne/core";
+import type { AIGNE, InvokeOptions, UserContext } from "@aigne/core";
 import { AgentResponseStreamSSE } from "@aigne/core/utils/event-stream.js";
 import { checkArguments, isRecord, tryOrThrow } from "@aigne/core/utils/type-utils.js";
 import contentType from "content-type";
 import getRawBody from "raw-body";
 import { z } from "zod";
+import { ChatModelName } from "../constants.js";
 import { ServerError } from "./error.js";
 
 /**
@@ -65,8 +66,7 @@ export interface AIGNEHTTPServerOptions {
 }
 
 export interface AIGNEHTTPServerInvokeOptions<U extends UserContext = UserContext>
-  extends Pick<AgentInvokeOptions<U>, "userContext" | "memories">,
-    Pick<InvokeOptions, "returnProgressChunks"> {}
+  extends Pick<InvokeOptions<U>, "returnProgressChunks" | "userContext" | "memories" | "hooks"> {}
 
 /**
  * AIGNEHTTPServer provides HTTP API access to AIGNE capabilities.
@@ -144,6 +144,7 @@ export class AIGNEHTTPServer {
     const result = await this._invoke(request, {
       userContext: opts?.userContext,
       memories: opts?.memories,
+      hooks: opts?.hooks,
     });
 
     if (response instanceof ServerResponse) {
@@ -182,13 +183,14 @@ export class AIGNEHTTPServer {
         (error) => new ServerError(400, error.message),
       );
 
-      const agent = aigne.agents[agentName];
+      const agent = agentName === ChatModelName ? aigne.model : aigne.agents[agentName];
       if (!agent) throw new ServerError(404, `Agent ${agentName} not found`);
 
       const mergedOptions: InvokeOptions = {
         returnProgressChunks: opts.returnProgressChunks,
         userContext: { ...opts.userContext, ...options.userContext },
         memories: [...(opts.memories ?? []), ...(options.memories ?? [])],
+        hooks: options.hooks,
       };
 
       if (!streaming) {

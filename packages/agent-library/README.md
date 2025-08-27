@@ -1,18 +1,30 @@
 # @aigne/agent-library
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/agent-library)](https://www.npmjs.com/package/@aigne/agent-library)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/agent-library)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
-**English** | [中文](README.zh.md)
-
 Collection of agent libraries for [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework), providing pre-built agent implementations.
 
 ## Introduction
 
 `@aigne/agent-library` is a collection of agent libraries for [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework), providing pre-built agent implementations for developers. The library is built on top of [@aigne/core](https://github.com/AIGNE-io/aigne-framework/tree/main/packages/core), extending the core functionality to simplify complex workflow orchestration.
+
+<picture>
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-libs-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-libs.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-libs.png" alt="AIGNE Arch" />
+</picture>
 
 ## Features
 
@@ -45,9 +57,9 @@ pnpm add @aigne/agent-library @aigne/core
 ## Basic Usage
 
 ```typescript
+import { OrchestratorAgent } from "@aigne/agent-library/orchestrator";
 import { AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
-import { OrchestratorAgent } from "@aigne/agent-library/orchestrator";
 
 // Create AI model instance
 const model = new OpenAIChatModel({
@@ -85,9 +97,9 @@ The library currently provides one specialized agent implementation:
 ### Creating an Orchestration Workflow
 
 ```typescript
+import { OrchestratorAgent } from "@aigne/agent-library/orchestrator";
 import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
-import { OrchestratorAgent } from "@aigne/agent-library/orchestrator";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

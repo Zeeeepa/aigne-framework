@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { type Tokens, type TokensList, marked } from "marked";
-import { Converter } from "./converter/index.js";
+import { marked, type Tokens, type TokensList } from "marked";
+import { Converter, type ConverterOptions } from "./converter/index.js";
 import { slugify } from "./utils/slugify.js";
 
 const resolveSubpageLexical = (slug: string) =>
@@ -21,6 +21,8 @@ export interface DocNode {
 export interface GeneratorOptions {
   sidebarPath: string;
   slugPrefix?: string;
+  slugWithoutExt?: boolean;
+  uploadConfig?: ConverterOptions["uploadConfig"];
 }
 
 export class Generator {
@@ -28,17 +30,23 @@ export class Generator {
   private slugPrefix?: string;
   private sidebarPath: string;
   private converter: Converter;
+  private slugWithoutExt: boolean;
 
   constructor(options: GeneratorOptions) {
     this.sidebarPath = options.sidebarPath;
     this.slugs = new Set<string>();
     this.slugPrefix = options.slugPrefix;
-    this.converter = new Converter({ slugPrefix: options.slugPrefix });
+    this.converter = new Converter({
+      slugPrefix: options.slugPrefix,
+      slugWithoutExt: options.slugWithoutExt,
+      uploadConfig: options.uploadConfig,
+    });
+    this.slugWithoutExt = options.slugWithoutExt ?? true;
   }
 
   private resolveLinkFilePath(link: string): string {
     const rel = link.replace(/^\//, "");
-    return path.join(process.cwd(), "docs", rel);
+    return path.join(process.cwd(), process.env.DOC_ROOT_DIR || "docs", rel);
   }
 
   private async getInfoFromFile(filePath: string) {
@@ -62,7 +70,7 @@ export class Generator {
     filePath: string,
   ): Promise<Record<string, { h1?: string; content?: string }>> {
     const i18n: Record<string, { h1?: string; content?: string }> = {};
-    const langs = ["zh"];
+    const langs = ["zh", "zh-TW", "ja", "ko", "es", "fr", "de", "pt", "ru", "it", "ar"];
     for (const lang of langs) {
       const i18nPath = filePath.replace(/\.md$/, `.${lang}.md`);
       try {
@@ -79,7 +87,7 @@ export class Generator {
   }
 
   private uniqueSlugify(str: string): string {
-    const slug = slugify(str);
+    const slug = slugify(str, this.slugWithoutExt);
     if (this.slugs.has(slug)) {
       throw new Error(`Duplicate slug: ${slug}`);
     }
@@ -139,14 +147,17 @@ export class Generator {
     const tree = this.parseSidebar(tokens as TokensList);
     await Promise.all(tree.map((x) => this.fillInfo(x)));
 
-    console.warn("Blank files:", this.converter.blankFilePaths);
+    if (this.converter.blankFilePaths && this.converter.blankFilePaths.length > 0) {
+      console.warn("Blank files:", this.converter.blankFilePaths);
+    }
 
-    console.warn(
-      "Referenced but not uploaded documents:",
-      Object.entries(this.converter.usedSlugs)
-        .filter(([key]) => !this.slugs.has(key))
-        .map(([slug, files]) => ({ slug, files: Array.from(new Set(files)) })),
-    );
+    const referencedButNotUploaded = Object.entries(this.converter.usedSlugs)
+      .filter(([key]) => !this.slugs.has(key))
+      .map(([slug, files]) => ({ slug, files: Array.from(new Set(files)) }));
+
+    if (referencedButNotUploaded && referencedButNotUploaded.length > 0) {
+      console.warn("Referenced but not uploaded documents:", referencedButNotUploaded);
+    }
     return tree;
   }
 }

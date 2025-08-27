@@ -1,103 +1,243 @@
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
-import type { Camelize } from "camelize-ts";
 import { parse } from "yaml";
 import { z } from "zod";
-import { Agent, FunctionAgent } from "../agents/agent.js";
+import { Agent, type AgentHooks, type AgentOptions, FunctionAgent } from "../agents/agent.js";
 import { AIAgent } from "../agents/ai-agent.js";
-import type { ChatModel, ChatModelOptions } from "../agents/chat-model.js";
+import type { ChatModel } from "../agents/chat-model.js";
+import { ImageAgent } from "../agents/image-agent.js";
+import type { ImageModel } from "../agents/image-model.js";
 import { MCPAgent } from "../agents/mcp-agent.js";
 import { TeamAgent } from "../agents/team-agent.js";
+import { TransformAgent } from "../agents/transform-agent.js";
+import type { AIGNEOptions } from "../aigne/aigne.js";
 import type { MemoryAgent, MemoryAgentOptions } from "../memory/memory.js";
-import { tryOrThrow } from "../utils/type-utils.js";
+import { PromptBuilder } from "../prompt/prompt-builder.js";
+import {
+  flat,
+  isNonNullable,
+  isRecord,
+  type PromiseOrValue,
+  tryOrThrow,
+} from "../utils/type-utils.js";
 import { loadAgentFromJsFile } from "./agent-js.js";
-import { loadAgentFromYamlFile } from "./agent-yaml.js";
+import { type HooksSchema, loadAgentFromYamlFile, type NestAgentSchema } from "./agent-yaml.js";
+import { camelizeSchema, optionalize } from "./schema.js";
 
 const AIGNE_FILE_NAME = ["aigne.yaml", "aigne.yml"];
 
 export interface LoadOptions {
-  models: { new (parameters: { model?: string; modelOptions?: ChatModelOptions }): ChatModel }[];
   memories?: { new (parameters?: MemoryAgentOptions): MemoryAgent }[];
-  path: string;
+  model?:
+    | ChatModel
+    | ((
+        model?: z.infer<typeof aigneFileSchema>["chatModel"],
+      ) => PromiseOrValue<ChatModel | undefined>);
+  imageModel?:
+    | ImageModel
+    | ((
+        model?: z.infer<typeof aigneFileSchema>["imageModel"],
+      ) => PromiseOrValue<ImageModel | undefined>);
+  key?: string | number;
 }
 
-export async function load(options: LoadOptions) {
-  const aigneFilePath = await getAIGNEFilePath(options.path);
-  const rootDir = nodejs.path.dirname(aigneFilePath);
+export async function load(path: string, options: LoadOptions = {}): Promise<AIGNEOptions> {
+  options.key ??= Date.now();
 
-  const aigne = await loadAIGNEFile(aigneFilePath);
+  const { aigne, rootDir } = await loadAIGNEFile(path);
 
-  const agents = await Promise.all(
-    (aigne.agents ?? []).map((filename) => loadAgent(nodejs.path.join(rootDir, filename), options)),
+  const allAgentPaths = new Set(
+    flat(
+      aigne.agents,
+      aigne.skills,
+      aigne.mcpServer?.agents,
+      aigne.cli?.agents,
+      aigne.cli?.chat,
+    ).map((i) => nodejs.path.join(rootDir, i)),
   );
-  const skills = await Promise.all(
-    (aigne.skills ?? []).map((filename) => loadAgent(nodejs.path.join(rootDir, filename), options)),
+  const allAgents: { [path: string]: Agent } = Object.fromEntries(
+    await Promise.all(
+      Array.from(allAgentPaths).map(async (path) => [path, await loadAgent(path, options)]),
+    ),
   );
+
+  const pickAgents = (paths: string[]) =>
+    paths.map((filename) => allAgents[nodejs.path.join(rootDir, filename)]).filter(isNonNullable);
 
   return {
     ...aigne,
-    model: await loadModel(options.models, aigne.chat_model),
-    agents,
-    skills,
+    rootDir,
+    model:
+      typeof options.model === "function" ? await options.model(aigne.chatModel) : options.model,
+    imageModel:
+      typeof options.imageModel === "function"
+        ? await options.imageModel(aigne.imageModel)
+        : options.imageModel,
+    agents: pickAgents(aigne.agents ?? []),
+    skills: pickAgents(aigne.skills ?? []),
+    mcpServer: {
+      agents: pickAgents(aigne.mcpServer?.agents ?? []),
+    },
+    cli: {
+      chat: aigne.cli?.chat ? pickAgents([aigne.cli.chat])[0] : undefined,
+      agents: pickAgents(aigne.cli?.agents ?? []),
+    },
   };
 }
 
-export async function loadAgent(path: string, options?: LoadOptions): Promise<Agent> {
+export async function loadAgent(
+  path: string,
+  options?: LoadOptions,
+  agentOptions?: AgentOptions,
+): Promise<Agent> {
   if ([".js", ".mjs", ".ts", ".mts"].includes(nodejs.path.extname(path))) {
-    const agent = await loadAgentFromJsFile(path);
+    const agent = await loadAgentFromJsFile(path, options);
     if (agent instanceof Agent) return agent;
-    return FunctionAgent.from(agent);
+    return parseAgent(path, agent, options, agentOptions);
   }
 
   if ([".yml", ".yaml"].includes(nodejs.path.extname(path))) {
     const agent = await loadAgentFromYamlFile(path);
 
-    const skills =
-      "skills" in agent
-        ? agent.skills &&
-          (await Promise.all(
-            agent.skills.map((filename) =>
-              loadAgent(nodejs.path.join(nodejs.path.dirname(path), filename), options),
-            ),
-          ))
-        : undefined;
+    return parseAgent(path, agent, options, agentOptions);
+  }
 
-    if (agent.type === "ai") {
+  throw new Error(`Unsupported agent file type: ${path}`);
+}
+
+async function loadNestAgent(
+  path: string,
+  agent: NestAgentSchema,
+  options?: LoadOptions,
+): Promise<Agent> {
+  return typeof agent === "object" && "type" in agent
+    ? parseAgent(path, agent, options)
+    : typeof agent === "string"
+      ? loadAgent(nodejs.path.join(nodejs.path.dirname(path), agent), options)
+      : loadAgent(nodejs.path.join(nodejs.path.dirname(path), agent.url), options, {
+          defaultInput: agent.defaultInput,
+          hooks: await parseHooks(path, agent.hooks, options),
+        });
+}
+
+async function parseHooks(
+  path: string,
+  hooks?: HooksSchema | HooksSchema[],
+  options?: LoadOptions,
+): Promise<AgentHooks[] | undefined> {
+  hooks = [hooks].flat().filter(isNonNullable);
+  if (!hooks.length) return undefined;
+
+  type AllHooks = Required<AgentHooks>;
+
+  return await Promise.all(
+    hooks.map(
+      async (hook): Promise<{ [key in keyof AllHooks]: AllHooks[key] | undefined }> => ({
+        priority: hook.priority,
+        onStart: hook.onStart ? await loadNestAgent(path, hook.onStart, options) : undefined,
+        onSuccess: hook.onSuccess ? await loadNestAgent(path, hook.onSuccess, options) : undefined,
+        onError: hook.onError ? await loadNestAgent(path, hook.onError, options) : undefined,
+        onEnd: hook.onEnd ? await loadNestAgent(path, hook.onEnd, options) : undefined,
+        onSkillStart: hook.onSkillStart
+          ? await loadNestAgent(path, hook.onSkillStart, options)
+          : undefined,
+        onSkillEnd: hook.onSkillEnd
+          ? await loadNestAgent(path, hook.onSkillEnd, options)
+          : undefined,
+        onHandoff: hook.onHandoff ? await loadNestAgent(path, hook.onHandoff, options) : undefined,
+      }),
+    ),
+  );
+}
+
+async function parseAgent(
+  path: string,
+  agent: Awaited<ReturnType<typeof loadAgentFromYamlFile>>,
+  options?: LoadOptions,
+  agentOptions?: AgentOptions,
+): Promise<Agent> {
+  const skills =
+    "skills" in agent
+      ? agent.skills &&
+        (await Promise.all(agent.skills.map((skill) => loadNestAgent(path, skill, options))))
+      : undefined;
+
+  const memory =
+    "memory" in agent && options?.memories?.length
+      ? await loadMemory(
+          options.memories,
+          typeof agent.memory === "object" ? agent.memory.provider : undefined,
+          typeof agent.memory === "object" ? agent.memory : {},
+        )
+      : undefined;
+
+  const baseOptions: AgentOptions<any, any> = {
+    ...agentOptions,
+    ...agent,
+    skills,
+    memory,
+    hooks: [
+      ...((await parseHooks(path, agent.hooks, options)) ?? []),
+      ...[agentOptions?.hooks].flat().filter(isNonNullable),
+    ],
+  };
+
+  switch (agent.type) {
+    case "ai": {
       return AIAgent.from({
-        ...agent,
-        memory:
-          !options?.memories?.length || !agent.memory
-            ? undefined
-            : await loadMemory(
-                options.memories,
-                typeof agent.memory === "object" ? agent.memory.provider : undefined,
-                typeof agent.memory === "object" ? agent.memory : {},
-              ),
-        skills,
+        ...baseOptions,
+        instructions:
+          agent.instructions &&
+          PromptBuilder.from(agent.instructions, { workingDir: nodejs.path.dirname(path) }),
       });
     }
-    if (agent.type === "mcp") {
+    case "image": {
+      return ImageAgent.from({
+        ...baseOptions,
+        instructions: PromptBuilder.from(agent.instructions, {
+          workingDir: nodejs.path.dirname(path),
+        }),
+      });
+    }
+    case "mcp": {
       if (agent.url) {
         return MCPAgent.from({
+          ...baseOptions,
           url: agent.url,
         });
       }
       if (agent.command) {
         return MCPAgent.from({
+          ...baseOptions,
           command: agent.command,
           args: agent.args,
         });
       }
       throw new Error(`Missing url or command in mcp agent: ${path}`);
     }
-    if (agent.type === "team") {
+    case "team": {
       return TeamAgent.from({
-        ...agent,
-        skills,
+        ...baseOptions,
+        mode: agent.mode,
+        iterateOn: agent.iterateOn,
+        reflection: agent.reflection && {
+          ...agent.reflection,
+          reviewer: await loadNestAgent(path, agent.reflection.reviewer, options),
+        },
+      });
+    }
+    case "transform": {
+      return TransformAgent.from({
+        ...baseOptions,
+        jsonata: agent.jsonata,
+      });
+    }
+    case "function": {
+      return FunctionAgent.from({
+        ...baseOptions,
+        process: agent.process,
       });
     }
   }
-
-  throw new Error(`Unsupported agent file type: ${path}`);
 }
 
 async function loadMemory(
@@ -113,80 +253,96 @@ async function loadMemory(
   return new M(options);
 }
 
-const { MODEL_PROVIDER, MODEL_NAME } = nodejs.env;
-const DEFAULT_MODEL_PROVIDER = "openai";
-
-export async function loadModel(
-  models: LoadOptions["models"],
-  model?: Camelize<z.infer<typeof aigneFileSchema>["chat_model"]>,
-  modelOptions?: ChatModelOptions,
-): Promise<ChatModel | undefined> {
-  const params = {
-    model: MODEL_NAME ?? model?.name ?? undefined,
-    temperature: model?.temperature ?? undefined,
-    topP: model?.topP ?? undefined,
-    frequencyPenalty: model?.frequencyPenalty ?? undefined,
-    presencePenalty: model?.presencePenalty ?? undefined,
-  };
-
-  const M = models.find((m) =>
-    m.name
-      .toLowerCase()
-      .includes((MODEL_PROVIDER ?? model?.provider ?? DEFAULT_MODEL_PROVIDER).toLowerCase()),
-  );
-  if (!M) throw new Error(`Unsupported model: ${model?.provider} ${model?.name}`);
-  return new M({ model: params.model, modelOptions: { ...params, ...modelOptions } });
-}
-
-const aigneFileSchema = z.object({
-  name: z.string().nullish(),
-  description: z.string().nullish(),
-  chat_model: z
-    .union([
-      z.string(),
+const aigneFileSchema = camelizeSchema(
+  z.object({
+    name: optionalize(z.string()),
+    description: optionalize(z.string()),
+    chatModel: z
+      .preprocess(
+        (v) => {
+          if (!isRecord(v)) return v;
+          return { ...v, model: v.model || `${v.provider || ""}:${v.name || ""}` };
+        },
+        optionalize(
+          z.union([
+            z.string(),
+            camelizeSchema(
+              z.object({
+                model: optionalize(z.string()),
+                temperature: optionalize(z.number().min(0).max(2)),
+                topP: optionalize(z.number().min(0)),
+                frequencyPenalty: optionalize(z.number().min(-2).max(2)),
+                presencePenalty: optionalize(z.number().min(-2).max(2)),
+              }),
+            ),
+          ]),
+        ),
+      )
+      .transform((v) => (typeof v === "string" ? { model: v } : v)),
+    imageModel: optionalize(
+      z.union([
+        z.string(),
+        camelizeSchema(
+          z.object({
+            model: optionalize(z.string()),
+          }),
+        ),
+      ]),
+    ).transform((v) => (typeof v === "string" ? { model: v } : v)),
+    agents: optionalize(z.array(z.string())),
+    skills: optionalize(z.array(z.string())),
+    mcpServer: optionalize(
       z.object({
-        provider: z.string().nullish(),
-        name: z.string().nullish(),
-        temperature: z.number().min(0).max(2).nullish(),
-        top_p: z.number().min(0).nullish(),
-        frequency_penalty: z.number().min(-2).max(2).nullish(),
-        presence_penalty: z.number().min(-2).max(2).nullish(),
+        agents: optionalize(z.array(z.string())),
       }),
-    ])
-    .nullish()
-    .transform((v) => (typeof v === "string" ? { name: v } : v)),
-  agents: z.array(z.string()).nullish(),
-  skills: z.array(z.string()).nullish(),
-});
+    ),
+    cli: optionalize(
+      z.object({
+        chat: optionalize(z.string()),
+        agents: optionalize(z.array(z.string())),
+      }),
+    ),
+  }),
+);
 
-export async function loadAIGNEFile(path: string) {
+export async function loadAIGNEFile(path: string): Promise<{
+  aigne: z.infer<typeof aigneFileSchema>;
+  rootDir: string;
+}> {
+  const file = await findAIGNEFile(path);
+
   const raw = await tryOrThrow(
-    () => nodejs.fs.readFile(path, "utf8"),
-    (error) => new Error(`Failed to load aigne.yaml from ${path}: ${error.message}`),
+    () => nodejs.fs.readFile(file, "utf8"),
+    (error) => new Error(`Failed to load aigne.yaml from ${file}: ${error.message}`),
   );
 
-  const json = await tryOrThrow(
+  const json = tryOrThrow(
     () => parse(raw),
-    (error) => new Error(`Failed to parse aigne.yaml from ${path}: ${error.message}`),
+    (error) => new Error(`Failed to parse aigne.yaml from ${file}: ${error.message}`),
   );
 
-  const agent = tryOrThrow(
-    () => aigneFileSchema.parse({ ...json, skills: json.skills ?? json.tools }),
-    (error) => new Error(`Failed to validate aigne.yaml from ${path}: ${error.message}`),
+  const aigne = tryOrThrow(
+    () => aigneFileSchema.parse(json),
+    (error) => new Error(`Failed to validate aigne.yaml from ${file}: ${error.message}`),
   );
 
-  return agent;
+  return { aigne, rootDir: nodejs.path.dirname(file) };
 }
 
-async function getAIGNEFilePath(path: string) {
-  const s = await nodejs.fs.stat(path);
+async function findAIGNEFile(path: string): Promise<string> {
+  const possibleFiles = AIGNE_FILE_NAME.includes(nodejs.path.basename(path))
+    ? [path]
+    : AIGNE_FILE_NAME.map((name) => nodejs.path.join(path, name));
 
-  if (s.isDirectory()) {
-    for (const file of AIGNE_FILE_NAME) {
-      const filePath = nodejs.path.join(path, file);
-      if ((await nodejs.fs.stat(filePath)).isFile()) return filePath;
-    }
+  for (const file of possibleFiles) {
+    try {
+      const stat = await nodejs.fs.stat(file);
+
+      if (stat.isFile()) return file;
+    } catch {}
   }
 
-  return path;
+  throw new Error(
+    `aigne.yaml not found in ${path}. Please ensure you are in the correct directory or provide a valid path.`,
+  );
 }

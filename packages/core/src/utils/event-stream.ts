@@ -4,13 +4,13 @@ import {
   type AgentResponseChunk,
   type AgentResponseProgress,
   type AgentResponseStream,
-  type Message,
   isAgentResponseDelta,
   isAgentResponseProgress,
+  type Message,
 } from "../agents/agent.js";
 import type { Context, ContextEventMap } from "../aigne/context.js";
 import { tryOrThrow } from "./type-utils.js";
-import type { Listener } from "./typed-event-emtter.js";
+import type { Listener } from "./typed-event-emitter.js";
 
 export class EventStreamParser<T> extends TransformStream<string, T | Error> {
   constructor() {
@@ -156,8 +156,10 @@ export class AgentResponseProgressStream extends ReadableStream<AgentResponsePro
           controller.close();
         };
 
-        const onAgentStarted: Listener<"agentStarted", ContextEventMap> = (event) => {
-          writeEvent("agentStarted", event);
+        const onAgentStarted: Listener<"agentStarted", ContextEventMap> = async (event) => {
+          const taskTitle = await event.agent.renderTaskTitle(event.input);
+
+          writeEvent("agentStarted", { ...event, taskTitle });
         };
         const onAgentSucceed: Listener<"agentSucceed", ContextEventMap> = (event) => {
           writeEvent("agentSucceed", event);

@@ -1,18 +1,32 @@
 # @aigne/cli
 
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/packages/cli/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/packages/cli/logo.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/packages/cli/logo.svg" alt="AIGNE Logo" width="400" />
+  </picture>
+
+  <center>Your command center for agent development</center>
+</p>
+
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
 [![NPM Version](https://img.shields.io/npm/v/@aigne/cli)](https://www.npmjs.com/package/@aigne/cli)
 [![Elastic-2.0 licensed](https://img.shields.io/npm/l/@aigne/cli)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
-**English** | [中文](README.zh.md)
-
 Command-line tool for [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework), providing convenient development and management capabilities.
 
 ## Introduction
 
 `@aigne/cli` is the official command-line tool for [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework), designed to simplify the development, testing, and deployment processes for AIGNE applications. It provides a series of useful commands to help developers quickly create projects, run agents, test code, and deploy applications.
+
+<picture>
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-cli-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-cli.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-cli.png" alt="AIGNE Arch" />
+</picture>
 
 ## Features
 
@@ -55,13 +69,16 @@ aigne --help
 aigne create [path]
 
 # Run an agent
-aigne run [path]
+aigne run --path xxx
 
 # Run tests
-aigne test [path]
+aigne test --path xxx
 
 # Start MCP server
-aigne serve [path] --mcp
+aigne serve-mcp --path xxx
+
+# Start observability server
+aigne observe [option]
 ```
 
 ## Create Command
@@ -90,10 +107,10 @@ Launch a chat loop with the specified agent.
 aigne run
 
 # Run the agent at the specified path
-aigne run path/to/agents
+aigne run --path path/to/agents
 
 # Run the agent from a remote URL
-aigne run https://example.com/aigne-project
+aigne run --url https://example.com/aigne-project
 
 # Run a specific agent
 aigne run --entry-agent myAgent
@@ -118,19 +135,31 @@ aigne test
 aigne test path/to/agents
 ```
 
-## Serve Command
+## Serve MCP Command
 
 Serve the agents in the specified directory as a MCP server.
 
 ```bash
 # Start MCP server on default port 3000
-aigne serve --mcp
+aigne serve-mcp
 
 # Start MCP server on specified port
-aigne serve --mcp --port 3001
+aigne serve-mcp --port 3001
 
 # Start MCP server for agents at specified path
-aigne serve path/to/agents --mcp
+aigne serve-mcp --path path/to/agents
+```
+
+## Serve Command (observability)
+
+Start the service for monitoring data
+
+```bash
+# Start observability server on default port 7890
+aigne observe
+
+# Start observability server on specified port
+aigne observe --port 3001
 ```
 
 ## License
