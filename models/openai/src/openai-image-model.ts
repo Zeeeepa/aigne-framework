@@ -160,7 +160,6 @@ export class OpenAIImageModel extends ImageModel<OpenAIImageModelInput, OpenAIIm
           SUPPORTED_PARAMS[model] || SUPPORTED_PARAMS[DEFAULT_MODEL],
         ),
       ),
-      response_format: "b64_json",
       model,
     };
 
