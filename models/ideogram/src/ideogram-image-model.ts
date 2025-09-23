@@ -1,6 +1,5 @@
 import {
   type AgentInvokeOptions,
-  FileOutputType,
   ImageModel,
   type ImageModelInput,
   type ImageModelOptions,
@@ -104,7 +103,9 @@ export class IdeogramImageModel extends ImageModel<
       "styleType",
     ];
 
-    const mergedInput = snakelize(pick({ ...this.modelOptions, ...input }, inputKeys));
+    const mergedInput = snakelize(
+      pick({ ...this.modelOptions, ...input.modelOptions, ...input }, inputKeys),
+    );
 
     Object.keys(mergedInput).forEach((key) => {
       if (mergedInput[key]) {
@@ -122,7 +123,7 @@ export class IdeogramImageModel extends ImageModel<
       if (inputImages.length > 1) {
         throw new Error(`${this.name} only support one image for editing`);
       }
-      const { data } = await this.transformFileOutput(FileOutputType.file, image, options);
+      const { data } = await this.transformFileType("file", image, options);
       formData.append("image", new Blob([Buffer.from(data, "base64")]));
     }
 
