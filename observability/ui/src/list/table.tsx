@@ -4,10 +4,12 @@ import { useLocaleContext } from "@arcblock/ux/lib/Locale/context";
 import RelativeTime from "@arcblock/ux/lib/RelativeTime";
 import UserCard from "@arcblock/ux/lib/UserCard";
 import { CardType, InfoType } from "@arcblock/ux/lib/UserCard/types";
+import { formatNumber } from "@blocklet/aigne-hub/utils/util";
 import { useMediaQuery } from "@mui/material";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import { compact } from "lodash";
+import prettyMs from "pretty-ms";
 import { BlockletComponent } from "../components/blocklet-comp.tsx";
 import type { TraceData } from "../components/run/types.ts";
 import Status from "../components/status.tsx";
@@ -98,10 +100,39 @@ const Table = ({
       label: t("latency"),
       name: "latency",
       align: "right" as const,
+      width: 160,
       options: {
         customBodyRender: (_: unknown, { rowIndex }: { rowIndex: number }) => {
           const item = traces[rowIndex];
+          if (item?.endTime && item?.startTime) {
+            return <Box>{prettyMs(item.endTime - item.startTime)}</Box>;
+          }
+
           return <Box>{parseDuration(item.startTime, item.endTime)}</Box>;
+        },
+      },
+    },
+    {
+      label: `${t("token")}`,
+      name: "token",
+      width: 200,
+      align: "right" as const,
+      options: {
+        customBodyRender: (_: unknown, { rowIndex }: { rowIndex: number }) => {
+          const item = traces[rowIndex];
+          return <Box>{`${formatNumber(item.token || 0)}`}</Box>;
+        },
+      },
+    },
+    {
+      label: `${t("cost")}`,
+      name: "token",
+      width: 200,
+      align: "right" as const,
+      options: {
+        customBodyRender: (_: unknown, { rowIndex }: { rowIndex: number }) => {
+          const item = traces[rowIndex];
+          return <Box>{`$${formatNumber((item.cost || 0).toFixed(6))}`}</Box>;
         },
       },
     },
@@ -272,10 +303,7 @@ const Table = ({
                 paddingBottom: "16px",
               },
             }
-          : {
-              paddingTop: 0.5,
-              paddingBottom: 0.5,
-            },
+          : {},
         ".MuiTableCell-body": isMobile
           ? {
               alignItems: "center",
