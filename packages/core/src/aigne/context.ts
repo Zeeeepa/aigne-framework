@@ -6,7 +6,7 @@ import { Emitter } from "strict-event-emitter";
 import { v7 } from "uuid";
 import { z } from "zod";
 import {
-  Agent,
+  type Agent,
   type AgentHooks,
   type AgentInvokeOptions,
   type AgentProcessAsyncGenerator,
@@ -760,7 +760,10 @@ async function* withAbortSignal<T extends Message>(
 }
 
 const aigneContextInvokeArgsSchema = z.object({
-  agent: z.union([z.function(), z.instanceof(Agent)]),
+  agent: z.union([
+    z.function(),
+    z.custom<Agent>((agent) => !!agent && typeof agent.invoke === "function"),
+  ]),
   message: z.union([z.record(z.string(), z.unknown()), z.string()]).optional(),
   options: z.object({ returnActiveAgent: z.boolean().optional() }).optional(),
 });
