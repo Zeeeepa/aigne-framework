@@ -1,10 +1,11 @@
 import chalk from "chalk";
-import { render, Text, useInput } from "ink";
+import { Box, render, Text, useInput } from "ink";
+import { useState } from "react";
 import { SIGINTError } from "./error.js";
 import { useTextBuffer } from "./text-buffer.js";
 
 export async function terminalInput(
-  options: { message?: string; default?: string } = {},
+  options: { message?: string; default?: string; inline?: boolean } = {},
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     process.addListener("SIGINT", () => {
@@ -15,9 +16,7 @@ export async function terminalInput(
       <Input
         {...options}
         onSubmit={(value) => {
-          app.clear();
           app.unmount();
-          console.log(`${options.message} ${value}`); // echo the input back to terminal
           resolve(value);
         }}
         onError={(error) => {
@@ -33,22 +32,32 @@ export async function terminalInput(
 function Input(props: {
   message?: string;
   default?: string;
+  inline?: boolean;
   onSubmit: (input: string) => void;
   onError: (error: Error) => void;
 }) {
   const buffer = useTextBuffer({
     initialText: props.default || "",
+    initialCursorOffset: props.default?.length || 0,
     isValidPath: () => false,
     viewport: { width: 80, height: 1 },
   });
 
+  const [status, setStatus] = useState<"input" | "success" | "error">("input");
+
   useInput((character, key) => {
     if (character === "c" && key.ctrl) {
-      props.onError(new SIGINTError("Input aborted by user"));
+      setStatus("error");
+      setTimeout(() => {
+        props.onError(new SIGINTError("Input aborted by user"));
+      });
       return;
     }
     if (key.return) {
-      props.onSubmit(buffer.text);
+      setStatus("success");
+      setTimeout(() => {
+        props.onSubmit(buffer.text);
+      });
       return;
     } else if (key.backspace) buffer.backspace();
     else if (key.delete) buffer.backspace();
@@ -64,14 +73,36 @@ function Input(props: {
   });
 
   const lines = [...buffer.lines];
-  const [row, col] = buffer.cursor;
-  const currentLine = lines[row] || "";
-  lines[row] =
-    currentLine.slice(0, col) + chalk.inverse(currentLine[col] || " ") + currentLine.slice(col + 1);
+  if (status === "input") {
+    const [row, col] = buffer.cursor;
+    const currentLine = lines[row] || "";
+    lines[row] =
+      currentLine.slice(0, col) +
+      chalk.inverse(currentLine[col] || " ") +
+      currentLine.slice(col + 1);
+  }
+
+  const label = props.message && chalk.bold(props.message);
+
+  const inline = props.inline !== false;
 
   return (
-    <Text>
-      {props.message} {lines.join("\n")}
-    </Text>
+    <Box flexDirection={inline ? "row" : "column"}>
+      <Text>
+        {PREFIX[status]} {!inline && label}
+      </Text>
+      <Box flexShrink={1} flexGrow={1} marginLeft={inline ? 0 : 2}>
+        <Text>
+          {!!label && inline && `${label} `}
+          {lines.join("\n")}
+        </Text>
+      </Box>
+    </Box>
   );
 }
+
+const PREFIX = {
+  input: chalk.blue("?"),
+  success: chalk.green("✔"),
+  error: chalk.red("✘"),
+};
