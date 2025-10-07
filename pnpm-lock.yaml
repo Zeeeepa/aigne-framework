@@ -69,6 +69,65 @@ importers:
         specifier: ^8.8.1
         version: 8.8.1
 
+  afs/core:
+    dependencies:
+      '@aigne/sqlite':
+        specifier: workspace:^
+        version: link:../../packages/sqlite
+      '@aigne/uuid':
+        specifier: ^13.0.1
+        version: 13.0.1
+      strict-event-emitter:
+        specifier: ^0.5.1
+        version: 0.5.1
+      ufo:
+        specifier: ^1.6.1
+        version: 1.6.1
+    devDependencies:
+      '@types/bun':
+        specifier: ^1.2.22
+        version: 1.2.22(@types/react@19.1.13)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+
+  afs/user-profile-memory:
+    dependencies:
+      '@aigne/afs':
+        specifier: workspace:^
+        version: link:../core
+      '@aigne/core':
+        specifier: workspace:^
+        version: link:../../packages/core
+      fast-json-patch:
+        specifier: ^3.1.1
+        version: 3.1.1
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.67
+      zod-to-json-schema:
+        specifier: ^3.24.6
+        version: 3.24.6(zod@3.25.67)
+    devDependencies:
+      '@types/bun':
+        specifier: ^1.2.22
+        version: 1.2.22(@types/react@19.1.13)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+
   blocklets/aigne-runtime:
     dependencies:
       '@aigne/aigne-hub':
@@ -420,9 +479,12 @@ importers:
 
   examples/memory:
     dependencies:
-      '@aigne/agent-library':
+      '@aigne/afs':
         specifier: workspace:^
-        version: link:../../packages/agent-library
+        version: link:../../afs/core
+      '@aigne/afs-user-profile-memory':
+        specifier: workspace:^
+        version: link:../../afs/user-profile-memory
       '@aigne/cli':
         specifier: workspace:^
         version: link:../../packages/cli
@@ -1920,6 +1982,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@aigne/afs':
+        specifier: workspace:^
+        version: link:../../afs/core
       '@aigne/json-schema-to-zod':
         specifier: ^1.3.3
         version: 1.3.3(zod@3.25.67)
@@ -10080,6 +10145,7 @@ packages:
   phin@3.7.1:
     resolution: {integrity: sha512-GEazpTWwTZaEQ9RhL7Nyz0WwqilbqgLahDM3D0hxWwmVDI52nXEybHqiN6/elwpkJBhcuj+WbBu+QfT0uhPGfQ==}
     engines: {node: '>= 8'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   phoenix@1.7.2:
     resolution: {integrity: sha512-jwWDOsUNEQZkLNSwzfLJ6AMFUkyZ+ILU+NkBBtoAK020QPpV/dYEQHGMQoFScj89MFjJlLdkE1W97i8S+4FdGg==}
