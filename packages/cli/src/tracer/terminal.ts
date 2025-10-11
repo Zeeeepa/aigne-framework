@@ -8,7 +8,9 @@ import {
   type ChatModelOutput,
   type Context,
   type ContextUsage,
+  DEFAULT_OUTPUT_FILE_KEY,
   DEFAULT_OUTPUT_KEY,
+  type FileUnionContent,
   type InvokeOptions,
   type Message,
   mergeContextUsage,
@@ -22,7 +24,12 @@ import { markedTerminal } from "@aigne/marked-terminal";
 import * as prompts from "@inquirer/prompts";
 import chalk from "chalk";
 import { Marked } from "marked";
+import terminalImage from "terminal-image";
+import terminalLink from "terminal-link";
+import { withProtocol } from "ufo";
 import { AIGNE_HUB_CREDITS_NOT_ENOUGH_ERROR_TYPE } from "../constants.js";
+import { terminalInput } from "../ui/utils/terminal-input.js";
+import checkbox from "../utils/inquirer/checkbox.js";
 import { AIGNEListr, AIGNEListrRenderer, type AIGNEListrTaskWrapper } from "../utils/listr.js";
 import { highlightUrl } from "../utils/string-utils.js";
 import { parseDuration } from "../utils/time.js";
@@ -31,6 +38,7 @@ const CREDITS_ERROR_PROCESSED_FLAG = "$credits_error_processed";
 
 export interface TerminalTracerOptions {
   outputKey?: string;
+  outputFileKey?: string;
 }
 
 export class TerminalTracer {
@@ -50,8 +58,8 @@ export class TerminalTracer {
       {
         formatRequest: (options?: { running?: boolean }) =>
           this.formatRequest(agent, context, input, options),
-        formatResult: (result, options?: { running?: boolean }) =>
-          [this.formatResult(agent, context, result, options)].filter(Boolean),
+        formatResult: (result, options?: { running?: boolean; renderImage?: boolean }) =>
+          this.formatResult(agent, context, result, options),
       },
       [],
       { concurrent: true, exitOnError: false },
@@ -65,12 +73,16 @@ export class TerminalTracer {
     const hideContextIds = new Set<string>();
 
     const onStart: AgentHooks["onStart"] = async ({ context, agent, ...event }) => {
-      if (agent instanceof UserAgent) return;
+      const result = { options: { prompts: this.proxiedPrompts } };
+
+      if (agent instanceof UserAgent) return result;
 
       if (agent.taskRenderMode === "hide") {
         hideContextIds.add(context.id);
-        return;
-      } else if (agent.taskRenderMode === "collapse") {
+        return result;
+      }
+
+      if (agent.taskRenderMode === "collapse") {
         collapsedMap.set(context.id, {
           ancestor: { contextId: context.id },
           usage: newEmptyContextUsage(),
@@ -81,13 +93,13 @@ export class TerminalTracer {
       if (context.parentId) {
         if (hideContextIds.has(context.parentId)) {
           hideContextIds.add(context.id);
-          return;
+          return result;
         }
 
         const collapsed = collapsedMap.get(context.parentId);
         if (collapsed) {
           collapsedMap.set(context.id, collapsed);
-          return;
+          return result;
         }
       }
 
@@ -126,7 +138,7 @@ export class TerminalTracer {
         listr.add(listrTask);
       }
 
-      return { options: { prompts: this.proxiedPrompts } };
+      return result;
     };
 
     const onSuccess: AgentHooks["onSuccess"] = async ({ context, agent, output, ...event }) => {
@@ -256,9 +268,15 @@ export class TerminalTracer {
     {},
     {
       get: (_target, prop) => {
-        // biome-ignore lint/performance/noDynamicNamespaceImportAccess: we need to access prompts dynamically
-        const method = prompts[prop as keyof typeof prompts] as (...args: any[]) => any;
-        if (typeof method !== "function") return undefined;
+        const method =
+          prop === "checkbox"
+            ? checkbox
+            : prop === "input"
+              ? terminalInput
+              : // biome-ignore lint/performance/noDynamicNamespaceImportAccess: we need to access prompts dynamically
+                (prompts[prop as keyof typeof prompts] as (...args: any[]) => any);
+        if (typeof method !== "function")
+          throw new Error(`Unsupported prompt method ${String(prop)}`);
 
         return async (config: any) => {
           const renderer =
@@ -299,10 +317,12 @@ export class TerminalTracer {
       return retry;
     })();
 
-    return this.buyCreditsPromptPromise.finally(() => {
-      // Clear the promise so that we can show the prompt again if needed
-      this.buyCreditsPromptPromise = undefined;
-    });
+    return this.buyCreditsPromptPromise
+      .catch(() => "exit")
+      .finally(() => {
+        // Clear the promise so that we can show the prompt again if needed
+        this.buyCreditsPromptPromise = undefined;
+      });
   }
 
   formatTokenUsage(usage: Partial<ContextUsage>, extra?: { [key: string]: string }) {
@@ -376,6 +396,10 @@ export class TerminalTracer {
     return this.options.outputKey || DEFAULT_OUTPUT_KEY;
   }
 
+  get outputFileKey() {
+    return this.options.outputFileKey || DEFAULT_OUTPUT_FILE_KEY;
+  }
+
   formatRequest(agent: Agent, _context: Context, m: Message = {}, { running = false } = {}) {
     const prefix = `${chalk.grey(figures.pointer)} 💬 `;
 
@@ -398,14 +422,19 @@ export class TerminalTracer {
     return `${prefix}${r}`;
   }
 
-  formatResult(agent: Agent, context: Context, m: Message = {}, { running = false } = {}) {
+  formatResult(
+    agent: Agent,
+    context: Context,
+    m: Message = {},
+    { running = false, renderImage = false } = {},
+  ): string | Promise<string> {
     const { isTTY } = process.stdout;
     const outputKey = this.outputKey || (agent instanceof AIAgent ? agent.outputKey : undefined);
 
     const prefix = `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`;
 
     const msg = outputKey ? m[outputKey] : undefined;
-    const message = outputKey ? omit(m, outputKey) : m;
+    const message = outputKey ? omit(m, outputKey, this.outputFileKey) : m;
 
     const text =
       msg && typeof msg === "string"
@@ -419,7 +448,53 @@ export class TerminalTracer {
         ? inspect(message, { colors: isTTY, ...(running ? this.runningInspectOptions : undefined) })
         : undefined;
 
+    if (renderImage) {
+      return this.formatResultData(m).then((images) => {
+        return [prefix, text, images, json].filter(Boolean).join(EOL.repeat(2));
+      });
+    }
+
     return [prefix, text, json].filter(Boolean).join(EOL.repeat(2));
+  }
+
+  async formatResultData(output: Message): Promise<string | undefined> {
+    const files = output[this.outputFileKey] as FileUnionContent[];
+    if (!Array.isArray(files)) return;
+
+    const options: Parameters<typeof terminalImage.file>[1] = {
+      height: 30,
+    };
+
+    return (
+      await Promise.all(
+        files.map(async (item) => {
+          const image =
+            item.type === "local"
+              ? await terminalImage.file(item.path, options)
+              : item.type === "file"
+                ? await terminalImage.buffer(Buffer.from(item.data, "base64"), options)
+                : undefined;
+
+          const link =
+            item.type === "local"
+              ? withProtocol(item.path, "file://")
+              : item.type === "url"
+                ? item.url
+                : undefined;
+          const text = [
+            link ? chalk.cyan(terminalLink(link, link)) : undefined,
+            item.filename,
+            item.mimeType ? chalk.gray(item.mimeType) : undefined,
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          return [image, text].filter(Boolean).join(EOL);
+        }),
+      )
+    )
+      .filter(Boolean)
+      .join(EOL);
   }
 
   protected runningInspectOptions: InspectOptions = {

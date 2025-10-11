@@ -4,25 +4,33 @@ import { z } from "zod";
 import { OpenAIImageModel } from "../_mocks/mock-models.js";
 
 test("ImageAgent should work correctly", async () => {
-  const model = new OpenAIImageModel();
+  const imageModel = new OpenAIImageModel();
 
   const agent = new ImageAgent({
-    model,
+    imageModel,
     instructions: "Draw an image about {{topic}}",
     inputSchema: z.object({
       topic: z.string(),
     }),
+    outputFileType: "file",
   });
 
-  const modelProcess = spyOn(model, "process").mockReturnValueOnce({
-    images: [{ url: "https://example.com/image.png" }],
+  const modelProcess = spyOn(imageModel, "process").mockReturnValueOnce({
+    images: [{ type: "file", data: Buffer.from("test image").toString("base64") }],
   });
 
   const result = await agent.invoke({ topic: "a cat" });
 
-  expect(result).toEqual({
-    images: [{ url: "https://example.com/image.png" }],
-  });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "images": [
+        {
+          "data": "dGVzdCBpbWFnZQ==",
+          "type": "file",
+        },
+      ],
+    }
+  `);
 
   expect(modelProcess).toHaveBeenLastCalledWith(
     expect.objectContaining({

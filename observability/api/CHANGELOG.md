@@ -1,5 +1,106 @@
 # Changelog
 
+## [0.11.2-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.2-beta...observability-api-v0.11.2-beta.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* add ability to delete individual trace records ([f853cec](https://github.com/AIGNE-io/aigne-framework/commit/f853cec0557600788f2da1e5be4935360372dc99))
+* add ability to delete individual trace records ([#606](https://github.com/AIGNE-io/aigne-framework/issues/606)) ([f853cec](https://github.com/AIGNE-io/aigne-framework/commit/f853cec0557600788f2da1e5be4935360372dc99))
+* observability list query setting ([#605](https://github.com/AIGNE-io/aigne-framework/issues/605)) ([0952d39](https://github.com/AIGNE-io/aigne-framework/commit/0952d398955702276956da963710f8bfd85a86ce))
+* observability list query setting ([#605](https://github.com/AIGNE-io/aigne-framework/issues/605)) ([0952d39](https://github.com/AIGNE-io/aigne-framework/commit/0952d398955702276956da963710f8bfd85a86ce))
+
+## [0.11.2-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.1...observability-api-v0.11.2-beta) (2025-10-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/sqlite bumped to 0.4.3-beta
+
+## [0.11.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.1-beta.2...observability-api-v0.11.1) (2025-10-04)
+
+## [0.11.1-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.1-beta.1...observability-api-v0.11.1-beta.2) (2025-10-01)
+
+
+### Bug Fixes
+
+* update deps compatibility in CommonJS environment ([#580](https://github.com/AIGNE-io/aigne-framework/issues/580)) ([a1e35d0](https://github.com/AIGNE-io/aigne-framework/commit/a1e35d016405accb51c1aeb6a544503a1c78e912))
+
+## [0.11.1-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.1-beta...observability-api-v0.11.1-beta.1) (2025-10-01)
+
+
+### Bug Fixes
+
+* resolve import.meta compatibility in CommonJS environment ([#578](https://github.com/AIGNE-io/aigne-framework/issues/578)) ([d3a492a](https://github.com/AIGNE-io/aigne-framework/commit/d3a492a4de1b8f6648866590266aab0fe69f32e0))
+
+## [0.11.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.0...observability-api-v0.11.1-beta) (2025-09-29)
+
+
+### Bug Fixes
+
+* improved path resolution for better module compatibility ([#564](https://github.com/AIGNE-io/aigne-framework/issues/564)) ([84e92a1](https://github.com/AIGNE-io/aigne-framework/commit/84e92a13367d801c58dd7740e9762c7b245308c6))
+
+## [0.11.0](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.0-beta.1...observability-api-v0.11.0) (2025-09-27)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/sqlite bumped to 0.4.2
+
+## [0.11.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.11.0-beta...observability-api-v0.11.0-beta.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* **blocklet:** observability blocklet start failure ([#554](https://github.com/AIGNE-io/aigne-framework/issues/554)) ([8431d4d](https://github.com/AIGNE-io/aigne-framework/commit/8431d4d89a4b96f735f23e774e9545bbe1fd811c))
+* **blocklet:** observability blocklet start failure ([#554](https://github.com/AIGNE-io/aigne-framework/issues/554)) ([8431d4d](https://github.com/AIGNE-io/aigne-framework/commit/8431d4d89a4b96f735f23e774e9545bbe1fd811c))
+
+## [0.11.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.5-beta...observability-api-v0.11.0-beta) (2025-09-25)
+
+
+### Features
+
+* **blocklet:** add token and cost summary for tracing list ([#543](https://github.com/AIGNE-io/aigne-framework/issues/543)) ([5e78919](https://github.com/AIGNE-io/aigne-framework/commit/5e789199b8183cf9c48339ec8163faec001ca64c))
+
+## [0.10.5-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.4...observability-api-v0.10.5-beta) (2025-09-25)
+
+
+### Bug Fixes
+
+* improve SQLite busy error handling and observability logging ([#545](https://github.com/AIGNE-io/aigne-framework/issues/545)) ([6dc8e06](https://github.com/AIGNE-io/aigne-framework/commit/6dc8e064231f3d6342036626591e89bff1ae5c08))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/sqlite bumped to 0.4.2-beta
+
+## [0.10.4](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.3...observability-api-v0.10.4) (2025-09-11)
+
+
+### Bug Fixes
+
+* add compatibility for incorrect file object input ([#477](https://github.com/AIGNE-io/aigne-framework/issues/477)) ([b8fa75d](https://github.com/AIGNE-io/aigne-framework/commit/b8fa75d28faeadaea76036838abbc5f2aae42aba))
+
+## [0.10.3](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.2...observability-api-v0.10.3) (2025-09-10)
+
+
+### Bug Fixes
+
+* **observability:** convert base64 image output into mekia kit image file ([#471](https://github.com/AIGNE-io/aigne-framework/issues/471)) ([ce05713](https://github.com/AIGNE-io/aigne-framework/commit/ce057131a2308eb73bbe49dff534749e68c268d9))
+
+## [0.10.2](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.1...observability-api-v0.10.2) (2025-09-05)
+
+
+### Bug Fixes
+
+* delete all observability data ([#451](https://github.com/AIGNE-io/aigne-framework/issues/451)) ([4176743](https://github.com/AIGNE-io/aigne-framework/commit/4176743afbd2aadf6777e39c29b45d65d21b751a))
+
 ## [0.10.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-api-v0.10.0...observability-api-v0.10.1) (2025-08-26)
 
 

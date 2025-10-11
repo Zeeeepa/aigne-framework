@@ -6,6 +6,8 @@ import express, { type Request, type Response, type Router } from "express";
 import type SSE from "express-sse";
 import { parse, stringify } from "yaml";
 import { z } from "zod";
+import { insertTrace } from "../../core/util.js";
+import type { FileData, ImageData } from "../base.js";
 import { Trace } from "../models/trace.js";
 import { getGlobalSettingPath } from "../utils/index.js";
 
@@ -35,9 +37,14 @@ import { createTraceBatchSchema } from "../../core/schema.js";
 export default ({
   sse,
   middleware,
+  options,
 }: {
   sse: SSE;
   middleware: express.RequestHandler[];
+  options?: {
+    formatOutputFiles?: (files: FileData[]) => Promise<FileData[]>;
+    formatOutputImages?: (images: ImageData[]) => Promise<ImageData[]>;
+  };
 }): Router => {
   router.get("/tree", ...middleware, async (req: Request, res: Response) => {
     const db = req.app.locals.db as LibSQLDatabase;
@@ -63,26 +70,35 @@ export default ({
     }
 
     const rootFilter = and(isNull(Trace.parentId), isNull(Trace.action));
-    const count = await db.select({ count: sql`count(*)` }).from(Trace).where(rootFilter).execute();
-    const total = Number((count[0] as { count: string }).count ?? 0);
 
     const searchFilter = or(
       like(Trace.attributes, `%${searchText}%`),
       like(Trace.name, `%${searchText}%`),
       like(Trace.id, `%${searchText}%`),
+      like(Trace.userId, `%${(searchText || "").replace("did:abt:", "")}%`),
     );
     let whereClause = searchText ? and(rootFilter, searchFilter) : rootFilter;
 
     if (startDate && endDate) {
-      whereClause = and(
-        whereClause,
-        between(Trace.startTime, new Date(startDate).getTime(), new Date(endDate).getTime()),
-      );
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      whereClause = and(whereClause, between(Trace.startTime, start.getTime(), end.getTime()));
     }
 
     if (componentId) {
       whereClause = and(whereClause, eq(Trace.componentId, componentId));
     }
+
+    const count = await db
+      .select({ count: sql`count(*)` })
+      .from(Trace)
+      .where(whereClause)
+      .execute();
+    const total = Number((count[0] as { count: string }).count ?? 0);
 
     const rootCalls = await db
       .select({
@@ -116,6 +132,8 @@ export default ({
         `,
         userId: Trace.userId,
         componentId: Trace.componentId,
+        token: Trace.token,
+        cost: Trace.cost,
       })
       .from(Trace)
       .where(whereClause)
@@ -140,6 +158,94 @@ export default ({
       page,
       pageSize,
       data: processedRootCalls,
+    });
+  });
+
+  router.get("/tree/summary", ...middleware, async (req: Request, res: Response) => {
+    const db = req.app.locals.db as LibSQLDatabase;
+
+    const baseWhere = and(isNull(Trace.parentId), isNull(Trace.action));
+
+    const totalCountResult = await db
+      .select({ totalCount: sql<number>`COUNT(*)` })
+      .from(Trace)
+      .where(baseWhere)
+      .execute();
+
+    const totalCount = totalCountResult[0]?.totalCount ?? 0;
+
+    const statusResult = await db
+      .select({
+        successCount: sql<number>`
+          COUNT(
+            CASE 
+              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0 
+              THEN 1 
+            END
+          )
+        `,
+      })
+      .from(Trace)
+      .where(baseWhere)
+      .execute();
+
+    const successCount = statusResult[0]?.successCount ?? 0;
+    const failCount = totalCount - successCount;
+
+    const TotalStatsResult = await db
+      .select({
+        totalToken: sql<number>`COALESCE(SUM(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.token} ELSE 0 END), 0)`,
+        totalCost: sql<number>`COALESCE(SUM(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.cost} ELSE 0 END), 0)`,
+        maxLatency: sql<number>`COALESCE(MAX(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.endTime} - ${Trace.startTime} ELSE NULL END), 0)`,
+        minLatency: sql<number>`COALESCE(MIN(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.endTime} - ${Trace.startTime} ELSE NULL END), 0)`,
+        avgLatency: sql<number>`COALESCE(AVG(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.endTime} - ${Trace.startTime} ELSE NULL END), 0)`,
+        totalDuration: sql<number>`COALESCE(SUM(CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.endTime} - ${Trace.startTime} ELSE 0 END), 0)`,
+      })
+      .from(Trace)
+      .where(baseWhere)
+      .execute();
+
+    const totalStats = TotalStatsResult[0];
+
+    const llmWhere = and(
+      sql`${Trace.attributes} IS NOT NULL`,
+      sql`JSON_EXTRACT(${Trace.attributes}, '$.output.model') IS NOT NULL`,
+    );
+
+    const llmStatsResult = await db
+      .select({
+        llmTotalCount: sql<number>`COUNT(*)`,
+        llmSuccessCount: sql<number>`
+          COUNT(
+            CASE 
+              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0 
+              THEN 1 
+            END
+          )
+        `,
+        llmTotalDuration: sql<number>`
+          COALESCE(SUM(
+            CASE WHEN ${Trace.endTime} > 0 THEN ${Trace.endTime} - ${Trace.startTime} ELSE 0 END
+          ), 0)
+        `,
+      })
+      .from(Trace)
+      .where(llmWhere)
+      .execute();
+
+    res.json({
+      totalCount,
+      successCount,
+      failCount,
+      totalToken: totalStats?.totalToken ?? 0,
+      totalCost: totalStats?.totalCost ?? 0,
+      maxLatency: totalStats?.maxLatency ?? 0,
+      minLatency: totalStats?.minLatency ?? 0,
+      avgLatency: totalStats?.avgLatency ?? 0,
+      totalDuration: totalStats?.totalDuration ?? 0,
+      llmSuccessCount: llmStatsResult[0]?.llmSuccessCount ?? 0,
+      llmTotalCount: llmStatsResult[0]?.llmTotalCount ?? 0,
+      llmTotalDuration: llmStatsResult[0]?.llmTotalDuration ?? 0,
     });
   });
 
@@ -262,6 +368,8 @@ export default ({
         userId: Trace.userId,
         sessionId: Trace.sessionId,
         componentId: Trace.componentId,
+        token: Trace.token,
+        cost: Trace.cost,
       })
       .from(Trace)
       .where(inArray(Trace.rootId, rootCallIds))
@@ -314,48 +422,19 @@ export default ({
 
     for (const trace of validatedTraces) {
       try {
-        const insertSql = sql`
-          INSERT INTO Trace (
-            id,
-            rootId,
-            parentId,
-            name,
-            startTime,
-            endTime,
-            attributes,
-            status,
-            userId,
-            sessionId,
-            componentId,
-            action
-          ) VALUES (
-            ${trace.id},
-            ${trace.rootId},
-            ${trace.parentId || null},
-            ${trace.name},
-            ${trace.startTime},
-            ${trace.endTime},
-            ${JSON.stringify(trace.attributes)},
-            ${JSON.stringify(trace.status)},
-            ${trace.userId || null},
-            ${trace.sessionId || null},
-            ${trace.componentId || null},
-            ${trace.action || null}
-          )
-          ON CONFLICT(id)
-          DO UPDATE SET
-            name = excluded.name,
-            startTime = excluded.startTime,
-            endTime = excluded.endTime,
-            attributes = excluded.attributes,
-            status = excluded.status,
-            userId = excluded.userId,
-            sessionId = excluded.sessionId,
-            componentId = excluded.componentId,
-            action = excluded.action;
-        `;
+        const mapping = {
+          files: options?.formatOutputFiles,
+          images: options?.formatOutputImages,
+        };
 
-        await db?.run?.(insertSql);
+        for (const [key, formatter] of Object.entries(mapping)) {
+          const items = trace?.attributes?.output?.[key];
+          if (items?.length && formatter) {
+            trace.attributes.output[key] = await formatter(items);
+          }
+        }
+
+        await insertTrace(db, trace);
       } catch (err) {
         console.error(`upsert spans failed for trace ${trace.id}:`, err);
       }
@@ -370,8 +449,16 @@ export default ({
 
   router.delete("/tree", async (req: Request, res: Response) => {
     const db = req.app.locals.db as LibSQLDatabase;
-    await db.update(Trace).set({ action: 1 }).where(isNull(Trace.action)).execute();
-    res.json({ code: 0, message: "ok" });
+
+    const ids = req.body?.ids;
+    if (Array.isArray(ids) && ids.length > 0) {
+      await db.delete(Trace).where(inArray(Trace.id, ids)).execute();
+      res.json({ code: 0, message: `${ids.length} traces deleted` });
+      return;
+    }
+
+    await db.delete(Trace).execute();
+    res.json({ code: 0, message: "all traces deleted" });
   });
 
   return router;

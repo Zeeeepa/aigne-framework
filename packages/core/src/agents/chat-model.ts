@@ -1,12 +1,45 @@
+import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { z } from "zod";
-import type { PromiseOrValue } from "../utils/type-utils.js";
+import { convertJsonSchemaToZod, type JSONSchema } from "zod-from-json-schema";
+import { wrapAutoParseJsonSchema } from "../utils/json-schema.js";
+import { checkArguments, isNil, omitByDeep, type PromiseOrValue } from "../utils/type-utils.js";
 import {
-  Agent,
+  type Agent,
   type AgentInvokeOptions,
   type AgentOptions,
   type AgentProcessResult,
+  type AgentResponse,
+  type AgentResponseStream,
+  agentOptionsSchema,
   type Message,
 } from "./agent.js";
+import {
+  type FileType,
+  type FileUnionContent,
+  fileContentSchema,
+  fileUnionContentSchema,
+  localContentSchema,
+  Model,
+  urlContentSchema,
+} from "./model.js";
+
+const CHAT_MODEL_DEFAULT_RETRY_OPTIONS: Agent["retryOnError"] = {
+  retries: 3,
+  shouldRetry: async (error) =>
+    error instanceof StructuredOutputError || (await import("is-network-error")).default(error),
+};
+
+export class StructuredOutputError extends Error {}
+
+export interface ChatModelOptions
+  extends Omit<
+    AgentOptions<ChatModelInput, ChatModelOutput>,
+    "model" | "inputSchema" | "outputSchema"
+  > {
+  model?: string;
+
+  modelOptions?: Omit<ChatModelInputOptions, "model">;
+}
 
 /**
  * ChatModel is an abstract base class for interacting with Large Language Models (LLMs).
@@ -31,16 +64,28 @@ import {
  * Here's an example with tool calls:
  * {@includeCode ../../test/agents/chat-model.test.ts#example-chat-model-tools}
  */
-export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
+export abstract class ChatModel extends Model<ChatModelInput, ChatModelOutput> {
   override tag = "ChatModelAgent";
 
-  constructor(
-    options?: Omit<AgentOptions<ChatModelInput, ChatModelOutput>, "inputSchema" | "outputSchema">,
-  ) {
+  constructor(public options?: ChatModelOptions) {
+    if (options) checkArguments("ChatModel", chatModelOptionsSchema, options);
+
+    const retryOnError =
+      options?.retryOnError === false
+        ? false
+        : options?.retryOnError === true
+          ? CHAT_MODEL_DEFAULT_RETRY_OPTIONS
+          : {
+              ...CHAT_MODEL_DEFAULT_RETRY_OPTIONS,
+              ...options?.retryOnError,
+            };
+
     super({
       ...options,
       inputSchema: chatModelInputSchema,
       outputSchema: chatModelOutputSchema,
+      retryOnError,
+      model: undefined,
     });
   }
 
@@ -142,6 +187,50 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
         enumerable: false,
       });
     }
+
+    input.messages = await Promise.all(
+      input.messages.map(async (message) => {
+        if (!Array.isArray(message.content)) return message;
+
+        return {
+          ...message,
+          content: await Promise.all(
+            message.content.map(async (item) => {
+              if (item.type === "local") {
+                return {
+                  ...item,
+                  type: "file" as const,
+                  data: await nodejs.fs.readFile(item.path, "base64"),
+                  path: undefined,
+                  mimeType:
+                    item.mimeType || (await ChatModel.getMimeType(item.filename || item.path)),
+                };
+              }
+
+              if (
+                (input.modelOptions?.preferInputFileType ||
+                  this.options?.modelOptions?.preferInputFileType) !== "url"
+              ) {
+                if (item.type === "url") {
+                  return {
+                    ...item,
+                    type: "file" as const,
+                    data: Buffer.from(
+                      await (await this.downloadFile(item.url)).arrayBuffer(),
+                    ).toString("base64"),
+                    url: undefined,
+                    mimeType:
+                      item.mimeType || (await ChatModel.getMimeType(item.filename || item.url)),
+                  };
+                }
+              }
+
+              return item;
+            }),
+          ),
+        };
+      }),
+    );
   }
 
   /**
@@ -158,21 +247,6 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
     output: ChatModelOutput,
     options: AgentInvokeOptions,
   ): Promise<void> {
-    // Restore original tool names in the output
-    if (output.toolCalls?.length) {
-      const toolsMap = input._toolsMap as Record<string, ChatModelInputTool> | undefined;
-      if (toolsMap) {
-        for (const toolCall of output.toolCalls) {
-          const originalTool = toolsMap[toolCall.function.name];
-          if (!originalTool) {
-            throw new Error(`Tool "${toolCall.function.name}" not found in tools map`);
-          }
-
-          toolCall.function.name = originalTool.function.name;
-        }
-      }
-    }
-
     super.postprocess(input, output, options);
     const { usage } = output;
     if (usage) {
@@ -206,6 +280,89 @@ export abstract class ChatModel extends Agent<ChatModelInput, ChatModelOutput> {
     input: ChatModelInput,
     options: AgentInvokeOptions,
   ): PromiseOrValue<AgentProcessResult<ChatModelOutput>>;
+
+  protected override async processAgentOutput(
+    input: ChatModelInput,
+    output: Exclude<AgentResponse<ChatModelOutput>, AgentResponseStream<ChatModelOutput>>,
+    options: AgentInvokeOptions,
+  ): Promise<ChatModelOutput> {
+    if (output.files) {
+      const files = z.array(fileUnionContentSchema).parse(output.files);
+      output = {
+        ...output,
+        files: await Promise.all(
+          files.map((file) => this.transformFileType(input.outputFileType, file, options)),
+        ),
+      };
+    }
+
+    // Remove fields with `null` value for validation
+    output = omitByDeep(output, (value) => isNil(value));
+
+    const toolCalls = (output as ChatModelOutput).toolCalls;
+
+    if (
+      input.responseFormat?.type === "json_schema" &&
+      // NOTE: Should not validate if there are tool calls
+      !toolCalls?.length
+    ) {
+      output.json = this.validateJsonSchema(input.responseFormat.jsonSchema.schema, output.json);
+    }
+
+    // Restore original tool names in the output
+    if (toolCalls?.length) {
+      const toolsMap = input._toolsMap as Record<string, ChatModelInputTool> | undefined;
+      if (toolsMap) {
+        for (const toolCall of toolCalls) {
+          const originalTool = toolsMap[toolCall.function.name];
+          if (!originalTool) {
+            throw new StructuredOutputError(
+              `Tool "${toolCall.function.name}" not found in tools map`,
+            );
+          }
+
+          toolCall.function.name = originalTool.function.name;
+          toolCall.function.arguments = this.validateJsonSchema(
+            originalTool.function.parameters,
+            toolCall.function.arguments,
+          );
+        }
+      }
+    }
+
+    return super.processAgentOutput(input, output, options);
+  }
+
+  protected validateJsonSchema<T>(schema: object, data: T, options?: { safe?: false }): T;
+  protected validateJsonSchema<T>(
+    schema: object,
+    data: T,
+    options: { safe: true },
+  ): z.SafeParseReturnType<T, T>;
+  protected validateJsonSchema<T>(
+    schema: object,
+    data: T,
+    options?: { safe?: boolean },
+  ): T | z.SafeParseReturnType<T, T>;
+  protected validateJsonSchema<T>(
+    schema: object,
+    data: T,
+    options?: { safe?: boolean },
+  ): T | z.SafeParseReturnType<T, T> {
+    const s = wrapAutoParseJsonSchema(convertJsonSchemaToZod(schema as JSONSchema));
+
+    const r = s.safeParse(data);
+
+    if (options?.safe) return r;
+
+    if (r.error) {
+      throw new StructuredOutputError(
+        `Output JSON does not conform to the provided JSON schema: ${r.error.errors.map((i) => `${i.path}: ${i.message}`).join(", ")}`,
+      );
+    }
+
+    return r.data;
+  }
 }
 
 /**
@@ -233,6 +390,8 @@ export interface ChatModelInput extends Message {
    */
   responseFormat?: ChatModelInputResponseFormat;
 
+  outputFileType?: FileType;
+
   /**
    * List of tools available for the model to use
    */
@@ -246,7 +405,7 @@ export interface ChatModelInput extends Message {
   /**
    * Model-specific configuration options
    */
-  modelOptions?: ChatModelOptions;
+  modelOptions?: ChatModelInputOptions;
 }
 
 /**
@@ -258,6 +417,13 @@ export interface ChatModelInput extends Message {
  * - tool: Tool call responses
  */
 export type Role = "system" | "user" | "agent" | "tool";
+
+export const roleSchema = z.union([
+  z.literal("system"),
+  z.literal("user"),
+  z.literal("agent"),
+  z.literal("tool"),
+]);
 
 /**
  * Structure of input messages
@@ -301,7 +467,7 @@ export interface ChatModelInputMessage {
  *
  * Can be a simple string, or a mixed array of text and image content
  */
-export type ChatModelInputMessageContent = string | (TextContent | ImageUrlContent)[];
+export type ChatModelInputMessageContent = string | UnionContent[];
 
 /**
  * Text content type
@@ -310,26 +476,23 @@ export type ChatModelInputMessageContent = string | (TextContent | ImageUrlConte
  */
 export type TextContent = { type: "text"; text: string };
 
-/**
- * Image URL content type
- *
- * Used for image parts of message content, referencing images via URL
- */
-export type ImageUrlContent = { type: "image_url"; url: string };
+export const textContentSchema = z.object({
+  type: z.literal("text"),
+  text: z.string(),
+});
+
+export type UnionContent = TextContent | FileUnionContent;
+
+export const unionContentSchema = z.discriminatedUnion("type", [
+  textContentSchema,
+  localContentSchema,
+  urlContentSchema,
+  fileContentSchema,
+]);
 
 const chatModelInputMessageSchema = z.object({
   role: z.union([z.literal("system"), z.literal("user"), z.literal("agent"), z.literal("tool")]),
-  content: z
-    .union([
-      z.string(),
-      z.array(
-        z.union([
-          z.object({ type: z.literal("text"), text: z.string() }),
-          z.object({ type: z.literal("image_url"), url: z.string() }),
-        ]),
-      ),
-    ])
-    .optional(),
+  content: z.union([z.string(), z.array(unionContentSchema)]).optional(),
   toolCalls: z
     .array(
       z.object({
@@ -447,12 +610,14 @@ const chatModelInputToolChoiceSchema = z.union([
   chatModelInputToolSchema,
 ]);
 
+export type Modality = "text" | "image" | "audio";
+
 /**
  * Model-specific configuration options
  *
  * Contains various parameters for controlling model behavior, such as model name, temperature, etc.
  */
-export interface ChatModelOptions {
+export interface ChatModelInputOptions {
   /**
    * Model name or version
    */
@@ -482,15 +647,25 @@ export interface ChatModelOptions {
    * Whether to allow parallel tool calls
    */
   parallelToolCalls?: boolean;
+
+  modalities?: Modality[];
+
+  preferInputFileType?: "file" | "url";
 }
 
-const chatModelOptionsSchema = z.object({
+const modelOptionsSchema = z.object({
   model: z.string().optional(),
   temperature: z.number().optional(),
   topP: z.number().optional(),
   frequencyPenalty: z.number().optional(),
   presencePenalty: z.number().optional(),
   parallelToolCalls: z.boolean().optional().default(true),
+  modalities: z.array(z.enum(["text", "image", "audio"])).optional(),
+});
+
+const chatModelOptionsSchema = agentOptionsSchema.extend({
+  model: z.string().optional(),
+  modelOptions: modelOptionsSchema.optional(),
 });
 
 const chatModelInputSchema: z.ZodType<ChatModelInput> = z.object({
@@ -498,7 +673,7 @@ const chatModelInputSchema: z.ZodType<ChatModelInput> = z.object({
   responseFormat: chatModelInputResponseFormatSchema.optional(),
   tools: z.array(chatModelInputToolSchema).optional(),
   toolChoice: chatModelInputToolChoiceSchema.optional(),
-  modelOptions: chatModelOptionsSchema.optional(),
+  modelOptions: modelOptionsSchema.optional(),
 });
 
 /**
@@ -539,6 +714,8 @@ export interface ChatModelOutput extends Message {
    * Model name or version used
    */
   model?: string;
+
+  files?: FileUnionContent[];
 }
 
 /**
@@ -620,4 +797,5 @@ const chatModelOutputSchema: z.ZodType<ChatModelOutput> = z.object({
   toolCalls: z.array(chatModelOutputToolCallSchema).optional(),
   usage: chatModelOutputUsageSchema.optional(),
   model: z.string().optional(),
+  files: z.array(fileUnionContentSchema).optional(),
 });

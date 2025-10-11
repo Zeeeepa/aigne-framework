@@ -8,23 +8,24 @@ import {
   agentOptionsSchema,
   type Message,
 } from "./agent.js";
-import { type ImageModel, type ImageModelOutput, imageModelOutputSchema } from "./image-model.js";
+import { type ImageModelOutput, imageModelOutputSchema } from "./image-model.js";
+import { type FileType, fileTypeSchema } from "./model.js";
 
 export interface ImageAgentOptions<I extends Message = any, O extends ImageModelOutput = any>
   extends Omit<AgentOptions<I, O>, "outputSchema"> {
-  model?: ImageModel;
-
   instructions: string | PromptBuilder;
 
   modelOptions?: Record<string, any>;
+
+  outputFileType?: FileType;
 }
 
 export const imageAgentOptionsSchema: ZodObject<{
   [key in keyof ImageAgentOptions]: ZodType<ImageAgentOptions[key]>;
 }> = agentOptionsSchema.extend({
-  model: z.custom<ImageModel>().optional(),
   instructions: z.union([z.string(), z.custom<PromptBuilder>()]),
   modelOptions: z.record(z.any()).optional(),
+  outputFileType: fileTypeSchema.optional(),
 });
 
 export class ImageAgent<I extends Message = any, O extends ImageModelOutput = any> extends Agent<
@@ -43,29 +44,29 @@ export class ImageAgent<I extends Message = any, O extends ImageModelOutput = an
     super({ ...options, outputSchema: imageModelOutputSchema as ZodType<O> });
     checkArguments("ImageAgent", imageAgentOptionsSchema, options);
 
-    this.model = options.model;
     this.instructions =
       typeof options.instructions === "string"
         ? PromptBuilder.from(options.instructions)
         : options.instructions;
     this.modelOptions = options.modelOptions;
+    this.outputFileType = options.outputFileType;
   }
-
-  model?: ImageModel;
 
   instructions: PromptBuilder;
 
   modelOptions?: Record<string, any>;
 
+  outputFileType?: FileType;
+
   override async process(input: I, options: AgentInvokeOptions): Promise<O> {
-    const model = this.model ?? options.context.imageModel;
-    if (!model) throw new Error("image model is required to run ImageAgent");
+    const imageModel = this.imageModel || options.imageModel || options.context.imageModel;
+    if (!imageModel) throw new Error("image model is required to run ImageAgent");
 
     const { prompt } = await this.instructions.buildImagePrompt({ input });
 
-    return (await options.context.invoke(
-      model,
-      { ...input, ...this.modelOptions, prompt },
+    return (await this.invokeChildAgent(
+      imageModel,
+      { ...input, modelOptions: this.modelOptions, prompt, outputFileType: this.outputFileType },
       { ...options, streaming: false },
     )) as O;
   }

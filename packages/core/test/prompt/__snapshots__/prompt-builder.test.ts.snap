@@ -18,6 +18,7 @@ Output in English
     },
   ],
   "modelOptions": undefined,
+  "outputFileType": undefined,
   "responseFormat": undefined,
   "toolAgents": undefined,
   "toolChoice": undefined,

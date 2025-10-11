@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.3-beta](https://github.com/AIGNE-io/aigne-framework/compare/sqlite-v0.4.2...sqlite-v0.4.3-beta) (2025-10-07)
+
+
+### Features
+
+* **afs:** add basic AFS(AIGNE File System) support ([#505](https://github.com/AIGNE-io/aigne-framework/issues/505)) ([ac2a18a](https://github.com/AIGNE-io/aigne-framework/commit/ac2a18a82470a2f31c466f329386525eb1cdab6d))
+
+## [0.4.2](https://github.com/AIGNE-io/aigne-framework/compare/sqlite-v0.4.2-beta...sqlite-v0.4.2) (2025-09-27)
+
+## [0.4.2-beta](https://github.com/AIGNE-io/aigne-framework/compare/sqlite-v0.4.1...sqlite-v0.4.2-beta) (2025-09-25)
+
+
+### Bug Fixes
+
+* improve SQLite busy error handling and observability logging ([#545](https://github.com/AIGNE-io/aigne-framework/issues/545)) ([6dc8e06](https://github.com/AIGNE-io/aigne-framework/commit/6dc8e064231f3d6342036626591e89bff1ae5c08))
+
 ## [0.4.1](https://github.com/AIGNE-io/aigne-framework/compare/sqlite-v0.4.0...sqlite-v0.4.1) (2025-08-26)
 
 

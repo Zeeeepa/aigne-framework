@@ -3,54 +3,85 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { type Agent, AIGNE, type Message } from "@aigne/core";
+import { logger } from "@aigne/core/utils/logger.js";
+import { jsonSchemaToZod } from "@aigne/json-schema-to-zod";
 import { Listr, PRESET_TIMER } from "@aigne/listr2";
 import { joinURL } from "ufo";
-import type { Argv, CommandModule } from "yargs";
+import type { CommandModule } from "yargs";
 import { downloadAndExtract } from "../utils/download.js";
-import { loadAIGNE } from "../utils/load-aigne.js";
-import { runAgentWithAIGNE } from "../utils/run-with-aigne.js";
-import { parseAgentInput, withAgentInputSchema } from "../utils/yargs.js";
+import { withSpinner } from "../utils/spinner.js";
+import {
+  type AgentInChildProcess,
+  type CLIAgentInChildProcess,
+  type LoadAIGNEInChildProcessResult,
+  runAIGNEInChildProcess,
+} from "../utils/workers/run-aigne-in-child-process.js";
+import { type AgentRunCommonOptions, withAgentInputSchema } from "../utils/yargs.js";
 import { serveMCPServerFromDir } from "./serve-mcp.js";
 
 const NPM_PACKAGE_CACHE_TIME_MS = 1000 * 60 * 60 * 24; // 1 day
 
+/**
+ * Check if beta applications should be used based on environment variables
+ */
+function shouldUseBetaApps(): boolean {
+  const envVar = process.env.AIGNE_USE_BETA_APPS;
+  return envVar === "true" || envVar === "1";
+}
+
 const builtinApps = [
   {
     name: "doc-smith",
+    packageName: "@aigne/doc-smith",
     describe: "Generate and maintain project docs — powered by agents.",
     aliases: ["docsmith", "doc"],
   },
+  {
+    name: "web-smith",
+    packageName: "@aigne/web-smith",
+    describe: "Generate and maintain project website pages — powered by agents.",
+    aliases: ["websmith", "web"],
+  },
 ];
 
-export function createAppCommands(): CommandModule[] {
+export function createAppCommands({ argv }: { argv?: string[] } = {}): CommandModule[] {
   return builtinApps.map((app) => ({
     command: app.name,
     describe: app.describe,
     aliases: app.aliases,
-    builder: async (yargs) => {
-      const { aigne, dir, version, isCache } = await loadApplication({ name: app.name });
+    builder: async (y) => {
+      const dir = join(homedir(), ".aigne", "registry.npmjs.org", app.packageName);
 
-      yargs
-        .option("model", {
+      y.command(upgradeCommandModule({ packageName: app.packageName, dir }));
+
+      if (!argv || !isUpgradeCommand(argv)) {
+        const { aigne, version } = await loadApplication({
+          dir,
+          packageName: app.packageName,
+          install: true,
+        });
+
+        if (aigne.cli?.chat) {
+          y.command({
+            ...agentCommandModule({ dir, agent: aigne.cli.chat, chat: true }),
+            command: "$0",
+          });
+        }
+
+        for (const cliAgent of aigne.cli?.agents ?? []) {
+          y.command(cliAgentCommandModule({ dir, cliAgent }));
+        }
+
+        y.option("model", {
           type: "string",
           description:
             "Model to use for the application, example: openai:gpt-4.1 or google:gemini-2.5-flash",
-        })
-        .command(serveMcpCommandModule({ name: app.name, dir }))
-        .command(upgradeCommandModule({ name: app.name, dir, isLatest: !isCache, version }));
+        }).command(serveMcpCommandModule({ name: app.name, dir }));
 
-      if (aigne.cli.chat) {
-        yargs.command({ ...agentCommandModule({ dir, agent: aigne.cli.chat }), command: "$0" });
+        y.version(`${app.name} v${version}`).alias("version", "v");
       }
 
-      for (const agent of aigne.cli?.agents ?? []) {
-        yargs.command(agentCommandModule({ dir, agent }));
-      }
-
-      yargs.version(`${app.name} v${version}`).alias("version", "v");
-
-      return yargs.demandCommand();
+      return y.demandCommand();
     },
     handler: () => {},
   }));
@@ -87,121 +118,263 @@ const serveMcpCommandModule = ({
   },
 });
 
-const upgradeCommandModule = ({
-  name,
-  dir,
-  isLatest,
-  version,
-}: {
-  name: string;
-  dir: string;
-  isLatest?: boolean;
-  version?: string;
-}): CommandModule => ({
-  command: "upgrade",
-  describe: `Upgrade ${name} to the latest version`,
-  handler: async () => {
-    if (!isLatest) {
-      const result = await loadApplication({ name, dir, forceUpgrade: true });
+function isUpgradeCommand(argv: string[]): boolean {
+  const skipGlobalOptions = ["-v", "--version"];
+  return argv[1] === "upgrade" && !argv.some((arg) => skipGlobalOptions.includes(arg));
+}
 
-      if (version !== result.version) {
-        console.log(`\n✅ Upgraded ${name} to version ${result.version}`);
-        return;
-      }
+const upgradeCommandModule = ({
+  packageName,
+  dir,
+}: {
+  packageName: string;
+  dir: string;
+}): CommandModule<
+  unknown,
+  {
+    beta?: boolean;
+    targetVersion?: string;
+    force?: boolean;
+  }
+> => ({
+  command: "upgrade",
+  describe: `Upgrade ${packageName} to the latest version`,
+  builder: (yargs) => {
+    return yargs
+      .option("beta", {
+        type: "boolean",
+        describe: "Use beta versions if available",
+      })
+      .option("target-version", {
+        type: "string",
+        describe: "Specify a version to upgrade to (default is latest)",
+        alias: ["to", "target"],
+      })
+      .option("force", {
+        type: "boolean",
+        describe: "Force upgrade even if already at latest version",
+        default: false,
+      });
+  },
+  handler: async ({ beta, targetVersion, force }) => {
+    beta ??= shouldUseBetaApps();
+
+    const npm = await withSpinner("", async () => {
+      if (force) await rm(dir, { force: true, recursive: true });
+      return await getNpmTgzInfo(packageName, { beta, version: targetVersion });
+    });
+
+    let app = await loadApplication({ packageName, dir });
+
+    if (!app || force || npm.version !== app.version) {
+      await installApp({ packageName, dir, beta, version: targetVersion });
+      app = await loadApplication({ dir, packageName, install: true });
+
+      console.log(`\n✅ Upgraded ${packageName} to version ${app.version}`);
+      return;
     }
 
-    console.log(`\n✅ ${name} is already at the latest version (${version})`);
+    console.log(`\n✅ ${packageName} is already at the latest version (${app.version})`);
   },
 });
 
-const agentCommandModule = ({
+export const agentCommandModule = ({
   dir,
   agent,
+  chat,
 }: {
   dir: string;
-  agent: Agent;
-}): CommandModule<unknown, { input?: string[]; format?: "json" | "yaml"; model?: string }> => {
+  agent: AgentInChildProcess;
+  chat?: boolean;
+}): CommandModule<unknown, AgentRunCommonOptions> => {
   return {
     command: agent.name,
     aliases: agent.alias || [],
     describe: agent.description || "",
-    builder: async (yargs) => withAgentInputSchema(yargs, agent) as Argv<unknown>,
-    handler: async (input) => {
-      await invokeCLIAgentFromDir({ dir, agent: agent.name, input });
+    builder: async (yargs) => {
+      return withAgentInputSchema(yargs, { inputSchema: jsonSchemaToZod(agent.inputSchema) });
+    },
+    handler: async (options) => {
+      if (options.logLevel) logger.level = options.logLevel;
+
+      await runAIGNEInChildProcess("invokeCLIAgentFromDir", {
+        dir,
+        agent: agent.name,
+        input: { ...options, chat: chat ?? options.chat },
+      });
+
+      process.exit(0);
     },
   };
 };
 
-export async function invokeCLIAgentFromDir(options: {
+export const cliAgentCommandModule = ({
+  dir,
+  parent,
+  cliAgent,
+}: {
   dir: string;
-  agent: string;
-  input: Message & { input?: string[]; format?: "yaml" | "json"; model?: string };
-}) {
-  const aigne = await loadAIGNE({
-    path: options.dir,
-    modelOptions: { model: options.input.model },
-  });
+  parent?: string[];
+  cliAgent: CLIAgentInChildProcess;
+}): CommandModule<unknown, AgentRunCommonOptions> => {
+  const { agent, agents } = cliAgent;
 
-  try {
-    const { chat, agents } = aigne.cli;
+  const name = cliAgent.name || agent?.name;
+  assert(name, "CLI agent must have a name");
 
-    const agent = chat && chat.name === options.agent ? chat : agents[options.agent];
-    assert(agent, `Agent ${options.agent} not found in ${options.dir}`);
+  return {
+    command: name,
+    aliases: cliAgent.alias || agent?.alias || [],
+    describe: cliAgent.description || agent?.description || "",
+    builder: async (yargs) => {
+      if (agent) {
+        withAgentInputSchema(yargs, { inputSchema: jsonSchemaToZod(agent.inputSchema) });
+      }
+      if (agents?.length) {
+        for (const cmd of agents) {
+          yargs.command(
+            cliAgentCommandModule({ dir, parent: (parent ?? []).concat(name), cliAgent: cmd }),
+          );
+        }
+      }
 
-    const input = await parseAgentInput(options.input, agent);
+      if (!agent) yargs.demandCommand();
 
-    await runAgentWithAIGNE(aigne, agent, { input, chat: agent === chat });
-  } finally {
-    await aigne.shutdown();
-  }
+      return yargs;
+    },
+    handler: async (options) => {
+      if (!agent) throw new Error("CLI agent is not defined");
+
+      if (options.logLevel) logger.level = options.logLevel;
+
+      await runAIGNEInChildProcess("invokeCLIAgentFromDir", {
+        dir,
+        parent,
+        agent: name,
+        input: options,
+      });
+
+      process.exit(0);
+    },
+  };
+};
+
+interface LoadApplicationOptions {
+  packageName: string;
+  dir: string;
+  install?: boolean;
 }
 
-export async function loadApplication({
-  name,
-  dir,
-  forceUpgrade = false,
-}: {
-  name: string;
-  dir?: string;
-  forceUpgrade?: boolean;
-}): Promise<{ aigne: AIGNE; dir: string; version: string; isCache?: boolean }> {
-  name = `@aigne/${name}`;
-  dir ??= join(homedir(), ".aigne", "registry.npmjs.org", name);
+interface LoadApplicationResult {
+  aigne: LoadAIGNEInChildProcessResult;
+  version: string;
+  isCache?: boolean;
+}
 
-  let check = forceUpgrade ? undefined : await isInstallationAvailable(dir);
-  if (check?.available) {
-    const aigne = await AIGNE.load(dir).catch((error) => {
-      console.warn(`⚠️ Failed to load ${name}, trying to reinstall:`, error.message);
+export async function loadApplication(
+  options: LoadApplicationOptions & { install: true },
+): Promise<LoadApplicationResult>;
+export async function loadApplication(
+  options: LoadApplicationOptions & { install?: false },
+): Promise<LoadApplicationResult | null>;
+export async function loadApplication(
+  options: LoadApplicationOptions,
+): Promise<LoadApplicationResult | null> {
+  const { dir, packageName } = options;
+
+  const check = await checkInstallation(dir);
+
+  if (check && !check.expired) {
+    const aigne = await runAIGNEInChildProcess("loadAIGNE", dir).catch(async (error) => {
+      logger.error(`⚠️ Failed to load ${packageName}, trying to reinstall:`, error.message);
+
+      await withSpinner("", async () => {
+        await rm(options.dir, { recursive: true, force: true });
+        await mkdir(options.dir, { recursive: true });
+      });
     });
-    if (aigne) {
-      return {
-        aigne,
-        dir,
-        version: check.version,
-        isCache: true,
-      };
-    }
 
-    check = undefined;
+    if (aigne) {
+      return { aigne, version: check.version, isCache: true };
+    }
   }
 
-  const result = await new Listr<{
-    url: string;
-    version: string;
-  }>(
+  if (!options.install) return null;
+
+  const result = await installApp({ dir, packageName, beta: check?.version?.includes("beta") });
+
+  return {
+    aigne: await runAIGNEInChildProcess("loadAIGNE", dir),
+    version: result.version,
+  };
+}
+
+interface InstallationMetadata {
+  installedAt?: number;
+}
+
+async function readInstallationMetadata(dir: string): Promise<InstallationMetadata | undefined> {
+  return safeParseJSON<InstallationMetadata>(
+    await readFile(join(dir, ".aigne-cli.json"), "utf-8").catch(() => "{}"),
+  );
+}
+
+async function writeInstallationMetadata(dir: string, metadata: InstallationMetadata) {
+  await writeFile(join(dir, ".aigne-cli.json"), JSON.stringify(metadata, null, 2));
+}
+
+async function checkInstallation(
+  dir: string,
+  { cacheTimeMs = NPM_PACKAGE_CACHE_TIME_MS }: { cacheTimeMs?: number } = {},
+): Promise<{ version: string; expired: boolean } | null> {
+  const s = await stat(join(dir, "package.json")).catch(() => null);
+
+  if (!s) return null;
+
+  const version = safeParseJSON<{ version: string }>(
+    await readFile(join(dir, "package.json"), "utf-8"),
+  )?.version;
+  if (!version) return null;
+
+  const installedAt = (await readInstallationMetadata(dir))?.installedAt;
+
+  if (!installedAt) return null;
+
+  const now = Date.now();
+  const expired = now - installedAt > cacheTimeMs;
+
+  return { version, expired };
+}
+
+export async function installApp({
+  dir,
+  packageName,
+  beta,
+  version,
+}: {
+  dir: string;
+  packageName: string;
+  beta?: boolean;
+  version?: string;
+}) {
+  return await new Listr<{ url: string; version: string }>(
     [
       {
-        title: `Fetching ${name} metadata`,
-        task: async (ctx) => {
-          const info = await getNpmTgzInfo(name);
+        title: `Fetching ${packageName} metadata`,
+        task: async (ctx, task) => {
+          if (beta) {
+            task.title = `Fetching ${packageName} metadata (using beta version)`;
+          }
+
+          const info = await getNpmTgzInfo(packageName, { beta, version });
           Object.assign(ctx, info);
         },
       },
       {
-        title: `Downloading ${name}`,
-        skip: (ctx) => ctx.version === check?.version,
-        task: async (ctx) => {
-          await rm(dir, { force: true, recursive: true });
+        title: `Downloading ${packageName}`,
+        task: async (ctx, task) => {
+          task.title = `Downloading ${packageName} (v${ctx.version})`;
+
           await mkdir(dir, { recursive: true });
 
           await downloadAndExtract(ctx.url, dir, { strip: 1 });
@@ -216,6 +389,8 @@ export async function loadApplication({
               if (last) task.output = last;
             },
           });
+
+          await writeInstallationMetadata(dir, { installedAt: Date.now() });
         },
       },
     ],
@@ -227,42 +402,11 @@ export async function loadApplication({
       },
     },
   ).run();
-
-  return {
-    aigne: await AIGNE.load(dir),
-    dir,
-    version: result.version,
-  };
-}
-
-async function isInstallationAvailable(
-  dir: string,
-  { cacheTimeMs = NPM_PACKAGE_CACHE_TIME_MS }: { cacheTimeMs?: number } = {},
-): Promise<{ version: string; available: boolean } | null> {
-  const s = await stat(join(dir, "package.json")).catch(() => null);
-
-  if (!s) return null;
-
-  const version = safeParseJSON<{ version: string }>(
-    await readFile(join(dir, "package.json"), "utf-8"),
-  )?.version;
-  if (!version) return null;
-
-  const installedAt = safeParseJSON<{ installedAt: number }>(
-    await readFile(join(dir, ".aigne-cli.json"), "utf-8").catch(() => "{}"),
-  )?.installedAt;
-
-  if (!installedAt) return null;
-
-  const now = Date.now();
-  const available = installedAt ? now - installedAt < cacheTimeMs : false;
-
-  return { version, available };
 }
 
 async function installDependencies(dir: string, { log }: { log?: (log: string) => void } = {}) {
   await new Promise<void>((resolve, reject) => {
-    const child = spawn("corepack", ["npm", "install", "--omit", "dev", "--verbose"], {
+    const child = spawn("npm", ["install", "--omit", "dev", "--verbose", "--legacy-peer-deps"], {
       cwd: dir,
       stdio: "pipe",
       shell: process.platform === "win32",
@@ -289,22 +433,35 @@ async function installDependencies(dir: string, { log }: { log?: (log: string) =
       }
     });
   });
-
-  await writeFile(
-    join(dir, ".aigne-cli.json"),
-    JSON.stringify({ installedAt: Date.now() }, null, 2),
-  );
 }
 
-async function getNpmTgzInfo(name: string) {
+export async function getNpmTgzInfo(
+  name: string,
+  { version, beta }: { version?: string; beta?: boolean } = {},
+): Promise<{ version: string; url: string }> {
   const res = await fetch(joinURL("https://registry.npmjs.org", name));
   if (!res.ok) throw new Error(`Failed to fetch package info for ${name}: ${res.statusText}`);
   const data = await res.json();
-  const latestVersion = data["dist-tags"].latest;
-  const url = data.versions[latestVersion].dist.tarball;
+
+  let targetVersion: string;
+
+  if (version) {
+    if (!data.versions[version]) {
+      throw new Error(`Version ${version} of package ${name} not found`);
+    }
+    targetVersion = version;
+  } else if (beta && data["dist-tags"].beta) {
+    // Use beta version if available and beta flag is set
+    targetVersion = data["dist-tags"].beta;
+  } else {
+    // Fall back to latest version
+    targetVersion = data["dist-tags"].latest;
+  }
+
+  const url = data.versions[targetVersion].dist.tarball;
 
   return {
-    version: latestVersion,
+    version: targetVersion,
     url,
   };
 }

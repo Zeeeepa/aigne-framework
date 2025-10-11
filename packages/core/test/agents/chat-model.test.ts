@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
-import { v7 } from "uuid";
+import { AIGNE } from "@aigne/core";
+import { v7 } from "@aigne/uuid";
 import {
   type AgentProcessResult,
   type AgentResponseStream,
@@ -10,8 +11,10 @@ import {
 import {
   ChatModel,
   type ChatModelInput,
+  type ChatModelInputOptions,
   type ChatModelOutput,
 } from "../../src/agents/chat-model.js";
+import { OpenAIChatModel } from "../_mocks/mock-models.js";
 
 test("ChatModel implementation", async () => {
   // #region example-chat-model
@@ -299,4 +302,302 @@ test("ChatModel should auto convert tool name to valid function name", async () 
   });
 
   expect(process.mock.lastCall?.[0].tools?.at(0)?.function.name).toEqual("get___weather");
+});
+
+test("ChatModel should validate structured response with json schema", async () => {
+  const model = new OpenAIChatModel({
+    retryOnError: false,
+  });
+
+  const input: ChatModelInput = {
+    messages: [{ role: "user", content: "Provide a JSON response with name and age." }],
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "TestSchema",
+        schema: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            age: { type: "number" },
+          },
+          required: ["name", "age"],
+          additionalProperties: false,
+        },
+        strict: true,
+      },
+    },
+  };
+
+  const modelProcess = spyOn(model, "process");
+
+  modelProcess.mockReturnValueOnce({ json: { name: 30 } });
+  expect(model.invoke(input)).rejects.toThrowError(
+    /Output JSON does not conform to the provided JSON schema/,
+  );
+
+  modelProcess.mockReturnValueOnce({ json: { name: "Alice", age: 25 } });
+  expect(await model.invoke(input)).toEqual({ json: { name: "Alice", age: 25 } });
+});
+
+test("ChatModel should try to fix the structured output format automatically", async () => {
+  const model = new OpenAIChatModel({
+    retryOnError: false,
+  });
+
+  const input: ChatModelInput = {
+    messages: [{ role: "user", content: "Provide a JSON response with name and age." }],
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "TestSchema",
+        schema: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            tags: { type: "array", items: { type: "string" } },
+          },
+          required: ["name", "tags"],
+          additionalProperties: false,
+        },
+        strict: true,
+      },
+    },
+  };
+
+  const modelProcess = spyOn(model, "process");
+
+  modelProcess.mockReturnValueOnce({
+    json: { name: "Alice", tags: JSON.stringify(["friend", "colleague"]) },
+  });
+  expect(await model.invoke(input)).toEqual({
+    json: { name: "Alice", tags: ["friend", "colleague"] },
+  });
+});
+
+test("ChatModel should retry after network errors or structured output validation failures", async () => {
+  const model = new OpenAIChatModel({});
+
+  const input: ChatModelInput = {
+    messages: [{ role: "user", content: "Provide a JSON response with name and age." }],
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "TestSchema",
+        schema: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            age: { type: "number" },
+          },
+          required: ["name", "age"],
+          additionalProperties: false,
+        },
+        strict: true,
+      },
+    },
+  };
+
+  const modelProcess = spyOn(model, "process");
+
+  modelProcess
+    .mockRejectedValueOnce(new TypeError("terminated") as never)
+    .mockReturnValueOnce({ json: { name: 30 } })
+    .mockReturnValueOnce({ json: { name: "Alice", age: 25 } });
+  expect(await model.invoke(input)).toEqual({ json: { name: "Alice", age: 25 } });
+});
+
+test("ChatModel should retry after tool not found error", async () => {
+  const model = new OpenAIChatModel({});
+
+  const input: ChatModelInput = {
+    messages: [{ role: "user", content: "Provide a JSON response with name and age." }],
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "get_user_info",
+          description: "Get user info",
+          parameters: {
+            type: "object",
+            properties: { user_id: { type: "string" } },
+            required: ["user_id"],
+          },
+        },
+      },
+    ],
+  };
+
+  const modelProcess = spyOn(model, "process");
+
+  modelProcess
+    .mockReturnValueOnce(<ChatModelOutput>{
+      toolCalls: [{ id: "1", type: "function", function: { name: "unknown_tool", arguments: {} } }],
+    })
+    .mockReturnValueOnce(<ChatModelOutput>{
+      toolCalls: [
+        {
+          id: "2",
+          type: "function",
+          function: { name: "get_user_info", arguments: { user_id: null } },
+        },
+      ],
+    })
+    .mockReturnValueOnce(<ChatModelOutput>{
+      toolCalls: [
+        {
+          id: "3",
+          type: "function",
+          function: { name: "get_user_info", arguments: { user_id: "123" } },
+        },
+      ],
+    });
+  expect(await model.invoke(input)).toMatchInlineSnapshot(`
+    {
+      "toolCalls": [
+        {
+          "function": {
+            "arguments": {
+              "user_id": "123",
+            },
+            "name": "get_user_info",
+          },
+          "id": "3",
+          "type": "function",
+        },
+      ],
+    }
+  `);
+});
+
+test("ChatModel should save file to local", async () => {
+  const context = new AIGNE().newContext();
+  const model = new OpenAIChatModel({});
+
+  const result = await model.transformFileType(
+    undefined,
+    { type: "file", data: Buffer.from("test data").toString("base64") },
+    { context },
+  );
+  expect(result).toMatchInlineSnapshot(
+    { path: expect.any(String) },
+    `
+      {
+        "mimeType": undefined,
+        "path": Any<String>,
+        "type": "local",
+      }
+    `,
+  );
+});
+
+test("ChatModel should download file", async () => {
+  const context = new AIGNE().newContext();
+  const model = new OpenAIChatModel({});
+
+  const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("test png file"));
+
+  const result = await model.transformFileType(
+    "file",
+    { type: "url", url: "https://www.example.com/test.png" },
+    { context },
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "data": "dGVzdCBwbmcgZmlsZQ==",
+      "mimeType": "image/png",
+      "type": "file",
+    }
+  `);
+
+  expect(fetchSpy).toHaveBeenCalledWith("https://www.example.com/test.png");
+
+  fetchSpy.mockRestore();
+});
+
+test.each<[ChatModelInputOptions]>([
+  [{}],
+  [{ preferInputFileType: "file" }],
+  [{ preferInputFileType: "url" }],
+])("ChatModel should auto convert image url to base64 image data %p", async (modelOptions) => {
+  const model = new OpenAIChatModel({
+    modelOptions,
+  });
+
+  const processSpy = spyOn(model, "process").mockReturnValue({ json: { files: {} } });
+  const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response("test png file"));
+
+  await model.invoke({
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "convert image to cartoon styles" },
+          { type: "url", url: "https://www.example.com/test.png" },
+        ],
+      },
+    ],
+  });
+
+  expect(processSpy.mock.lastCall?.at(0)).toMatchSnapshot();
+
+  fetchSpy.mockRestore();
+});
+
+test("ChatModel should validate and try to fix the arguments for tool use", async () => {
+  const model = new OpenAIChatModel({});
+
+  spyOn(model, "process").mockReturnValueOnce({
+    toolCalls: [
+      {
+        id: "call_123",
+        type: "function",
+        function: {
+          name: "get_weather",
+          arguments: {
+            cities: '["New York", "Los Angeles"]',
+          },
+        },
+      },
+    ],
+  });
+
+  const result = await model.invoke({
+    messages: [{ role: "user", content: "What's the weather in New York?" }],
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "get_weather",
+          description: "Get weather for a location",
+          parameters: {
+            type: "object",
+            properties: {
+              cities: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      },
+    ],
+  });
+
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "toolCalls": [
+        {
+          "function": {
+            "arguments": {
+              "cities": [
+                "New York",
+                "Los Angeles",
+              ],
+            },
+            "name": "get_weather",
+          },
+          "id": "call_123",
+          "type": "function",
+        },
+      ],
+    }
+  `);
 });

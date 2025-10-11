@@ -3,7 +3,7 @@ import { format } from "node:util";
 import type { AgentResponseStream, Message } from "@aigne/core";
 import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { mergeAgentResponseChunk } from "@aigne/core/utils/stream-utils.js";
-import type { PromiseOrValue } from "@aigne/core/utils/type-utils";
+import type { PromiseOrValue } from "@aigne/core/utils/type-utils.js";
 import {
   color,
   DefaultRenderer,
@@ -41,7 +41,10 @@ export class AIGNEListr extends Listr<
   constructor(
     public myOptions: {
       formatRequest: () => string | undefined;
-      formatResult: (result: Message, options?: { running?: boolean }) => string[];
+      formatResult: (
+        result: Message,
+        options?: { running?: boolean; renderImage?: boolean },
+      ) => string | Promise<string>;
     },
     ...[task, options, parentTask]: ConstructorParameters<
       typeof Listr<object, typeof AIGNEListrRenderer, typeof AIGNEListrFallbackRenderer>
@@ -51,8 +54,11 @@ export class AIGNEListr extends Listr<
       getStdoutLogs: () => {
         return this.logs.splice(0);
       },
-      getBottomBarLogs: (options?: { running?: boolean }) => {
-        return this.myOptions.formatResult(this.result, options);
+      getBottomBarLogs: (options?: { running?: boolean; renderImage?: boolean }) => {
+        if (!options?.running) return [];
+        const r = this.myOptions.formatResult(this.result);
+        if (typeof r !== "string") throw new Error("Must return a string result for running task");
+        return [r];
       },
     };
 
@@ -122,10 +128,16 @@ export class AIGNEListr extends Listr<
 
       this.add({ task: () => this.extractStream(_stream) });
 
-      return await super.run().then(() => {
+      const result = await super.run().then(() => {
         if (this.error) throw this.error;
         return { ...this.result };
       });
+
+      console.log(
+        await this.myOptions.formatResult(this.result, { running: false, renderImage: true }),
+      );
+
+      return result;
     } finally {
       logger.logMessage = originalLog;
       Object.assign(console, originalConsole);

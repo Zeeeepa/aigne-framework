@@ -1,3 +1,4 @@
+import fastq from "fastq";
 import { type ZodObject, type ZodType, z } from "zod";
 import { PromptBuilder } from "../prompt/prompt-builder.js";
 import { STRUCTURED_STREAM_INSTRUCTIONS } from "../prompt/prompts/structured-stream-instructions.js";
@@ -9,6 +10,7 @@ import {
   type AgentInvokeOptions,
   type AgentOptions,
   type AgentProcessAsyncGenerator,
+  type AgentProcessResult,
   type AgentResponseStream,
   agentOptionsSchema,
   isAgentResponseDelta,
@@ -22,9 +24,11 @@ import type {
   ChatModelOutputToolCall,
 } from "./chat-model.js";
 import type { GuideRailAgentOutput } from "./guide-rail-agent.js";
-import { isTransferAgentOutput } from "./types.js";
+import { type FileType, fileUnionContentsSchema } from "./model.js";
+import { isTransferAgentOutput, type TransferAgentOutput } from "./types.js";
 
 export const DEFAULT_OUTPUT_KEY = "message";
+export const DEFAULT_OUTPUT_FILE_KEY = "files";
 
 /**
  * Configuration options for an AI Agent
@@ -38,13 +42,6 @@ export const DEFAULT_OUTPUT_KEY = "message";
 export interface AIAgentOptions<I extends Message = Message, O extends Message = Message>
   extends AgentOptions<I, O> {
   /**
-   * The language model to use for this agent
-   *
-   * If not provided, the agent will use the model from the context
-   */
-  model?: ChatModel;
-
-  /**
    * Instructions to guide the AI model's behavior
    *
    * Can be a simple string or a full PromptBuilder instance for
@@ -57,6 +54,8 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
    */
   inputKey?: string;
 
+  inputFileKey?: string;
+
   /**
    * Custom key to use for text output in the response
    *
@@ -64,12 +63,28 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
    */
   outputKey?: string;
 
+  outputFileKey?: string;
+
+  outputFileType?: FileType;
+
   /**
    * Controls how the agent uses tools during execution
    *
    * @default AIAgentToolChoice.auto
    */
   toolChoice?: AIAgentToolChoice | Agent;
+
+  /**
+   * Maximum number of tool calls to execute concurrently
+   *
+   * @default 1
+   */
+  toolCallsConcurrency?: number;
+
+  /**
+   * Whether to preserve text generated during tool usage in the final output
+   */
+  keepTextInToolUses?: boolean;
 
   /**
    * Whether to catch errors from tool execution and continue processing.
@@ -205,6 +220,8 @@ export const aiAgentOptionsSchema: ZodObject<{
   inputKey: z.string().optional(),
   outputKey: z.string().optional(),
   toolChoice: aiAgentToolChoiceSchema.optional(),
+  toolCallsConcurrency: z.number().int().min(0).optional(),
+  keepTextInToolUses: z.boolean().optional(),
   memoryAgentsAsTools: z.boolean().optional(),
   memoryPromptTemplate: z.string().optional(),
 }) as ZodObject<{
@@ -259,15 +276,18 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     super(options);
     checkArguments("AIAgent", aiAgentOptionsSchema, options);
 
-    this.model = options.model;
     this.instructions =
       typeof options.instructions === "string"
         ? PromptBuilder.from(options.instructions)
         : (options.instructions ?? new PromptBuilder());
     this.inputKey = options.inputKey;
-
+    this.inputFileKey = options.inputFileKey;
     this.outputKey = options.outputKey || DEFAULT_OUTPUT_KEY;
+    this.outputFileKey = options.outputFileKey || DEFAULT_OUTPUT_FILE_KEY;
+    this.outputFileType = options.outputFileType;
     this.toolChoice = options.toolChoice;
+    this.toolCallsConcurrency = options.toolCallsConcurrency || 1;
+    this.keepTextInToolUses = options.keepTextInToolUses;
     this.memoryAgentsAsTools = options.memoryAgentsAsTools;
     this.memoryPromptTemplate = options.memoryPromptTemplate;
     this.useMemoriesFromContext = options.useMemoriesFromContext;
@@ -290,13 +310,6 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
   }
 
   /**
-   * The language model used by this agent
-   *
-   * If not set on the agent, the model from the context will be used
-   */
-  model?: ChatModel;
-
-  /**
    * Instructions for the language model
    *
    * Contains system messages, user templates, and other prompt elements
@@ -313,6 +326,8 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
    */
   inputKey?: string;
 
+  inputFileKey?: string;
+
   /**
    * Custom key to use for text output in the response
    *
@@ -321,6 +336,10 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
    * {@includeCode ../../test/agents/ai-agent.test.ts#example-ai-agent-custom-output-key}
    */
   outputKey: string;
+
+  outputFileKey: string;
+
+  outputFileType?: FileType;
 
   /**
    * Controls how the agent uses tools during execution
@@ -334,6 +353,18 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
    * {@includeCode ../../test/agents/ai-agent.test.ts#example-ai-agent-router}
    */
   toolChoice?: AIAgentToolChoice | Agent;
+
+  /**
+   * Maximum number of tool calls to execute concurrently
+   *
+   * @default 1
+   */
+  toolCallsConcurrency?: number;
+
+  /**
+   * Whether to preserve text generated during tool usage in the final output
+   */
+  keepTextInToolUses?: boolean;
 
   /**
    * Whether to include memory agents as tools for the AI model
@@ -400,13 +431,34 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     parse: (raw: string) => object;
   };
 
+  override get inputSchema(): ZodType<I> {
+    let schema = super.inputSchema as unknown as ZodObject<{ [key: string]: ZodType<any> }>;
+
+    if (this.inputKey) {
+      schema = schema.extend({
+        [this.inputKey]: z.string().nullish(),
+      });
+    }
+    if (this.inputFileKey) {
+      schema = schema.extend({
+        [this.inputFileKey]: fileUnionContentsSchema.nullish(),
+      });
+    }
+
+    return schema as unknown as ZodType<I>;
+  }
+
   /**
    * Process an input message and generate a response
    *
    * @protected
    */
-  async *process(input: I, options: AgentInvokeOptions): AgentProcessAsyncGenerator<O> {
-    const model = this.model ?? options.context.model;
+  process(input: I, options: AgentInvokeOptions): AgentProcessResult<O> {
+    return this._process(input, options);
+  }
+
+  private async *_process(input: I, options: AgentInvokeOptions): AgentProcessAsyncGenerator<O> {
+    const model = this.model || options.model || options.context.model;
     if (!model) throw new Error("model is required to run AIAgent");
 
     const { toolAgents, ...modelInput } = await this.instructions.build({
@@ -428,7 +480,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     for (;;) {
       const modelOutput: ChatModelOutput = {};
 
-      let stream = await options.context.invoke(
+      let stream = await this.invokeChildAgent(
         model,
         { ...modelInput, messages: modelInput.messages.concat(toolCallMessages) },
         { ...options, streaming: true },
@@ -463,47 +515,72 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
         }
       }
 
-      const { toolCalls, json, text } = modelOutput;
+      const { toolCalls, json, text, files } = modelOutput;
 
       if (toolCalls?.length) {
+        if (!this.keepTextInToolUses) {
+          yield { delta: { json: { [outputKey]: "" } as Partial<O> } };
+        } else {
+          yield { delta: { text: { [outputKey]: "\n" } } };
+        }
+
         const executedToolCalls: {
           call: ChatModelOutputToolCall;
           output: Message;
         }[] = [];
+
+        let error: Error | undefined;
+
+        const queue = fastq.promise<unknown, { tool: Agent; call: ChatModelOutputToolCall }>(
+          async ({ tool, call }) => {
+            try {
+              // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
+              const output = await this.invokeSkill(
+                tool,
+                { ...input, ...call.function.arguments },
+                options,
+              ).catch((error) => {
+                if (!this.catchToolsError) {
+                  return Promise.reject(error);
+                }
+
+                return {
+                  isError: true,
+                  error: {
+                    message: error.message,
+                  },
+                };
+              });
+
+              executedToolCalls.push({ call, output });
+            } catch (e) {
+              error = e;
+              queue.killAndDrain();
+            }
+          },
+          this.toolCallsConcurrency || 1,
+        );
 
         // Execute tools
         for (const call of toolCalls) {
           const tool = toolsMap.get(call.function.name);
           if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
 
-          // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
-          const output = await this.invokeSkill(
-            tool,
-            { ...input, ...call.function.arguments },
-            options,
-          ).catch((error) => {
-            if (!this.catchToolsError) {
-              return Promise.reject(error);
-            }
-
-            return {
-              isError: true,
-              error: {
-                message: error.message,
-              },
-            };
-          });
-
-          // NOTE: Return transfer output immediately
-          if (isTransferAgentOutput(output)) {
-            return output;
-          }
-
-          executedToolCalls.push({ call, output });
+          queue.push({ tool, call });
         }
+
+        await queue.drained();
+
+        if (error) throw error;
 
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
+          const transferOutput = executedToolCalls.find(
+            (i): i is { call: ChatModelOutputToolCall; output: TransferAgentOutput } =>
+              isTransferAgentOutput(i.output),
+          )?.output;
+          if (transferOutput) return transferOutput;
+
           toolCallMessages.push(
             await AgentMessageTemplate.from(
               undefined,
@@ -527,6 +604,9 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
       }
       if (text) {
         Object.assign(result, { [outputKey]: text });
+      }
+      if (files) {
+        Object.assign(result, { [this.outputFileKey]: files });
       }
 
       if (!isEmpty(result)) {
@@ -560,7 +640,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     options: AgentInvokeOptions,
     toolsMap: Map<string, Agent>,
   ): AgentProcessAsyncGenerator<O> {
-    const { toolCalls: [call] = [] } = await options.context.invoke(model, modelInput, {
+    const { toolCalls: [call] = [] } = await this.invokeChildAgent(model, modelInput, {
       ...options,
       streaming: false,
     });
@@ -572,7 +652,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     const tool = toolsMap.get(call.function.name);
     if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
 
-    const stream = await options.context.invoke(
+    const stream = await this.invokeChildAgent(
       tool,
       { ...call.function.arguments, ...input },
       { ...options, streaming: true, sourceAgent: this },

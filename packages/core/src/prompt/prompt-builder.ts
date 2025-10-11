@@ -1,24 +1,30 @@
+import { type AFSEntry, AFSHistory } from "@aigne/afs";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { Agent, type AgentInvokeOptions, type Message } from "../agents/agent.js";
-import type { AIAgent } from "../agents/ai-agent.js";
+import { type AIAgent, DEFAULT_OUTPUT_FILE_KEY, DEFAULT_OUTPUT_KEY } from "../agents/ai-agent.js";
 import type {
   ChatModel,
   ChatModelInput,
   ChatModelInputMessage,
+  ChatModelInputMessageContent,
+  ChatModelInputOptions,
   ChatModelInputResponseFormat,
   ChatModelInputTool,
   ChatModelInputToolChoice,
-  ChatModelOptions,
 } from "../agents/chat-model.js";
+import { fileUnionContentsSchema } from "../agents/model.js";
+import { optionalize } from "../loader/schema.js";
 import type { Memory } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
-import { isNil, isRecord, unique } from "../utils/type-utils.js";
+import { checkArguments, flat, isNonNullable, isRecord, unique } from "../utils/type-utils.js";
+import { getAFSSystemPrompt } from "./prompts/afs-builtin-prompt.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
 import { STRUCTURED_STREAM_INSTRUCTIONS } from "./prompts/structured-stream-instructions.js";
+import { getAFSSkills } from "./skills/afs.js";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
@@ -72,10 +78,10 @@ export class PromptBuilder {
             if (typeof resource.text === "string") {
               content = resource.text;
             } else if (typeof resource.blob === "string") {
-              content = [{ type: "image_url", url: resource.blob }];
+              content = [{ type: "url", url: resource.blob }];
             }
           } else if (i.content.type === "image") {
-            content = [{ type: "image_url", url: i.content.data }];
+            content = [{ type: "url", url: i.content.data }];
           }
 
           if (!content) throw new Error(`Unsupported content type ${i.content.type}`);
@@ -104,7 +110,8 @@ export class PromptBuilder {
       responseFormat: options.agent?.structuredStreamMode
         ? undefined
         : this.buildResponseFormat(options),
-      ...this.buildTools(options),
+      outputFileType: options.agent?.outputFileType,
+      ...(await this.buildTools(options)),
     };
   }
 
@@ -132,6 +139,17 @@ export class PromptBuilder {
         : this.instructions
       )?.format(options.input, { workingDir: this.workingDir })) ?? [];
 
+    const inputFileKey = options.agent?.inputFileKey;
+    const files = flat(
+      inputFileKey
+        ? checkArguments(
+            "Check input files",
+            optionalize(fileUnionContentsSchema),
+            input?.[inputFileKey],
+          )
+        : null,
+    );
+
     const memories: Pick<Memory, "content">[] = [];
 
     if (options.agent && options.context) {
@@ -145,6 +163,25 @@ export class PromptBuilder {
 
     if (options.agent?.useMemoriesFromContext && options.context?.memories?.length) {
       memories.push(...options.context.memories);
+    }
+
+    if (options.agent?.afs) {
+      const history = await options.agent.afs.list(AFSHistory.Path, {
+        limit: options.agent.maxRetrieveMemoryCount ?? 10,
+        orderBy: [["createdAt", "desc"]],
+      });
+
+      if (message) {
+        const result = await options.agent.afs.search("/", message);
+        const ms = result.list.map((entry) => ({ content: stringify(entry.content) }));
+        memories.push(...ms);
+      }
+
+      memories.push(
+        ...history.list.filter((i): i is Required<AFSEntry> => isNonNullable(i.content)),
+      );
+
+      messages.push(SystemMessageTemplate.from(await getAFSSystemPrompt(options.agent.afs)));
     }
 
     if (memories.length)
@@ -167,11 +204,12 @@ export class PromptBuilder {
       );
     }
 
-    if (message) {
-      messages.push({
-        role: "user",
-        content: message,
-      });
+    if (message || files.length) {
+      const content: Exclude<ChatModelInputMessageContent, "string"> = [];
+      if (message) content.push({ type: "text", text: message });
+      if (files.length) content.push(...files);
+
+      messages.push({ role: "user", content });
     }
 
     return messages;
@@ -184,17 +222,86 @@ export class PromptBuilder {
     const messages: ChatModelInputMessage[] = [];
     const other: unknown[] = [];
 
-    const stringOrStringify = (value: unknown): string =>
+    const inputKey = options.agent?.inputKey;
+    const inputFileKey = options.agent?.inputFileKey;
+
+    const outputKey = options.agent?.outputKey || DEFAULT_OUTPUT_KEY;
+    const outputFileKey = options.agent?.outputFileKey || DEFAULT_OUTPUT_FILE_KEY;
+
+    const stringOrStringify = (value: unknown) =>
       typeof value === "string" ? value : stringify(value);
 
+    const convertMemoryToMessage = async (content: {
+      input?: unknown;
+      output?: unknown;
+    }): Promise<ChatModelInputMessage[]> => {
+      const { input, output } = content;
+      if (!input || !output) return [];
+
+      const result: ChatModelInputMessage[] = [];
+
+      const userMessageContent: ChatModelInputMessageContent = [];
+      if (typeof input === "object") {
+        const inputMessage: unknown = inputKey ? Reflect.get(input, inputKey) : undefined;
+        const inputFiles: unknown = inputFileKey ? Reflect.get(input, inputFileKey) : undefined;
+
+        if (inputMessage) {
+          userMessageContent.push({ type: "text", text: stringOrStringify(inputMessage) });
+        }
+        if (inputFiles) {
+          userMessageContent.push(
+            ...flat(
+              checkArguments(
+                "Check memory input files",
+                optionalize(fileUnionContentsSchema),
+                inputFiles,
+              ),
+            ),
+          );
+        }
+      }
+      if (!userMessageContent.length) {
+        userMessageContent.push({ type: "text", text: stringOrStringify(input) });
+      }
+      result.push({ role: "user", content: userMessageContent });
+
+      const agentMessageContent: ChatModelInputMessageContent = [];
+      if (typeof output === "object") {
+        const outputMessage: unknown = Reflect.get(output, outputKey);
+        const outputFiles: unknown = Reflect.get(output, outputFileKey);
+        if (outputMessage) {
+          agentMessageContent.push({ type: "text", text: stringOrStringify(outputMessage) });
+        }
+        if (outputFiles) {
+          agentMessageContent.push(
+            ...flat(
+              checkArguments(
+                "Check memory output files",
+                optionalize(fileUnionContentsSchema),
+                outputFiles,
+              ),
+            ),
+          );
+        }
+      }
+      if (!agentMessageContent.length) {
+        agentMessageContent.push({ type: "text", text: stringOrStringify(output) });
+      }
+
+      result.push({ role: "agent", content: agentMessageContent });
+
+      return result;
+    };
+
     for (const { content } of memories) {
-      if (isRecord(content) && "input" in content && "output" in content) {
-        if (!isNil(content.input) && content.input !== "") {
-          messages.push({ role: "user", content: stringOrStringify(content.input) });
-        }
-        if (!isNil(content.output) && content.output !== "") {
-          messages.push({ role: "agent", content: stringOrStringify(content.output) });
-        }
+      if (
+        isRecord(content) &&
+        "input" in content &&
+        content.input &&
+        "output" in content &&
+        content.output
+      ) {
+        messages.push(...(await convertMemoryToMessage(content)));
       } else {
         other.push(content);
       }
@@ -231,9 +338,11 @@ export class PromptBuilder {
       : undefined;
   }
 
-  private buildTools(
+  private async buildTools(
     options: PromptBuildOptions,
-  ): Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] } {
+  ): Promise<
+    Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] }
+  > {
     const toolAgents = unique(
       (options.context?.skills ?? [])
         .concat(options.agent?.skills ?? [])
@@ -241,6 +350,10 @@ export class PromptBuilder {
         .flatMap((i) => (i.isInvokable ? i : i.skills)),
       (i) => i.name,
     );
+
+    if (options.agent?.afs) {
+      toolAgents.push(...(await getAFSSkills(options.agent.afs)));
+    }
 
     const tools: ChatModelInputTool[] = toolAgents.map((i) => ({
       type: "function",
@@ -254,7 +367,7 @@ export class PromptBuilder {
     }));
 
     let toolChoice: ChatModelInputToolChoice | undefined;
-    const modelOptions: ChatModelOptions = {};
+    const modelOptions: ChatModelInputOptions = {};
 
     // use manual choice if configured in the agent
     const manualChoice = options.agent?.toolChoice;

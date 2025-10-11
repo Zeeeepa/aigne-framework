@@ -23,11 +23,17 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
       "input": {
         "messages": [
           {
-            "content": "hello",
+            "content": [
+              {
+                "text": "hello",
+                "type": "text",
+              },
+            ],
             "role": "user",
           },
         ],
         "modelOptions": undefined,
+        "outputFileType": undefined,
         "responseFormat": undefined,
         "toolChoice": undefined,
         "tools": undefined,
@@ -188,25 +194,22 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
       "input": {
         "messages": [
           {
-            "content": "hello",
+            "content": [
+              {
+                "text": "hello",
+                "type": "text",
+              },
+            ],
             "role": "user",
           },
         ],
         "modelOptions": undefined,
+        "outputFileType": undefined,
         "responseFormat": undefined,
         "toolChoice": undefined,
         "tools": undefined,
       },
       "taskTitle": undefined,
-    },
-  },
-  {
-    "progress": {
-      "agent": {
-        "name": "OpenAIChatModel",
-      },
-      "error": [Error: Test error],
-      "event": "agentFailed",
     },
   },
   {
@@ -221,6 +224,15 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
       "text": {
         "message": " world",
       },
+    },
+  },
+  {
+    "progress": {
+      "agent": {
+        "name": "OpenAIChatModel",
+      },
+      "error": [Error: Test error],
+      "event": "agentFailed",
     },
   },
   {
@@ -241,6 +253,13 @@ exports[`AIGNE.invoke should respond $metafield with usage metrics with {
   returnMetadata: true,
 } 1`] = `
 [
+  {
+    "delta": {
+      "json": {
+        "message": "",
+      },
+    },
+  },
   {
     "delta": {
       "text": {

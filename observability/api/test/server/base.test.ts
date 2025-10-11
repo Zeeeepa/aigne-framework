@@ -150,7 +150,7 @@ describe("Base Server", () => {
     const deleteRes = await fetch(`${url}/api/trace/tree`, { method: "DELETE" });
     expect(deleteRes.status).toBe(200);
     const deleteJson = await deleteRes.json();
-    expect(deleteJson.message).toBe("ok");
+    expect(deleteJson.message).toBe("all traces deleted");
 
     // Step 10: GET /tree list
     const listRes10 = await fetch(`${url}/api/trace/tree`);
@@ -162,6 +162,12 @@ describe("Base Server", () => {
     expect(listRes11.status).toBe(400);
     const listJson11 = await listRes11.json();
     expect(listJson11.error).toBe("Page number too large, would cause overflow");
+
+    const listRes12 = await fetch(`${url}/api/trace/tree/summary`);
+    expect(listRes12.status).toBe(200);
+    const listJson12 = await listRes12.json();
+    expect(listJson12.totalToken).toBeGreaterThanOrEqual(0);
+    expect(listJson12.totalCost).toBeGreaterThanOrEqual(0);
 
     server.closeAllConnections();
     server.close();

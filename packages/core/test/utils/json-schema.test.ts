@@ -3,6 +3,7 @@ import {
   ensureZodUnionArray,
   outputSchemaToResponseFormatSchema,
   parseJSON,
+  wrapAutoParseJsonSchema,
 } from "@aigne/core/utils/json-schema.js";
 import { logger } from "@aigne/core/utils/logger.js";
 import { z } from "zod";
@@ -58,4 +59,169 @@ test("parseJSON should throw error if the json is invalid", async () => {
   expect(error).toHaveBeenCalledWith("Failed to parse JSON", expect.anything());
 
   error.mockRestore();
+});
+
+test("convertNullableToOptional should convert all nullable properties to optional", async () => {
+  const schema = z.object({
+    name: z.string(),
+    name_nullable: z.string().nullable(),
+    name_nullish: z.string().nullish(),
+
+    collections: z.array(z.object({ name: z.string() })),
+    collections_nullable: z
+      .array(
+        z.object({
+          name: z.string().nullable(),
+        }),
+      )
+      .nullable(),
+    collections_nullish: z
+      .array(
+        z.object({
+          name: z.string().nullish(),
+        }),
+      )
+      .nullish(),
+
+    tags: z.array(z.string()),
+    tags_nullable: z.array(z.string().nullable()).nullable(),
+    tags_nullish: z.array(z.string().nullish()).nullish(),
+  });
+
+  const jsonSchema = outputSchemaToResponseFormatSchema(schema);
+
+  expect(jsonSchema).toMatchInlineSnapshot(`
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "collections": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "name",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "collections_nullable": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "collections_nullish": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "name": {
+          "type": "string",
+        },
+        "name_nullable": {
+          "type": "string",
+        },
+        "name_nullish": {
+          "type": "string",
+        },
+        "tags": {
+          "items": {
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "tags_nullable": {
+          "items": {
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "tags_nullish": {
+          "items": {
+            "type": "string",
+          },
+          "type": "array",
+        },
+      },
+      "required": [
+        "name",
+        "collections",
+        "tags",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("wrapAutoParseJsonSchema should auto parse json string to object", async () => {
+  const schema = z.object({
+    profile: z.object({
+      name: z.string(),
+      tags: z.array(z.string()),
+    }),
+    friends: z.array(
+      z.object({
+        profile: z.object({
+          name: z.string(),
+          tags: z.array(z.string()),
+        }),
+      }),
+    ),
+  });
+
+  const data: z.infer<typeof schema> = {
+    profile: { name: "Alice", tags: ["friend", "colleague"] },
+    friends: [
+      { profile: { name: "Bob", tags: ["gym"] } },
+      { profile: { name: "Charlie", tags: ["school", "neighbor"] } },
+    ],
+  };
+
+  expect(wrapAutoParseJsonSchema(schema).parse(JSON.stringify(data))).toEqual(data);
+
+  expect(
+    wrapAutoParseJsonSchema(schema).parse({
+      ...data,
+      profile: { ...data.profile, tags: JSON.stringify(data.profile.tags) },
+      friends: JSON.stringify(data.friends),
+    }),
+  ).toEqual(data);
+
+  expect(
+    wrapAutoParseJsonSchema(schema).parse({
+      ...data,
+      friends: data.friends.map((i) => JSON.stringify(i)),
+    }),
+  ).toEqual(data);
+
+  expect(
+    wrapAutoParseJsonSchema(schema).parse({
+      ...data,
+      friends: data.friends.map((i) => ({
+        ...i,
+        profile: { ...i.profile, tags: JSON.stringify(i.profile.tags) },
+      })),
+    }),
+  ).toEqual(data);
 });

@@ -1,5 +1,372 @@
 # Changelog
 
+## [1.63.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.2...core-v1.63.0-beta.3) (2025-10-11)
+
+
+### Features
+
+* **afs:** add module system fs for afs ([#594](https://github.com/AIGNE-io/aigne-framework/issues/594)) ([83c7b65](https://github.com/AIGNE-io/aigne-framework/commit/83c7b6555d21c606a5005eb05f6686882fb8ffa3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.1.0-beta
+    * @aigne/observability-api bumped to 0.11.2-beta.1
+
+## [1.63.0-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.1...core-v1.63.0-beta.2) (2025-10-09)
+
+
+### Bug Fixes
+
+* input schema of AI agent should includes input key and input file key ([#600](https://github.com/AIGNE-io/aigne-framework/issues/600)) ([b4ca076](https://github.com/AIGNE-io/aigne-framework/commit/b4ca076d6b4a1a1ecb8d4ebb008abd0d7561aadd))
+
+## [1.63.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta...core-v1.63.0-beta.1) (2025-10-09)
+
+
+### Features
+
+* **core:** add `toolCallsConcurrency` support for AI agent ([#598](https://github.com/AIGNE-io/aigne-framework/issues/598)) ([84df406](https://github.com/AIGNE-io/aigne-framework/commit/84df406bfa9e3bdf159509f4b9cf2301ec80b155))
+
+
+### Bug Fixes
+
+* **core:** add input_file_key support for agent yaml ([#597](https://github.com/AIGNE-io/aigne-framework/issues/597)) ([63414a3](https://github.com/AIGNE-io/aigne-framework/commit/63414a3d46c74c686e7f033c224ca6175bea8c3f))
+
+## [1.63.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0...core-v1.63.0-beta) (2025-10-07)
+
+
+### Features
+
+* **afs:** add basic AFS(AIGNE File System) support ([#505](https://github.com/AIGNE-io/aigne-framework/issues/505)) ([ac2a18a](https://github.com/AIGNE-io/aigne-framework/commit/ac2a18a82470a2f31c466f329386525eb1cdab6d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.0.0
+    * @aigne/observability-api bumped to 0.11.2-beta
+
+## [1.62.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.6...core-v1.62.0) (2025-10-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.1
+
+## [1.62.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.5...core-v1.62.0-beta.6) (2025-10-03)
+
+
+### Features
+
+* support custom extra model options in agent yaml file ([#586](https://github.com/AIGNE-io/aigne-framework/issues/586)) ([6d82115](https://github.com/AIGNE-io/aigne-framework/commit/6d82115e0763385c7e44ea152867c0d4a9e0a301))
+* support custom reflection error message ([#589](https://github.com/AIGNE-io/aigne-framework/issues/589)) ([856348e](https://github.com/AIGNE-io/aigne-framework/commit/856348e889890051d7149b4093161f6ba8636273))
+
+
+### Bug Fixes
+
+* **core:** auto retry LLM request for tool not found error ([#590](https://github.com/AIGNE-io/aigne-framework/issues/590)) ([3283daa](https://github.com/AIGNE-io/aigne-framework/commit/3283daa7abb0a44545b27d51645e5868c59a442f))
+
+## [1.62.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.4...core-v1.62.0-beta.5) (2025-10-02)
+
+
+### Features
+
+* **core:** add `keepTextInToolUses` option for AI Agent ([#585](https://github.com/AIGNE-io/aigne-framework/issues/585)) ([6c6be9e](https://github.com/AIGNE-io/aigne-framework/commit/6c6be9eee8e96294921b676a1982a18c93b2f66d))
+
+
+### Bug Fixes
+
+* **core:** agent should not emit error event if retried ([#583](https://github.com/AIGNE-io/aigne-framework/issues/583)) ([04edcbf](https://github.com/AIGNE-io/aigne-framework/commit/04edcbfd71aa2746dad98140e20e0b718701fa0a))
+
+## [1.62.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.3...core-v1.62.0-beta.4) (2025-10-01)
+
+
+### Bug Fixes
+
+* handle optional imageModel in loader function ([#582](https://github.com/AIGNE-io/aigne-framework/issues/582)) ([7d55084](https://github.com/AIGNE-io/aigne-framework/commit/7d550841b6edfc762ef7c188a585d9fc8ffdf4c7))
+* update deps compatibility in CommonJS environment ([#580](https://github.com/AIGNE-io/aigne-framework/issues/580)) ([a1e35d0](https://github.com/AIGNE-io/aigne-framework/commit/a1e35d016405accb51c1aeb6a544503a1c78e912))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.1-beta.2
+
+## [1.62.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.2...core-v1.62.0-beta.3) (2025-10-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.1-beta.1
+
+## [1.62.0-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta.1...core-v1.62.0-beta.2) (2025-10-01)
+
+
+### Bug Fixes
+
+* **core:** add `include_input_in_output` option for agent definition ([#575](https://github.com/AIGNE-io/aigne-framework/issues/575)) ([9e28b72](https://github.com/AIGNE-io/aigne-framework/commit/9e28b729963faa8bea90ee42fde855868889396d))
+
+## [1.62.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.62.0-beta...core-v1.62.0-beta.1) (2025-10-01)
+
+
+### Bug Fixes
+
+* prevent template rendering for agent and tool messages ([#572](https://github.com/AIGNE-io/aigne-framework/issues/572)) ([859687e](https://github.com/AIGNE-io/aigne-framework/commit/859687e499b07ffebced8b2cd89d4af676f6a462))
+
+## [1.62.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.1-beta...core-v1.62.0-beta) (2025-09-30)
+
+
+### Features
+
+* **cli:** support define nested commands for sub apps ([#568](https://github.com/AIGNE-io/aigne-framework/issues/568)) ([0693b80](https://github.com/AIGNE-io/aigne-framework/commit/0693b807e0f8d335010e6ad00763b07cf095e65b))
+
+## [1.61.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0...core-v1.61.1-beta) (2025-09-29)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.1-beta
+
+## [1.61.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.8...core-v1.61.0) (2025-09-27)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.0
+    * @aigne/platform-helpers bumped to 0.6.3
+
+## [1.61.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.7...core-v1.61.0-beta.8) (2025-09-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.0-beta.1
+
+## [1.61.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.6...core-v1.61.0-beta.7) (2025-09-26)
+
+
+### Bug Fixes
+
+* **core:** check agent by structure instead of instanceOf ([826ef6f](https://github.com/AIGNE-io/aigne-framework/commit/826ef6fd4e9603cf51344e8e5b11af644396220e))
+
+## [1.61.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.5...core-v1.61.0-beta.6) (2025-09-26)
+
+
+### Bug Fixes
+
+* multiple input reminder ([#550](https://github.com/AIGNE-io/aigne-framework/issues/550)) ([0ab858f](https://github.com/AIGNE-io/aigne-framework/commit/0ab858fbe5177f02c1ca6af239b4171a358545df))
+
+## [1.61.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.4...core-v1.61.0-beta.5) (2025-09-25)
+
+
+### Features
+
+* **core:** add automatic JSON parsing and validation for structured outputs ([#548](https://github.com/AIGNE-io/aigne-framework/issues/548)) ([9077f93](https://github.com/AIGNE-io/aigne-framework/commit/9077f93856865915aaf5e8caa5638ef0b7f05b1e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.0-beta
+
+## [1.61.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.3...core-v1.61.0-beta.4) (2025-09-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.5-beta
+
+## [1.61.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.2...core-v1.61.0-beta.3) (2025-09-24)
+
+
+### Features
+
+* **core:** add multi-roles instructions support for agent yaml ([#538](https://github.com/AIGNE-io/aigne-framework/issues/538)) ([97bf77f](https://github.com/AIGNE-io/aigne-framework/commit/97bf77f96b5f69321539311159010499eb3b1b25))
+
+## [1.61.0-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta.1...core-v1.61.0-beta.2) (2025-09-23)
+
+
+### Bug Fixes
+
+* add prefer input file type option for image model ([#536](https://github.com/AIGNE-io/aigne-framework/issues/536)) ([3cba8a5](https://github.com/AIGNE-io/aigne-framework/commit/3cba8a5562233a1567b49b6dd5c446c0760f5c4c))
+
+## [1.61.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.61.0-beta...core-v1.61.0-beta.1) (2025-09-23)
+
+
+### Bug Fixes
+
+* standardize file parameter naming across models ([#534](https://github.com/AIGNE-io/aigne-framework/issues/534)) ([f159a9d](https://github.com/AIGNE-io/aigne-framework/commit/f159a9d6af21ec0e99641996b150560929845845))
+
+## [1.61.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.60.3...core-v1.61.0-beta) (2025-09-22)
+
+
+### Features
+
+* improve image model architecture and file handling ([#527](https://github.com/AIGNE-io/aigne-framework/issues/527)) ([4db50aa](https://github.com/AIGNE-io/aigne-framework/commit/4db50aa0387a1a0f045ca11aaa61613e36ca7597))
+
+
+### Bug Fixes
+
+* resolve Windows file import URI issues ([#528](https://github.com/AIGNE-io/aigne-framework/issues/528)) ([bf807c5](https://github.com/AIGNE-io/aigne-framework/commit/bf807c5a3563c4423dc82fddff7fba280ef57957))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.3-beta
+
+## [1.60.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.60.2...core-v1.60.3) (2025-09-18)
+
+
+### Bug Fixes
+
+* **models:** convert local image to base64 for image model ([#517](https://github.com/AIGNE-io/aigne-framework/issues/517)) ([c0bc971](https://github.com/AIGNE-io/aigne-framework/commit/c0bc971087ef6e1caa641a699aed391a24feb40d))
+
+## [1.60.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.60.1...core-v1.60.2) (2025-09-11)
+
+
+### Bug Fixes
+
+* **core:** add nullish or nullable support for output schema ([#482](https://github.com/AIGNE-io/aigne-framework/issues/482)) ([bf80c29](https://github.com/AIGNE-io/aigne-framework/commit/bf80c29e10d3fef654c830df8dc7f3b7939fa58d))
+
+## [1.60.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.60.0...core-v1.60.1) (2025-09-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.4
+
+## [1.60.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.59.0...core-v1.60.0) (2025-09-10)
+
+
+### Features
+
+* support custom model for every agents ([#472](https://github.com/AIGNE-io/aigne-framework/issues/472)) ([0bda78a](https://github.com/AIGNE-io/aigne-framework/commit/0bda78a2ebf537e953d855882d68cb37d94d1d10))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.3
+
+## [1.59.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.58.3...core-v1.59.0) (2025-09-09)
+
+
+### Features
+
+* support custom prefer input file type ([#469](https://github.com/AIGNE-io/aigne-framework/issues/469)) ([db0161b](https://github.com/AIGNE-io/aigne-framework/commit/db0161bbac52542c771ee2f40f361636b0668075))
+
+## [1.58.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.58.2...core-v1.58.3) (2025-09-08)
+
+
+### Bug Fixes
+
+* handle absolute paths in agent YAML prompt URLs ([#466](https://github.com/AIGNE-io/aigne-framework/issues/466)) ([a07a088](https://github.com/AIGNE-io/aigne-framework/commit/a07a0880728f65fc831578763b62ce5144d1aed8))
+* support optional field sturectured output for gemini ([#468](https://github.com/AIGNE-io/aigne-framework/issues/468)) ([70c6279](https://github.com/AIGNE-io/aigne-framework/commit/70c62795039a2862e3333f26707329489bf938de))
+
+## [1.58.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.58.1...core-v1.58.2) (2025-09-05)
+
+
+### Bug Fixes
+
+* **model:** transform local file to base64 before request llm ([#462](https://github.com/AIGNE-io/aigne-framework/issues/462)) ([58ef5d7](https://github.com/AIGNE-io/aigne-framework/commit/58ef5d77046c49f3c4eed15b7f0cc283cbbcd74a))
+
+## [1.58.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.58.0...core-v1.58.1) (2025-09-05)
+
+
+### Bug Fixes
+
+* should not return local path from aigne hub service ([#460](https://github.com/AIGNE-io/aigne-framework/issues/460)) ([c959717](https://github.com/AIGNE-io/aigne-framework/commit/c95971774f7e84dbeb3313f60b3e6464e2bb22e4))
+
+## [1.58.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.5...core-v1.58.0) (2025-09-05)
+
+
+### Features
+
+* add modalities support for chat model ([#454](https://github.com/AIGNE-io/aigne-framework/issues/454)) ([70d1bf6](https://github.com/AIGNE-io/aigne-framework/commit/70d1bf631f4e711235d89c6df8ee210a19179b30))
+
+
+### Bug Fixes
+
+* add disabled observability env ([#453](https://github.com/AIGNE-io/aigne-framework/issues/453)) ([3e01107](https://github.com/AIGNE-io/aigne-framework/commit/3e01107deb07d3e4eb6fbe49a7b39919fa412df1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.10.2
+
+## [1.57.5](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.4...core-v1.57.5) (2025-09-01)
+
+
+### Bug Fixes
+
+* **core:** replace static import with dynamic import for CommonJS compatibility ([#448](https://github.com/AIGNE-io/aigne-framework/issues/448)) ([6db1e57](https://github.com/AIGNE-io/aigne-framework/commit/6db1e570858fff32f7352143585b98e900f1f71d))
+
+## [1.57.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.3...core-v1.57.4) (2025-08-30)
+
+
+### Bug Fixes
+
+* **core:** handle relative path correctly ([#440](https://github.com/AIGNE-io/aigne-framework/issues/440)) ([45a65fe](https://github.com/AIGNE-io/aigne-framework/commit/45a65fea432da44218007e566fe952fa973d8ae2))
+
+## [1.57.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.2...core-v1.57.3) (2025-08-30)
+
+
+### Bug Fixes
+
+* **core:** improve nested prompt file resolution ([#437](https://github.com/AIGNE-io/aigne-framework/issues/437)) ([38b5b13](https://github.com/AIGNE-io/aigne-framework/commit/38b5b1397b7897cddef39d60c8cae2152e37dc5b))
+
+## [1.57.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.1...core-v1.57.2) (2025-08-29)
+
+
+### Bug Fixes
+
+* **core:** resolve nested prompt file correctly ([#434](https://github.com/AIGNE-io/aigne-framework/issues/434)) ([b334092](https://github.com/AIGNE-io/aigne-framework/commit/b334092900c003ca3c22d320e12712fd55c2500c))
+
+## [1.57.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.57.0...core-v1.57.1) (2025-08-29)
+
+
+### Bug Fixes
+
+* **core:** load nested prompt files with relative paths correctly ([#432](https://github.com/AIGNE-io/aigne-framework/issues/432)) ([036ffa7](https://github.com/AIGNE-io/aigne-framework/commit/036ffa72391d3f27870a5022b7964739805a6161))
+
+## [1.57.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.56.0...core-v1.57.0) (2025-08-28)
+
+
+### Features
+
+* **cli:** add searchable checkbox component with dynamic filtering ([#426](https://github.com/AIGNE-io/aigne-framework/issues/426)) ([1a76fe7](https://github.com/AIGNE-io/aigne-framework/commit/1a76fe7c2f7d91bc4041dfcd73850b39a18a036b))
+
+## [1.56.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.55.1...core-v1.56.0) (2025-08-27)
+
+
+### Features
+
+* **models:** add retry mechanism for network errors and structured output validation errors ([#418](https://github.com/AIGNE-io/aigne-framework/issues/418)) ([52bc9ee](https://github.com/AIGNE-io/aigne-framework/commit/52bc9eec5f4f4fa3c3f26881c405f4f89dad01c9))
+
 ## [1.55.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.55.0...core-v1.55.1) (2025-08-26)
 
 

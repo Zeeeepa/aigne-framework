@@ -1,9 +1,9 @@
 import type { AIGNEObserver } from "@aigne/observability-api";
+import { v7 } from "@aigne/uuid";
 import type { Span } from "@opentelemetry/api";
 import { context, SpanStatusCode, trace } from "@opentelemetry/api";
 import equal from "fast-deep-equal";
 import { Emitter } from "strict-event-emitter";
-import { v7 } from "uuid";
 import { z } from "zod";
 import {
   type Agent,
@@ -13,7 +13,6 @@ import {
   type AgentResponse,
   type AgentResponseChunk,
   type AgentResponseStream,
-  type FunctionAgentFn,
   isAgentResponseDelta,
   isEmptyChunk,
   type Message,
@@ -480,6 +479,8 @@ export class AIGNEContext implements Context {
     args: Args<K, ContextEmitEventMap>,
     b: AgentEvent,
   ): Promise<void> {
+    if (process.env.AIGNE_OBSERVABILITY_DISABLED) return;
+
     const span = this.span;
     if (!span) return;
 
@@ -682,6 +683,8 @@ class AIGNEContextShared {
           hooks: options.hooks,
           context,
           streaming: true,
+          model: options.model,
+          imageModel: options.imageModel,
         });
         for await (const value of stream) {
           if (isAgentResponseDelta(value)) {
@@ -757,7 +760,10 @@ async function* withAbortSignal<T extends Message>(
 }
 
 const aigneContextInvokeArgsSchema = z.object({
-  agent: z.union([z.custom<FunctionAgentFn>(), z.custom<Agent>()]),
+  agent: z.union([
+    z.function(),
+    z.custom<Agent>((agent) => !!agent && typeof agent.invoke === "function"),
+  ]),
   message: z.union([z.record(z.string(), z.unknown()), z.string()]).optional(),
   options: z.object({ returnActiveAgent: z.boolean().optional() }).optional(),
 });

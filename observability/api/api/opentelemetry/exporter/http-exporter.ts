@@ -1,11 +1,13 @@
 import { initDatabase } from "@aigne/sqlite";
 import { ExportResultCode } from "@opentelemetry/core";
 import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
-import { sql } from "drizzle-orm";
 import type { TraceFormatSpans } from "../../core/type.js";
-import { isBlocklet } from "../../core/util.js";
+import { insertTrace, isBlocklet } from "../../core/util.js";
 import { migrate } from "../../server/migrate.js";
+import getAIGNEHomePath from "../../server/utils/image-home-path.js";
+import saveFiles from "../../server/utils/save-files.js";
 import { validateTraceSpans } from "./util.js";
+
 export interface HttpExporterInterface extends SpanExporter {
   export(
     spans: ReadableSpan[],
@@ -50,48 +52,16 @@ class HttpExporter implements HttpExporterInterface {
     if (!db) throw new Error("Database not initialized");
 
     for (const trace of validatedData) {
-      const insertSql = sql`
-        INSERT INTO Trace (
-          id,
-          rootId,
-          parentId,
-          name,
-          startTime,
-          endTime,
-          attributes,
-          status,
-          userId,
-          sessionId,
-          componentId,
-          action
-        ) VALUES (
-          ${trace.id},
-          ${trace.rootId},
-          ${trace.parentId || null},
-          ${trace.name},
-          ${trace.startTime},
-          ${trace.endTime},
-          ${JSON.stringify(trace.attributes)},
-          ${JSON.stringify(trace.status)},
-          ${trace.userId || null},
-          ${trace.sessionId || null},
-          ${trace.componentId || null},
-          ${trace.action || null}
-        )
-        ON CONFLICT(id)
-        DO UPDATE SET
-          name = excluded.name,
-          startTime = excluded.startTime,
-          endTime = excluded.endTime,
-          attributes = excluded.attributes,
-          status = excluded.status,
-          userId = excluded.userId,
-          sessionId = excluded.sessionId,
-          componentId = excluded.componentId,
-          action = excluded.action;
-      `;
+      const dataDir = getAIGNEHomePath();
 
-      await db?.run?.(insertSql);
+      for (const key of ["files", "images"]) {
+        const items = trace.attributes?.output?.[key];
+        if (trace?.attributes?.output?.[key] && items?.length) {
+          trace.attributes.output[key] = await saveFiles(items, { dataDir });
+        }
+      }
+
+      await insertTrace(db, trace);
     }
   }
 
@@ -104,7 +74,10 @@ class HttpExporter implements HttpExporterInterface {
 
       resultCallback({ code: ExportResultCode.SUCCESS });
     } catch (error) {
-      console.error("Failed to export spans:", error);
+      console.warn(
+        "[Observability] Failed to export spans:",
+        error.cause?.message || error.message,
+      );
       resultCallback({ code: ExportResultCode.FAILED });
     }
   }

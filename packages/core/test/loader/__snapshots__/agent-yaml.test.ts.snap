@@ -7,12 +7,19 @@ exports[`loadAgentFromYaml should load AIAgent correctly 1`] = `
     "bot",
   ],
   "description": "Chat agent",
+  "includeInputInOutput": true,
+  "input_file_key": "message_file",
+  "input_key": "message",
   "instructions": 
-"You are a helpful assistant that can answer questions and provide information on a wide range of topics.
+"system: You are a helpful assistant that can answer questions and provide information on a wide range of topics.
 Your goal is to assist users in finding the information they need and to engage in friendly conversation.
 "
 ,
+  "keep_text_in_tool_uses": true,
+  "model": "google/gemini-2.5-flash",
   "name": "chat",
+  "output_file_key": "response_file",
+  "output_key": "message",
   "skills": [
     {
       "default_input": undefined,
@@ -44,11 +51,12 @@ Your goal is to assist users in finding the information they need and to engage 
       },
     },
   ],
+  "toolCallsConcurrency": 3,
 }
 `;
 
 exports[`loadAgentFromYaml should load AIAgent with prompt file correctly 1`] = `
-"You are a helper agent to answer everything about chat prompt in AIGNE.
+"system: You are a helper agent to answer everything about chat prompt in AIGNE.
 
 {% include "language_instruction.txt" %}
 "
@@ -82,7 +90,7 @@ exports[`loadAgentFromYaml should load nested agent correctly 3`] = `
     {
       "inputSchema": undefined,
       "instructions": 
-"You are a helpful assistant that can answer questions and provide information on a wide range of topics.
+"system: You are a helpful assistant that can answer questions and provide information on a wide range of topics.
 Your goal is to assist users in finding the information they need and to engage in friendly conversation.
 "
 ,
@@ -123,7 +131,7 @@ Your goal is to assist users in finding the information they need and to engage 
     {
       "inputSchema": undefined,
       "instructions": 
-"You are a helper agent to answer everything about chat prompt in AIGNE.
+"system: You are a helper agent to answer everything about chat prompt in AIGNE.
 
 {% include "language_instruction.txt" %}
 "
@@ -141,7 +149,7 @@ Your goal is to assist users in finding the information they need and to engage 
         {
           "inputSchema": undefined,
           "instructions": 
-"You are a helpful assistant that can answer questions and provide information on a wide range of topics.
+"system: You are a helpful assistant that can answer questions and provide information on a wide range of topics.
 Your goal is to assist users in finding the information they need and to engage in friendly conversation.
 "
 ,
@@ -195,7 +203,7 @@ Your goal is to assist users in finding the information they need and to engage 
             "type": "object",
           },
           "instructions": 
-"You are a helper agent to answer everything about chat prompt in AIGNE.
+"system: You are a helper agent to answer everything about chat prompt in AIGNE.
 
 {% include "language_instruction.txt" %}
 "
@@ -1119,6 +1127,7 @@ exports[`loadAgentFromYaml should support reflection for TeamAgent 1`] = `
 {
   "name": "test-team-agent-with-reflection",
   "reflection": {
+    "customErrorMessage": "Test custom error message for reflection",
     "isApproved": "approved",
     "maxIterations": 5,
     "returnLastOnMaxIterations": true,

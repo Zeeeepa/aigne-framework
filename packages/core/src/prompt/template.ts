@@ -6,7 +6,7 @@ import type {
   ChatModelInputMessageContent,
   ChatModelOutputToolCall,
 } from "../agents/chat-model.js";
-import { isNil } from "../utils/type-utils.js";
+import { isNil, omitBy } from "../utils/type-utils.js";
 
 (nunjucks.runtime as any).suppressValue = (v: unknown) => {
   if (isNil(v)) return "";
@@ -50,14 +50,26 @@ export class CustomLoader extends nunjucks.Loader {
 
   async = true;
 
+  override isRelative(filename: string): boolean {
+    return !nodejs.path.isAbsolute(filename);
+  }
+
+  override resolve(from: string, to: string): string {
+    return nodejs.path.resolve(nodejs.path.dirname(from), to);
+  }
+
   getSource(name: string, callback: Callback<Error, LoaderSource>): LoaderSource {
     let result: LoaderSource | null = null;
 
-    nodejs.fs.readFile(nodejs.path.join(this.options.workingDir, name), "utf-8").then(
+    const path = nodejs.path.isAbsolute(name)
+      ? name
+      : nodejs.path.join(this.options.workingDir, name);
+
+    nodejs.fs.readFile(path, "utf-8").then(
       (content) => {
         result = {
           src: content,
-          path: name,
+          path,
           noCache: true,
         };
         callback(null, result);
@@ -77,13 +89,17 @@ export class ChatMessageTemplate {
     public role: "system" | "user" | "agent" | "tool",
     public content?: ChatModelInputMessage["content"],
     public name?: string,
+    public options?: FormatOptions,
   ) {}
 
   async format(
     variables?: Record<string, unknown>,
     options?: FormatOptions,
   ): Promise<ChatModelInputMessage> {
+    options = { ...this.options, ...omitBy(options ?? {}, (v) => isNil(v)) };
+
     let { content } = this;
+
     if (Array.isArray(content)) {
       content = await Promise.all(
         content.map(async (i) => {
@@ -105,14 +121,14 @@ export class ChatMessageTemplate {
 }
 
 export class SystemMessageTemplate extends ChatMessageTemplate {
-  static from(content: string, name?: string) {
-    return new SystemMessageTemplate("system", content, name);
+  static from(content: string, name?: string, options?: FormatOptions) {
+    return new SystemMessageTemplate("system", content, name, options);
   }
 }
 
 export class UserMessageTemplate extends ChatMessageTemplate {
-  static from(template: ChatModelInputMessageContent, name?: string) {
-    return new UserMessageTemplate("user", template, name);
+  static from(template: ChatModelInputMessageContent, name?: string, options?: FormatOptions) {
+    return new UserMessageTemplate("user", template, name, options);
   }
 }
 
@@ -121,35 +137,46 @@ export class AgentMessageTemplate extends ChatMessageTemplate {
     template?: ChatModelInputMessage["content"],
     toolCalls?: ChatModelOutputToolCall[],
     name?: string,
+    options?: FormatOptions,
   ) {
-    return new AgentMessageTemplate(template, toolCalls, name);
+    return new AgentMessageTemplate(template, toolCalls, name, options);
   }
 
   constructor(
     content?: ChatModelInputMessage["content"],
     public toolCalls?: ChatModelOutputToolCall[],
     name?: string,
+    options?: FormatOptions,
   ) {
-    super("agent", content, name);
+    super("agent", content, name, options);
   }
 
-  override async format(variables?: Record<string, unknown>, options?: FormatOptions) {
+  override async format(_variables?: Record<string, unknown>, _options?: FormatOptions) {
     return {
-      ...(await super.format(variables, options)),
+      role: this.role,
+      name: this.name,
+      // NOTE: agent message should not rendered by template
+      content: this.content,
       toolCalls: this.toolCalls,
     };
   }
 }
 
 export class ToolMessageTemplate extends ChatMessageTemplate {
-  static from(content: object | string, toolCallId: string, name?: string) {
-    return new ToolMessageTemplate(content, toolCallId, name);
+  static from(
+    content: object | string,
+    toolCallId: string,
+    name?: string,
+    options?: FormatOptions,
+  ) {
+    return new ToolMessageTemplate(content, toolCallId, name, options);
   }
 
   constructor(
     content: object | string,
     public toolCallId: string,
     name?: string,
+    options?: FormatOptions,
   ) {
     super(
       "tool",
@@ -159,12 +186,16 @@ export class ToolMessageTemplate extends ChatMessageTemplate {
             typeof value === "bigint" ? value.toString() : value,
           ),
       name,
+      options,
     );
   }
 
-  override async format(variables?: Record<string, unknown>, options?: FormatOptions) {
+  override async format(_variables?: Record<string, unknown>, _options?: FormatOptions) {
     return {
-      ...(await super.format(variables, options)),
+      role: this.role,
+      name: this.name,
+      // NOTE: tool result should not rendered by template
+      content: this.content,
       toolCallId: this.toolCallId,
     };
   }
@@ -233,20 +264,36 @@ const chatMessageSchema = z.union([
 
 const chatMessagesSchema = z.array(chatMessageSchema);
 
-export function parseChatMessages(messages: unknown): ChatMessageTemplate[] | undefined {
+export function safeParseChatMessages(messages: unknown): ChatMessageTemplate[] | undefined {
   const result = chatMessagesSchema.safeParse(messages);
   if (!result.success) return undefined;
 
-  return result.data.map((message) => {
+  return parseChatMessages(result.data);
+}
+
+export function parseChatMessages(
+  messages: (z.infer<typeof chatMessageSchema> & { options?: FormatOptions })[],
+): ChatMessageTemplate[] {
+  return messages.map((message) => {
     switch (message.role) {
       case "system":
-        return SystemMessageTemplate.from(message.content, message.name);
+        return SystemMessageTemplate.from(message.content, message.name, message.options);
       case "user":
-        return UserMessageTemplate.from(message.content, message.name);
+        return UserMessageTemplate.from(message.content, message.name, message.options);
       case "agent":
-        return AgentMessageTemplate.from(message.content, message.toolCalls, message.name);
+        return AgentMessageTemplate.from(
+          message.content,
+          message.toolCalls,
+          message.name,
+          message.options,
+        );
       case "tool":
-        return ToolMessageTemplate.from(message.content, message.toolCallId, message.name);
+        return ToolMessageTemplate.from(
+          message.content,
+          message.toolCallId,
+          message.name,
+          message.options,
+        );
     }
   });
 }

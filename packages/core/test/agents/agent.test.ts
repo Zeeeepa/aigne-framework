@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from "bun:test";
+import { expect, mock, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { inspect } from "node:util";
 import {
@@ -814,4 +814,160 @@ test("Agent should render task title (function) correctly", async () => {
   expect(await agent.renderTaskTitle({ lang: "en", message: "Hello" })).toBe(
     "Test Task for message: Hello",
   );
+});
+
+test("Agent should support retrying on errors", async () => {
+  const agent = FunctionAgent.from({
+    retryOnError: { retries: 1 },
+    process: () => ({}),
+  });
+
+  const processSpy = spyOn(agent, "process");
+
+  processSpy
+    .mockRejectedValueOnce(new Error("Network error") as never)
+    .mockReturnValueOnce({ result: "success" });
+
+  expect(await agent.invoke({})).toEqual({ result: "success" });
+});
+
+test("Agent should support default retry options", async () => {
+  const agent = FunctionAgent.from({
+    retryOnError: true,
+    process: () => ({}),
+  });
+
+  const processSpy = spyOn(agent, "process");
+
+  processSpy
+    .mockRejectedValueOnce(new Error("Network error") as never)
+    .mockReturnValueOnce({ result: "success" });
+
+  expect(await agent.invoke({})).toEqual({ result: "success" });
+});
+
+test("Agent should support disable retry options", async () => {
+  const agent = FunctionAgent.from({
+    retryOnError: false,
+    process: () => ({}),
+  });
+
+  const processSpy = spyOn(agent, "process");
+
+  processSpy
+    .mockRejectedValueOnce(new Error("Network error") as never)
+    .mockReturnValueOnce({ result: "success" });
+
+  expect(agent.invoke({})).rejects.toThrow("Network error");
+});
+
+test("Agent should support custom retry condition", async () => {
+  const agent = FunctionAgent.from({
+    retryOnError: { shouldRetry: (error) => error.message === "custom error", retries: 1 },
+    process: () => ({}),
+  });
+
+  const processSpy = spyOn(agent, "process");
+
+  processSpy
+    .mockRejectedValueOnce(new Error("Network error") as never)
+    .mockRejectedValueOnce(new Error("custom error") as never)
+    .mockReturnValueOnce({ result: "success" });
+
+  expect(agent.invoke({})).rejects.toThrow("Network error");
+  expect(await agent.invoke({})).toEqual({ result: "success" });
+});
+
+test("Agent should not emit agentFailed event if error is handled and is being retried", async () => {
+  const model = new OpenAIChatModel();
+  const aigne = new AIGNE({ model });
+
+  const context = aigne.newContext();
+
+  const onAgentFailed = mock();
+
+  context.on("agentFailed", onAgentFailed);
+
+  const getWeather = FunctionAgent.from({
+    name: "getWeather",
+    inputSchema: z.object({
+      location: z.string(),
+    }),
+    outputSchema: z.object({
+      forecast: z.string(),
+    }),
+    process: ({ location }: { location: string }) => {
+      return { location, forecast: `Sunny in ${location}` };
+    },
+  });
+
+  const agent = AIAgent.from({
+    skills: [getWeather],
+    inputKey: "message",
+  });
+
+  const modelSpy = spyOn(model, "process");
+
+  // 1. should emit agentFailed event if error is not handled
+  modelSpy
+    .mockReturnValueOnce(
+      Promise.resolve({
+        toolCalls: [createToolCallResponse("getWeather", { location: "New York" })],
+      }),
+    )
+    .mockRejectedValueOnce(new Error("Model failed during second call") as never)
+    .mockReturnValueOnce(
+      Promise.resolve(stringToAgentResponseStream("The weather in New York is Sunny.")),
+    );
+
+  const result1 = context.invoke(
+    agent,
+    { message: "How's the weather in New York?" },
+    { newContext: false },
+  );
+
+  expect(result1).rejects.toThrowErrorMatchingInlineSnapshot(`"Model failed during second call"`);
+  expect(onAgentFailed.mock.calls.length).toBe(2);
+  expect(onAgentFailed.mock.calls.map((i) => i.at(0).error)).toMatchInlineSnapshot(`
+    [
+      [Error: Model failed during second call],
+      [Error: Model failed during second call],
+    ]
+  `);
+
+  modelSpy.mockReset();
+  onAgentFailed.mockReset();
+
+  // 2. should not emit agentFailed event if error is handled and is being retried
+  modelSpy
+    .mockReturnValueOnce(
+      Promise.resolve({
+        toolCalls: [createToolCallResponse("getWeather", { location: "New York" })],
+      }),
+    )
+    .mockRejectedValueOnce(new Error("Model failed during second call") as never)
+    .mockReturnValueOnce(
+      Promise.resolve(stringToAgentResponseStream("The weather in New York is Sunny.")),
+    );
+
+  const result = await context.invoke(
+    agent,
+    { message: "How's the weather in New York?" },
+    {
+      newContext: false,
+      hooks: {
+        onError({ error }) {
+          if (error.message === "Model failed during second call") return { retry: true };
+        },
+      },
+    },
+  );
+
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "message": "The weather in New York is Sunny.",
+    }
+  `);
+
+  expect(onAgentFailed.mock.calls.length).toBe(0);
 });

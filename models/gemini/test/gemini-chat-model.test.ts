@@ -10,6 +10,7 @@ import {
   createWeatherToolExpected,
   createWeatherToolMessages,
 } from "@aigne/test-utils/utils/openai-like-utils.js";
+import type { GenerateContentResponse } from "@google/genai";
 
 test("Gemini chat model basic usage", async () => {
   // #region example-gemini-chat-model
@@ -153,7 +154,7 @@ test("GeminiChatModel should reset last message role from system to user", async
     createMockEventStream({ path: join(import.meta.dirname, "gemini-streaming-response-2.txt") }),
   );
 
-  const _result = await model.invoke({
+  await model.invoke({
     messages: [
       {
         role: "system",
@@ -162,11 +163,248 @@ test("GeminiChatModel should reset last message role from system to user", async
     ],
   });
 
-  expect(create).toHaveBeenLastCalledWith(
-    expect.objectContaining({
-      messages: [
-        { role: "user", content: "This is a system message that should be treated as user input." },
+  expect(create.mock.lastCall?.[0].messages).toMatchInlineSnapshot(`
+    [
+      {
+        "content": "This is a system message that should be treated as user input.",
+        "name": undefined,
+        "role": "user",
+        "tool_call_id": undefined,
+        "tool_calls": undefined,
+      },
+    ]
+  `);
+
+  create.mockReturnValueOnce(
+    createMockEventStream({ path: join(import.meta.dirname, "gemini-streaming-response-3.txt") }),
+  );
+
+  await model.invoke({
+    messages: [
+      {
+        role: "system",
+        content: "How is the weather today in New York?",
+      },
+      {
+        role: "agent",
+        toolCalls: [
+          {
+            id: "123",
+            type: "function",
+            function: { name: "get_current_weather", arguments: { location: "New York" } },
+          },
+        ],
+      },
+      {
+        role: "tool",
+        toolCallId: "123",
+        content: '{"temperature":20,"unit":"celsius","description":"Sunny"}',
+      },
+    ],
+  });
+
+  expect(create.mock.lastCall?.[0].messages).toMatchInlineSnapshot(`
+    [
+      {
+        "content": "How is the weather today in New York?",
+        "name": undefined,
+        "role": "user",
+        "tool_call_id": undefined,
+        "tool_calls": undefined,
+      },
+      {
+        "content": undefined,
+        "name": undefined,
+        "role": "assistant",
+        "tool_call_id": undefined,
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{"location":"New York"}",
+              "name": "get_current_weather",
+            },
+            "id": "123",
+            "type": "function",
+          },
+        ],
+      },
+      {
+        "content": "{"temperature":20,"unit":"celsius","description":"Sunny"}",
+        "name": undefined,
+        "role": "tool",
+        "tool_call_id": "123",
+        "tool_calls": undefined,
+      },
+    ]
+  `);
+});
+
+test("GeminiChatModel should support image mode", async () => {
+  const generateSpy = spyOn(
+    model.googleClient.models,
+    "generateContentStream",
+  ).mockResolvedValueOnce(
+    (async function* (): AsyncGenerator<GenerateContentResponse> {
+      const common = {
+        text: undefined,
+        data: undefined,
+        functionCalls: undefined,
+        executableCode: undefined,
+        codeExecutionResult: undefined,
+      };
+      yield { ...common, candidates: [{ content: { parts: [{ text: "hello" }] } }] };
+      yield { ...common, candidates: [{ content: { parts: [{ text: " world" }] } }] };
+      yield {
+        ...common,
+        candidates: [
+          {
+            content: {
+              parts: [{ inlineData: { data: Buffer.from("test image").toString("base64") } }],
+            },
+          },
+        ],
+      };
+    })(),
+  );
+
+  const result = await model.invoke({
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Remove background form following image" },
+          { type: "file", data: Buffer.from("hello").toString("base64") },
+        ],
+      },
+    ],
+    modelOptions: {
+      model: "gemini-2.5-flash-image-preview",
+      modalities: ["text", "image"],
+    },
+  });
+
+  expect(result).toMatchInlineSnapshot(
+    { files: [{ path: expect.any(String) }] },
+    `
+    {
+      "files": [
+        {
+          "path": Any<String>,
+          "type": "local",
+        },
       ],
+      "text": "hello world",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+      },
+    }
+  `,
+  );
+  expect(generateSpy.mock.lastCall).toMatchInlineSnapshot(`
+    [
+      {
+        "config": {
+          "frequencyPenalty": undefined,
+          "presencePenalty": undefined,
+          "responseModalities": [
+            "text",
+            "image",
+          ],
+          "temperature": undefined,
+          "toolConfig": {
+            "functionCallingConfig": undefined,
+          },
+          "tools": [],
+          "topP": undefined,
+        },
+        "contents": [
+          {
+            "parts": [
+              {
+                "text": "Remove background form following image",
+              },
+              {
+                "inlineData": {
+                  "data": "aGVsbG8=",
+                  "mimeType": undefined,
+                },
+              },
+            ],
+            "role": "user",
+          },
+        ],
+        "model": "gemini-2.5-flash-image-preview",
+      },
+    ]
+  `);
+});
+
+test("GeminiChatModel should support optional schema", async () => {
+  const createSpy = spyOn(model.client.chat.completions, "create").mockReturnValueOnce(
+    createMockEventStream({ path: join(import.meta.dirname, "gemini-streaming-response-3.txt") }),
+  );
+
+  const result = await model.invoke({
+    messages: [
+      {
+        role: "system",
+        content: `\
+What is the weather in New York?
+
+<context>
+{
+  "city": "New York",
+  "temperature": 20
+}
+</context>
+`,
+      },
+    ],
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "output",
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            text: {
+              type: "string",
+              description: "Your answer",
+            },
+          },
+          required: [],
+        },
+        strict: true,
+      },
+    },
+  });
+
+  expect(result).toEqual(
+    expect.objectContaining({
+      json: { text: "The temperature in New York is 20 degrees." },
     }),
   );
+
+  expect(createSpy.mock.calls[0]?.[0].response_format).toMatchInlineSnapshot(`
+    {
+      "json_schema": {
+        "name": "output",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "description": "Your answer",
+              "type": "string",
+            },
+          },
+          "required": [],
+          "type": "object",
+        },
+        "strict": true,
+      },
+      "type": "json_schema",
+    }
+  `);
 });

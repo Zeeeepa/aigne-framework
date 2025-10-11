@@ -1,18 +1,27 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { join } from "node:path";
-import { AIAgent, AIGNE, ChatModel, MCPAgent } from "@aigne/core";
-import * as agentJs from "@aigne/core/loader/agent-js.js";
+import { AIAgent, AIGNE, ChatModel, type ChatModelOptions, MCPAgent } from "@aigne/core";
 import { load, loadAgent } from "@aigne/core/loader/index.js";
+import { mapCliAgent } from "@aigne/core/utils/agent-utils.js";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { ClaudeChatModel, OpenAIChatModel } from "../_mocks/mock-models.js";
+import { ClaudeChatModel, OpenAIChatModel, OpenAIImageModel } from "../_mocks/mock-models.js";
 
-const loadModel = () => new OpenAIChatModel();
+const loadModel = (options?: ChatModelOptions) => new OpenAIChatModel(options);
 
 test("AIGNE.load should load agents correctly", async () => {
   const aigne = await AIGNE.load(join(import.meta.dirname, "../../test-agents"), {
-    model: loadModel,
+    model: (options) =>
+      loadModel({
+        model: options?.model,
+        modelOptions: options,
+      }),
+    imageModel: (options) =>
+      new OpenAIImageModel({
+        model: options?.model,
+        modelOptions: options,
+      }),
   });
 
   expect(aigne).toEqual(
@@ -22,7 +31,7 @@ test("AIGNE.load should load agents correctly", async () => {
     }),
   );
 
-  expect(aigne.agents.length).toBe(4);
+  expect(aigne.agents.length).toBe(5);
 
   const chat = aigne.agents[0];
   expect(chat).toEqual(
@@ -36,7 +45,23 @@ test("AIGNE.load should load agents correctly", async () => {
   expect(chat.skills[0]).toEqual(expect.objectContaining({ name: "evaluateJs" }));
 
   expect(aigne.model).toBeInstanceOf(ChatModel);
+  expect(aigne.model?.options?.modelOptions).toMatchInlineSnapshot(`
+    {
+      "customOption": 1,
+      "model": ":gpt-4o-mini",
+      "name": "gpt-4o-mini",
+      "temperature": 0.8,
+    }
+  `);
   assert(aigne.model, "model should be defined");
+
+  expect(aigne.imageModel).toBeInstanceOf(OpenAIImageModel);
+  expect(aigne.imageModel?.options?.modelOptions).toMatchInlineSnapshot(`
+    {
+      "model": "openai/gpt-image-1",
+      "quality": "standard",
+    }
+  `);
 
   expect({
     agents: aigne.agents.map((agent) => ({
@@ -55,10 +80,9 @@ test("AIGNE.load should load agents correctly", async () => {
       })),
     },
     cli: {
-      agents: aigne.cli?.agents.map((agent) => ({
-        name: agent.name,
-        description: agent.description,
-      })),
+      agents: aigne.cli?.agents?.map((i) =>
+        mapCliAgent(i, (i) => ({ name: i.name, description: i.description })),
+      ),
     },
   }).toMatchSnapshot();
 });
@@ -87,6 +111,9 @@ test("loader should use override options", async () => {
     }),
     expect.objectContaining({
       name: "test-image-agent",
+    }),
+    expect.objectContaining({
+      name: "test-relative-prompt-paths",
     }),
     testAgent,
   ]);
@@ -133,7 +160,7 @@ test("load should process path correctly", async () => {
   readFile.mockReturnValueOnce(Promise.resolve("chat_model: gpt-4o-mini"));
   expect(load("foo", { model: loadModel })).resolves.toEqual(
     expect.objectContaining({
-      chatModel: expect.anything(),
+      model: expect.anything(),
       agents: [],
       skills: [],
     }),
@@ -151,7 +178,7 @@ test("load should process path correctly", async () => {
   readFile.mockReturnValueOnce(Promise.resolve("chat_model: gpt-4o-mini"));
   expect(load("bar", { model: loadModel })).resolves.toEqual(
     expect.objectContaining({
-      chatModel: expect.anything(),
+      model: expect.anything(),
       agents: [],
       skills: [],
     }),
@@ -223,17 +250,92 @@ type: mcp
   expect(loadAgent("./local-mcp.yaml")).rejects.toThrow("Missing url or command in mcp agent");
 });
 
-test("loadAgent should load js agent with a random key to avoid caching issues", async () => {
-  const loadAgentFromJsFile = spyOn(agentJs, "loadAgentFromJsFile");
+test("loadAgent should support nested relative prompt paths", async () => {
+  const aigne = await AIGNE.load(join(import.meta.dirname, "../../test-agents"));
 
-  await AIGNE.load(join(import.meta.dirname, "../../test-agents"));
+  const agent = aigne.agents["test-relative-prompt-paths"];
 
-  expect(loadAgentFromJsFile).toHaveBeenLastCalledWith(
-    expect.any(String),
-    expect.objectContaining({
-      key: expect.any(Number),
-    }),
+  assert(agent instanceof AIAgent);
+
+  expect(await agent.instructions.build({})).toMatchInlineSnapshot(`
+    {
+      "messages": [
+        {
+          "content": 
+    "You are a professional chatbot.
+
+    Please output in native English
+
+    This is content of prompt-c.md
+
+    This is content of prompt-d.md
+
+
+    "
+    ,
+          "name": undefined,
+          "role": "system",
+        },
+      ],
+      "modelOptions": undefined,
+      "outputFileType": undefined,
+      "responseFormat": undefined,
+      "toolAgents": undefined,
+      "toolChoice": undefined,
+      "tools": undefined,
+    }
+  `);
+});
+
+test("loadAgent should load agent with multi roles instructions", async () => {
+  const agent = await loadAgent(
+    join(import.meta.dirname, "../../test-agents/test-agent-with-multi-roles-instructions.yaml"),
   );
 
-  loadAgentFromJsFile.mockRestore();
+  assert(agent instanceof AIAgent);
+
+  expect(
+    await agent.instructions.build({
+      input: { topic: "AIGNE is the best framework to build AI applications." },
+    }),
+  ).toMatchInlineSnapshot(`
+    {
+      "messages": [
+        {
+          "content": 
+    "You are a smart agent that helps with code editing and understanding.
+
+    <topic>
+    AIGNE is the best framework to build AI applications.
+    </topic>
+    "
+    ,
+          "name": undefined,
+          "role": "system",
+        },
+        {
+          "content": "This is a user instruction.",
+          "name": undefined,
+          "role": "user",
+        },
+        {
+          "content": "This is an agent instruction.",
+          "name": undefined,
+          "role": "agent",
+          "toolCalls": undefined,
+        },
+        {
+          "content": "Latest user instruction about AIGNE is the best framework to build AI applications.",
+          "name": undefined,
+          "role": "user",
+        },
+      ],
+      "modelOptions": undefined,
+      "outputFileType": undefined,
+      "responseFormat": undefined,
+      "toolAgents": undefined,
+      "toolChoice": undefined,
+      "tools": undefined,
+    }
+  `);
 });

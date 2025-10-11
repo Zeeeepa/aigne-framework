@@ -25,4 +25,14 @@ export interface TraceData {
   };
   componentId?: string;
   userId?: string;
+  token?: number;
+  cost?: number;
+}
+
+export interface RunDetailDrawerProps {
+  traceId: string;
+  traceInfo: TraceData;
+  selectedTrace: TraceData;
+  setSelectedTrace: (trace: TraceData | null) => void;
+  onClose: () => void;
 }

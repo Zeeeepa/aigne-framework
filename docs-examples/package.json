@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aigne/agent-library": "workspace:^",
+    "@aigne/aigne-hub": "workspace:^",
     "@aigne/anthropic": "workspace:^",
     "@aigne/bedrock": "workspace:^",
     "@aigne/core": "workspace:^",
@@ -29,14 +30,13 @@
     "@aigne/openai": "workspace:^",
     "@aigne/transport": "workspace:^",
     "@aigne/xai": "workspace:^",
-    "@aigne/aigne-hub": "workspace:^",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "hono": "^4.8.4",
+    "hono": "^4.9.7",
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.18",
+    "@types/bun": "^1.2.22",
     "@types/express": "^5.0.3",
     "detect-port": "^2.1.0",
     "rimraf": "^6.0.1"

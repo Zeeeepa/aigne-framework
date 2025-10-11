@@ -5,13 +5,15 @@ import { Suspense } from "react";
 import {
   createBrowserRouter,
   createRoutesFromElements,
+  Outlet,
   Route,
   RouterProvider,
 } from "react-router-dom";
 
 import Layout from "./layout.tsx";
-import List from "./list.tsx";
+import List from "./list/index.tsx";
 import { translations } from "./locales/index.ts";
+import Overview from "./overview.tsx";
 
 export default function App() {
   return (
@@ -29,14 +31,25 @@ export default function App() {
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route
-      path="/"
-      element={
-        <Layout>
-          <List />
-        </Layout>
-      }
-    />,
+    <Route path="/" element={<Outlet />}>
+      <Route
+        path="/"
+        element={
+          <Layout>
+            <Overview />
+          </Layout>
+        }
+      />
+      <Route
+        path="/traces"
+        element={
+          <Layout>
+            <List />
+          </Layout>
+        }
+      />
+      ,
+    </Route>,
   ),
   { basename: "/" },
 );

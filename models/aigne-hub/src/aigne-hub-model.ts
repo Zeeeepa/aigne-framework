@@ -2,54 +2,32 @@ import {
   type AgentProcessResult,
   ChatModel,
   type ChatModelInput,
-  type ChatModelOptions,
   type ChatModelOutput,
 } from "@aigne/core";
 import { checkArguments } from "@aigne/core/utils/type-utils.js";
-import type { OpenAIChatModelOptions } from "@aigne/openai";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import {
   BaseClient,
   type BaseClientInvokeOptions,
 } from "@aigne/transport/http-client/base-client.js";
 import { joinURL } from "ufo";
-import { z } from "zod";
 import { getAIGNEHubMountPoint } from "./utils/blocklet.js";
 import {
   AIGNE_HUB_BLOCKLET_DID,
   AIGNE_HUB_DEFAULT_MODEL,
-  AIGNE_HUB_URL,
+  aigneHubBaseUrl,
 } from "./utils/constants.js";
-
-const aigneHubChatModelOptionsSchema = z.object({
-  url: z.string().optional(),
-  apiKey: z.string().optional(),
-  model: z.string().optional(),
-  modelOptions: z
-    .object({
-      model: z.string().optional(),
-      temperature: z.number().optional(),
-      topP: z.number().optional(),
-      frequencyPenalty: z.number().optional(),
-      presencePenalty: z.number().optional(),
-      parallelToolCalls: z.boolean().optional().default(true),
-    })
-    .optional(),
-  clientOptions: z.object({}).optional(),
-});
-
-export interface AIGNEHubChatModelOptions {
-  url?: string;
-  apiKey?: string;
-  model?: string;
-  modelOptions?: ChatModelOptions;
-  clientOptions?: OpenAIChatModelOptions["clientOptions"] & { clientId?: string };
-}
+import { getModels } from "./utils/hub.js";
+import { type AIGNEHubChatModelOptions, aigneHubModelOptionsSchema } from "./utils/type.js";
 
 export class AIGNEHubChatModel extends ChatModel {
-  constructor(public options: AIGNEHubChatModelOptions) {
-    checkArguments("AIGNEHubChatModel", aigneHubChatModelOptionsSchema, options);
+  constructor(public override options: AIGNEHubChatModelOptions) {
+    checkArguments("AIGNEHubChatModel", aigneHubModelOptionsSchema, options);
     super();
+  }
+
+  async models() {
+    return getModels({ baseURL: (await this.credential).url, type: "chat" });
   }
 
   protected _client?: Promise<BaseClient>;
@@ -69,11 +47,8 @@ export class AIGNEHubChatModel extends ChatModel {
   }>;
 
   override get credential() {
-    this._credential = getAIGNEHubMountPoint(
-      this.options.url ||
-        process.env.BLOCKLET_AIGNE_API_URL ||
-        process.env.AIGNE_HUB_API_URL ||
-        AIGNE_HUB_URL,
+    this._credential ??= getAIGNEHubMountPoint(
+      this.options.baseURL || aigneHubBaseUrl(),
       AIGNE_HUB_BLOCKLET_DID,
     ).then((url) => {
       const path = "/api/v2/chat";
@@ -110,15 +85,28 @@ export class AIGNEHubChatModel extends ChatModel {
       ABT_NODE_DID ||
       `@aigne/aigne-hub:${typeof process !== "undefined" ? nodejs.os.hostname() : "unknown"}`;
 
-    return (await this.client).__invoke(undefined, input, {
-      ...options,
-      fetchOptions: {
-        ...options.fetchOptions,
-        headers: {
-          ...options.fetchOptions?.headers,
-          "x-aigne-hub-client-did": clientId,
+    return (await this.client).__invoke(
+      undefined,
+      {
+        ...input,
+        modelOptions: {
+          ...this.options.modelOptions,
+          ...input.modelOptions,
+          model: input.modelOptions?.model || (await this.credential).model,
+        },
+        // Shouldn't use `local` output type for remote AIGNE Hub call, client can not access the remote filesystem
+        outputFileType: "file",
+      },
+      {
+        ...options,
+        fetchOptions: {
+          ...options.fetchOptions,
+          headers: {
+            ...options.fetchOptions?.headers,
+            "x-aigne-hub-client-did": clientId,
+          },
         },
       },
-    });
+    );
   }
 }

@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.11.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-ui-v0.11.0...observability-ui-v0.11.1-beta) (2025-10-11)
+
+
+### Bug Fixes
+
+* add ability to delete individual trace records ([f853cec](https://github.com/AIGNE-io/aigne-framework/commit/f853cec0557600788f2da1e5be4935360372dc99))
+* add ability to delete individual trace records ([#606](https://github.com/AIGNE-io/aigne-framework/issues/606)) ([f853cec](https://github.com/AIGNE-io/aigne-framework/commit/f853cec0557600788f2da1e5be4935360372dc99))
+* observability list query setting ([#605](https://github.com/AIGNE-io/aigne-framework/issues/605)) ([0952d39](https://github.com/AIGNE-io/aigne-framework/commit/0952d398955702276956da963710f8bfd85a86ce))
+* observability list query setting ([#605](https://github.com/AIGNE-io/aigne-framework/issues/605)) ([0952d39](https://github.com/AIGNE-io/aigne-framework/commit/0952d398955702276956da963710f8bfd85a86ce))
+* update observability deps ([#602](https://github.com/AIGNE-io/aigne-framework/issues/602)) ([fc70ecd](https://github.com/AIGNE-io/aigne-framework/commit/fc70ecd142825f0bcfc01bfa7df488d8f1d95ec3))
+* update observability deps ([#602](https://github.com/AIGNE-io/aigne-framework/issues/602)) ([fc70ecd](https://github.com/AIGNE-io/aigne-framework/commit/fc70ecd142825f0bcfc01bfa7df488d8f1d95ec3))
+
+## [0.11.0](https://github.com/AIGNE-io/aigne-framework/compare/observability-ui-v0.11.0-beta.1...observability-ui-v0.11.0) (2025-09-27)
+
+## [0.11.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-ui-v0.11.0-beta...observability-ui-v0.11.0-beta.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* **blocklet:** observability blocklet start failure ([#554](https://github.com/AIGNE-io/aigne-framework/issues/554)) ([8431d4d](https://github.com/AIGNE-io/aigne-framework/commit/8431d4d89a4b96f735f23e774e9545bbe1fd811c))
+* **blocklet:** observability blocklet start failure ([#554](https://github.com/AIGNE-io/aigne-framework/issues/554)) ([8431d4d](https://github.com/AIGNE-io/aigne-framework/commit/8431d4d89a4b96f735f23e774e9545bbe1fd811c))
+
+## [0.11.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/observability-ui-v0.10.1...observability-ui-v0.11.0-beta) (2025-09-25)
+
+
+### Features
+
+* **blocklet:** add token and cost summary for tracing list ([#543](https://github.com/AIGNE-io/aigne-framework/issues/543)) ([5e78919](https://github.com/AIGNE-io/aigne-framework/commit/5e789199b8183cf9c48339ec8163faec001ca64c))
+
 ## [0.10.1](https://github.com/AIGNE-io/aigne-framework/compare/observability-ui-v0.10.0...observability-ui-v0.10.1) (2025-08-26)
 
 

@@ -1,9 +1,16 @@
-import { AIGNE_HUB_DEFAULT_MODEL, findModel } from "@aigne/aigne-hub";
-import type { ChatModel, ChatModelOptions } from "@aigne/core";
-import { flat } from "@aigne/core/utils/type-utils.js";
+import { readFile } from "node:fs/promises";
+import { AIGNE_HUB_DEFAULT_MODEL, findImageModel, findModel } from "@aigne/aigne-hub";
+import type {
+  ChatModel,
+  ChatModelInputOptions,
+  ImageModel,
+  ImageModelInputOptions,
+} from "@aigne/core";
+import { flat, omit } from "@aigne/core/utils/type-utils.js";
 import chalk from "chalk";
 import inquirer from "inquirer";
-import { AIGNE_HUB_PROVIDER } from "./constants.js";
+import { parse, stringify } from "yaml";
+import { AIGNE_ENV_FILE, AIGNE_HUB_PROVIDER } from "./constants.js";
 import { loadAIGNEHubCredential } from "./credential.js";
 import type { LoadCredentialOptions } from "./type.js";
 
@@ -15,7 +22,8 @@ export function maskApiKey(apiKey?: string) {
 }
 
 export const parseModelOption = (model: string) => {
-  const { provider, name } = model.match(/(?<provider>[^:]*)(:(?<name>.*))?/)?.groups ?? {};
+  model = model.replace(":", "/");
+  const { provider, name } = model.match(/(?<provider>[^/]*)(\/(?<name>.*))?/)?.groups ?? {};
   return { provider: provider?.replace(/-/g, ""), model: name };
 };
 
@@ -27,10 +35,11 @@ export const formatModelName = async (
   provider ||= AIGNE_HUB_PROVIDER;
 
   const { match, all } = findModel(provider);
-  if (!match)
+  if (!match) {
     throw new Error(
       `Unsupported model: ${provider}/${name}, available providers: ${all.map((m) => m.name).join(", ")}`,
     );
+  }
 
   if (provider.includes(AIGNE_HUB_PROVIDER)) {
     return { provider, model: name || AIGNE_HUB_DEFAULT_MODEL };
@@ -39,6 +48,11 @@ export const formatModelName = async (
   const requireEnvs = flat(match.apiKeyEnvName);
   if (requireEnvs.some((name) => name && process.env[name])) {
     return { provider, model: name };
+  }
+
+  const envs = parse(await readFile(AIGNE_ENV_FILE, "utf8").catch(() => stringify({})));
+  if (process.env.AIGNE_HUB_API_KEY || envs?.default?.AIGNE_HUB_API_URL) {
+    return { provider: AIGNE_HUB_PROVIDER, model: `${provider}/${name}` };
   }
 
   const result = await inquirerPrompt({
@@ -71,21 +85,13 @@ export const formatModelName = async (
 };
 
 export async function loadChatModel(
-  options?: ChatModelOptions & LoadCredentialOptions,
+  options?: ChatModelInputOptions & LoadCredentialOptions,
 ): Promise<ChatModel> {
   const { provider, model } = await formatModelName(
     options?.model || process.env.MODEL || "",
     options?.inquirerPromptFn ??
       (inquirer.prompt as NonNullable<LoadCredentialOptions["inquirerPromptFn"]>),
   );
-
-  const params: ChatModelOptions = {
-    model,
-    temperature: options?.temperature,
-    topP: options?.topP,
-    frequencyPenalty: options?.frequencyPenalty,
-    presencePenalty: options?.presencePenalty,
-  };
 
   const { match, all } = findModel(provider);
   if (!match) {
@@ -100,7 +106,35 @@ export async function loadChatModel(
 
   return match.create({
     ...credential,
-    model: params.model,
-    modelOptions: { ...params },
+    baseURL: credential?.url,
+    model,
+    modelOptions: options && omit(options, "model", "aigneHubUrl", "inquirerPromptFn"),
+  });
+}
+
+export async function loadImageModel(
+  options?: ImageModelInputOptions & LoadCredentialOptions,
+): Promise<ImageModel> {
+  const { provider, model } = await formatModelName(
+    options?.model || process.env.IMAGE_MODEL || "",
+    options?.inquirerPromptFn ??
+      (inquirer.prompt as NonNullable<LoadCredentialOptions["inquirerPromptFn"]>),
+  );
+
+  const { match, all } = findImageModel(provider);
+  if (!match) {
+    throw new Error(
+      `Unsupported image model provider ${provider}, available providers: ${all.map((m) => m.name).join(", ")}`,
+    );
+  }
+
+  const credential = provider.toLowerCase().includes(AIGNE_HUB_PROVIDER)
+    ? await loadAIGNEHubCredential(options)
+    : undefined;
+
+  return match.create({
+    ...credential,
+    model,
+    modelOptions: options && omit(options, "model", "aigneHubUrl", "inquirerPromptFn"),
   });
 }

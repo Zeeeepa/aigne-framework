@@ -1,8 +1,9 @@
+import { AFS, type AFSOptions } from "@aigne/afs";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import type * as prompts from "@inquirer/prompts";
 import equal from "fast-deep-equal";
 import nunjucks from "nunjucks";
-import { ZodObject, type ZodType, z } from "zod";
+import { type ZodObject, type ZodType, z } from "zod";
 import type { AgentEvent, Context, UserContext } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
 import type { ContextUsage } from "../aigne/usage.js";
@@ -10,6 +11,7 @@ import type { Memory, MemoryAgent } from "../memory/memory.js";
 import type { MemoryRecorderInput } from "../memory/recorder.js";
 import type { MemoryRetrieverInput } from "../memory/retriever.js";
 import { sortHooks } from "../utils/agent-utils.js";
+import { isZodSchema } from "../utils/json-schema.js";
 import { logger } from "../utils/logger.js";
 import {
   agentResponseStreamToObject,
@@ -31,7 +33,9 @@ import {
   type PromiseOrValue,
   type XOr,
 } from "../utils/type-utils.js";
+import type { ChatModel } from "./chat-model.js";
 import type { GuideRailAgent, GuideRailAgentOutput } from "./guide-rail-agent.js";
+import type { ImageModel } from "./image-model.js";
 import {
   replaceTransferAgentToName,
   type TransferAgentOutput,
@@ -41,6 +45,10 @@ import {
 export * from "./types.js";
 
 export const DEFAULT_INPUT_ACTION_GET = "$get";
+
+const DEFAULT_RETRIES = 3;
+const DEFAULT_RETRY_MIN_TIMEOUT = 1000;
+const DEFAULT_RETRY_FACTOR = 2;
 
 /**
  * Basic message type that can contain any key-value pairs
@@ -116,6 +124,10 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
    */
   description?: string;
 
+  model?: ChatModel;
+
+  imageModel?: ImageModel;
+
   taskTitle?: string | ((input: I) => PromiseOrValue<string | undefined>);
 
   taskRenderMode?: TaskRenderMode;
@@ -168,6 +180,8 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
    */
   memory?: MemoryAgent | MemoryAgent[];
 
+  afs?: true | AFSOptions | AFS | ((afs: AFS) => AFS);
+
   asyncMemoryRecord?: boolean;
 
   /**
@@ -176,6 +190,8 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
   maxRetrieveMemoryCount?: number;
 
   hooks?: AgentHooks<I, O> | AgentHooks<I, O>[];
+
+  retryOnError?: Agent<I, O>["retryOnError"] | boolean;
 }
 
 const hooksSchema = z.object({
@@ -206,6 +222,18 @@ export const agentOptionsSchema: ZodObject<{
   maxRetrieveMemoryCount: z.number().optional(),
   hooks: z.union([z.array(hooksSchema), hooksSchema]).optional(),
   guideRails: z.array(z.custom<GuideRailAgent>()).optional(),
+  retryOnError: z
+    .union([
+      z.boolean(),
+      z.object({
+        retries: z.number().int().min(0),
+        minTimeout: z.number().min(0).optional(),
+        factor: z.number().min(1).optional(),
+        randomize: z.boolean().optional(),
+        shouldRetry: z.custom<(error: Error) => boolean | Promise<boolean>>().optional(),
+      }),
+    ])
+    .optional(),
 });
 
 export interface AgentInvokeOptions<U extends UserContext = UserContext> {
@@ -223,6 +251,10 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
    * agent system and maintain proper isolation and resource control.
    */
   context: Context<U>;
+
+  model?: ChatModel;
+
+  imageModel?: ImageModel;
 
   /**
    * Whether to enable streaming response
@@ -273,11 +305,15 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
  */
 export abstract class Agent<I extends Message = any, O extends Message = any> {
   constructor(options: AgentOptions<I, O> = {}) {
+    checkArguments("Agent options", agentOptionsSchema, options);
+
     const { inputSchema, outputSchema } = options;
 
     this.name = options.name || this.constructor.name;
     this.alias = options.alias;
     this.description = options.description;
+    this.model = options.model;
+    this.imageModel = options.imageModel;
     this.taskTitle = options.taskTitle as Agent<I, O>["taskTitle"];
     this.taskRenderMode = options.taskRenderMode;
 
@@ -297,18 +333,37 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     } else if (options.memory) {
       this.memories.push(options.memory);
     }
+    this.afs = !options.afs
+      ? undefined
+      : options.afs === true
+        ? new AFS()
+        : typeof options.afs === "function"
+          ? options.afs(new AFS())
+          : options.afs instanceof AFS
+            ? options.afs
+            : new AFS(options.afs);
     this.asyncMemoryRecord = options.asyncMemoryRecord;
 
     this.maxRetrieveMemoryCount = options.maxRetrieveMemoryCount;
 
     this.hooks = flat(options.hooks);
+    this.retryOnError =
+      options.retryOnError === false
+        ? undefined
+        : options.retryOnError === true
+          ? { retries: DEFAULT_RETRIES }
+          : options.retryOnError;
     this.guideRails = options.guideRails;
   }
 
   /**
    * List of memories this agent can use
+   *
+   * @deprecated use afs instead
    */
   readonly memories: MemoryAgent[] = [];
+
+  afs?: AFS;
 
   asyncMemoryRecord?: boolean;
 
@@ -330,6 +385,14 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
    * {@includeCode ../../test/agents/agent.test.ts#example-agent-hooks}
    */
   readonly hooks: AgentHooks<I, O>[];
+
+  retryOnError?: {
+    retries?: number;
+    minTimeout?: number;
+    factor?: number;
+    randomize?: boolean;
+    shouldRetry?: (error: Error) => boolean | Promise<boolean>;
+  };
 
   /**
    * List of GuideRail agents applied to this agent
@@ -381,6 +444,10 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
    * each other's roles in a multi-agent system
    */
   readonly description?: string;
+
+  model?: ChatModel;
+
+  imageModel?: ImageModel;
 
   taskTitle?: string | ((input: Message) => PromiseOrValue<string | undefined>);
 
@@ -668,6 +735,7 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     options: AgentInvokeOptions,
   ): AgentProcessAsyncGenerator<O> {
     let output = {};
+    let attempt = 0;
 
     for (;;) {
       // Reset output to avoid accumulating old data
@@ -705,6 +773,26 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
         // Close the stream after processing
         break;
       } catch (error) {
+        if (this.retryOnError?.retries) {
+          const {
+            retries,
+            minTimeout = DEFAULT_RETRY_MIN_TIMEOUT,
+            factor = DEFAULT_RETRY_FACTOR,
+            randomize = false,
+            shouldRetry,
+          } = this.retryOnError;
+
+          if (attempt++ < retries && (!shouldRetry || (await shouldRetry(error)))) {
+            const timeout =
+              minTimeout * factor ** (attempt - 1) * (randomize ? 1 + Math.random() : 1);
+            logger.warn(
+              `Agent ${this.name} attempt ${attempt} of ${retries} failed with error: ${error}. Retrying in ${timeout}ms...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, timeout));
+            continue;
+          }
+        }
+
         const res = await this.processAgentError(input, error, options);
         if (!res.retry) throw res.error ?? error;
       }
@@ -770,12 +858,10 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     input: I & Message,
     options: AgentInvokeOptions,
   ): Promise<O> {
-    const { context } = options;
-
     await this.callHooks("onSkillStart", { skill, input }, options);
 
     try {
-      const output = await context.invoke(skill, input);
+      const output = await this.invokeChildAgent(skill, input, { ...options, streaming: false });
 
       await this.callHooks("onSkillEnd", { skill, input, output }, options);
 
@@ -787,6 +873,18 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     }
   }
 
+  protected invokeChildAgent = ((
+    agent: Agent<I, O>,
+    input: I & Message,
+    options: AgentInvokeOptions,
+  ) => {
+    return options.context.invoke(agent, input, {
+      ...options,
+      model: this.model || options.model,
+      imageModel: this.imageModel || options.imageModel,
+    });
+  }) as Context["invoke"];
+
   /**
    * Process agent output
    *
@@ -797,7 +895,7 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
    * @param options Invocation options
    * @returns Final processed output
    */
-  private async processAgentOutput(
+  protected async processAgentOutput(
     input: I,
     output: Exclude<AgentResponse<O>, AgentResponseStream<O>>,
     options: AgentInvokeOptions,
@@ -825,6 +923,8 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     const o = await this.callHooks(["onSuccess", "onEnd"], { input, output: finalOutput }, options);
     if (o?.output) finalOutput = o.output as O;
 
+    this.afs?.emit("agentSucceed", { input, output: finalOutput });
+
     if (!this.disableEvents) context.emit("agentSucceed", { agent: this, output: finalOutput });
 
     return finalOutput;
@@ -844,9 +944,12 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     options: AgentInvokeOptions,
   ): Promise<{ retry?: boolean; error?: Error }> {
     logger.error("Invoke agent %s failed with error: %O", this.name, error);
-    if (!this.disableEvents) options.context.emit("agentFailed", { agent: this, error });
 
     const res = (await this.callHooks(["onError", "onEnd"], { input, error }, options)) ?? {};
+
+    if (!res.retry) {
+      if (!this.disableEvents) options.context.emit("agentFailed", { agent: this, error });
+    }
 
     return { ...res };
   }
@@ -919,7 +1022,9 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     options: AgentInvokeOptions,
   ): Promise<(GuideRailAgentOutput & { abort: true }) | undefined> {
     const result = await Promise.all(
-      (this.guideRails ?? []).map((i) => options.context.invoke(i, { input, output })),
+      (this.guideRails ?? []).map((i) =>
+        this.invokeChildAgent(i, { input, output }, { ...options, streaming: false }),
+      ),
     );
     return result.find((i): i is GuideRailAgentOutput & { abort: true } => !!i.abort);
   }
@@ -1402,7 +1507,7 @@ function checkAgentInputOutputSchema<I extends Message>(
 ): asserts schema is
   | ZodObject<{ [key in keyof I]: ZodType<I[key]> }>
   | ((agent: Agent) => ZodType<I>) {
-  if (!(schema instanceof ZodObject) && typeof schema !== "function") {
+  if (typeof schema !== "function" && !isZodSchema(schema)) {
     throw new Error(
       `schema must be a zod object or function return a zod object, got: ${typeof schema}`,
     );
