@@ -21,8 +21,10 @@ import { optionalize } from "../loader/schema.js";
 import type { Memory } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
 import { checkArguments, flat, isNonNullable, isRecord, unique } from "../utils/type-utils.js";
+import { getAFSSystemPrompt } from "./prompts/afs-builtin-prompt.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
 import { STRUCTURED_STREAM_INSTRUCTIONS } from "./prompts/structured-stream-instructions.js";
+import { getAFSSkills } from "./skills/afs.js";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
@@ -109,7 +111,7 @@ export class PromptBuilder {
         ? undefined
         : this.buildResponseFormat(options),
       outputFileType: options.agent?.outputFileType,
-      ...this.buildTools(options),
+      ...(await this.buildTools(options)),
     };
   }
 
@@ -165,7 +167,7 @@ export class PromptBuilder {
 
     if (options.agent?.afs) {
       const history = await options.agent.afs.list(AFSHistory.Path, {
-        limit: options.agent.maxRetrieveMemoryCount || 1,
+        limit: options.agent.maxRetrieveMemoryCount ?? 10,
         orderBy: [["createdAt", "desc"]],
       });
 
@@ -178,6 +180,8 @@ export class PromptBuilder {
       memories.push(
         ...history.list.filter((i): i is Required<AFSEntry> => isNonNullable(i.content)),
       );
+
+      messages.push(SystemMessageTemplate.from(await getAFSSystemPrompt(options.agent.afs)));
     }
 
     if (memories.length)
@@ -334,9 +338,11 @@ export class PromptBuilder {
       : undefined;
   }
 
-  private buildTools(
+  private async buildTools(
     options: PromptBuildOptions,
-  ): Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] } {
+  ): Promise<
+    Pick<ChatModelInput, "tools" | "toolChoice" | "modelOptions"> & { toolAgents?: Agent[] }
+  > {
     const toolAgents = unique(
       (options.context?.skills ?? [])
         .concat(options.agent?.skills ?? [])
@@ -344,6 +350,10 @@ export class PromptBuilder {
         .flatMap((i) => (i.isInvokable ? i : i.skills)),
       (i) => i.name,
     );
+
+    if (options.agent?.afs) {
+      toolAgents.push(...(await getAFSSkills(options.agent.afs)));
+    }
 
     const tools: ChatModelInputTool[] = toolAgents.map((i) => ({
       type: "function",

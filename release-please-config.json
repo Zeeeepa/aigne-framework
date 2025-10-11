@@ -145,6 +145,9 @@
     "examples/nano-banana": {
       "prerelease-type": "beta"
     },
+    "examples/afs-system-fs": {
+      "prerelease-type": "beta"
+    },
     "blocklets/aigne-runtime": {
       "prerelease-type": "beta",
       "package-name": "aigne-runtime",
@@ -160,6 +163,9 @@
       "prerelease-type": "beta"
     },
     "afs/user-profile-memory": {
+      "prerelease-type": "beta"
+    },
+    "afs/system-fs": {
       "prerelease-type": "beta"
     }
   },
