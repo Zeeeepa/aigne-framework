@@ -76,6 +76,7 @@ export default ({
       like(Trace.name, `%${searchText}%`),
       like(Trace.id, `%${searchText}%`),
       like(Trace.userId, `%${(searchText || "").replace("did:abt:", "")}%`),
+      like(Trace.remark, `%${searchText}%`),
     );
     let whereClause = searchText ? and(rootFilter, searchFilter) : rootFilter;
 
@@ -110,19 +111,19 @@ export default ({
         endTime: Trace.endTime,
         status: Trace.status,
         attributes: sql<string>`
-          CASE 
+          CASE
             WHEN ${Trace.attributes} IS NULL THEN JSON_OBJECT('input', '', 'output', '')
             ELSE JSON_OBJECT(
-              'input', 
-              CASE 
-                WHEN JSON_EXTRACT(${Trace.attributes}, '$.input') IS NOT NULL 
+              'input',
+              CASE
+                WHEN JSON_EXTRACT(${Trace.attributes}, '$.input') IS NOT NULL
                 THEN SUBSTR(CAST(JSON_EXTRACT(${Trace.attributes}, '$.input') AS TEXT), 1, 150) ||
                 CASE WHEN LENGTH(CAST(JSON_EXTRACT(${Trace.attributes}, '$.input') AS TEXT)) > 150 THEN '...' ELSE '' END
                 ELSE ''
               END,
               'output',
-              CASE 
-                WHEN JSON_EXTRACT(${Trace.attributes}, '$.output') IS NOT NULL 
+              CASE
+                WHEN JSON_EXTRACT(${Trace.attributes}, '$.output') IS NOT NULL
                 THEN SUBSTR(CAST(JSON_EXTRACT(${Trace.attributes}, '$.output') AS TEXT), 1, 150) ||
                 CASE WHEN LENGTH(CAST(JSON_EXTRACT(${Trace.attributes}, '$.output') AS TEXT)) > 150 THEN '...' ELSE '' END
                 ELSE ''
@@ -134,6 +135,7 @@ export default ({
         componentId: Trace.componentId,
         token: Trace.token,
         cost: Trace.cost,
+        remark: Trace.remark,
       })
       .from(Trace)
       .where(whereClause)
@@ -178,9 +180,9 @@ export default ({
       .select({
         successCount: sql<number>`
           COUNT(
-            CASE 
-              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0 
-              THEN 1 
+            CASE
+              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0
+              THEN 1
             END
           )
         `,
@@ -217,9 +219,9 @@ export default ({
         llmTotalCount: sql<number>`COUNT(*)`,
         llmSuccessCount: sql<number>`
           COUNT(
-            CASE 
-              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0 
-              THEN 1 
+            CASE
+              WHEN JSON_EXTRACT(${Trace.status}, '$.code') = 1 AND ${Trace.endTime} > 0
+              THEN 1
             END
           )
         `,
@@ -459,6 +461,34 @@ export default ({
 
     await db.delete(Trace).execute();
     res.json({ code: 0, message: "all traces deleted" });
+  });
+
+  router.post("/remark", ...middleware, async (req: Request, res: Response) => {
+    const db = req.app.locals.db as LibSQLDatabase;
+
+    const { id, remark } = req.body;
+    if (!id) {
+      res.status(400).json({ error: "id is required" });
+      return;
+    }
+
+    if (remark && remark.length > 50) {
+      res.status(400).json({ error: "Remark cannot exceed 50 characters" });
+      return;
+    }
+
+    try {
+      await db
+        .update(Trace)
+        .set({ remark: remark || null })
+        .where(eq(Trace.id, id))
+        .execute();
+
+      res.json({ code: 0, message: "remark updated successfully" });
+    } catch (error) {
+      console.error("Failed to update remark:", error);
+      res.status(500).json({ error: "Failed to update remark" });
+    }
   });
 
   return router;

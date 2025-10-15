@@ -296,6 +296,18 @@ const List = ({ ref }: { ref?: React.RefObject<ListRef | null> }) => {
           onDelete={onDelete}
           selectedRows={selectedRows}
           setSelectedRows={setSelectedRows}
+          onRemarkUpdate={(id, remark) => {
+            setTraces((prev) =>
+              prev.map((trace) => (trace.id === id ? { ...trace, remark } : trace)),
+            );
+
+            fetchTraces({
+              page: page.page - 1,
+              pageSize: page.pageSize,
+              searchText: search.searchText,
+              dateRange: search.dateRange,
+            });
+          }}
         />
       </Box>
 
