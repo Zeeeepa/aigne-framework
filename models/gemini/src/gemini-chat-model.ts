@@ -183,8 +183,10 @@ export class GeminiChatModel extends ChatModel {
       }
 
       if (chunk.usageMetadata) {
-        usage.inputTokens += chunk.usageMetadata.promptTokenCount || 0;
-        usage.outputTokens += chunk.usageMetadata.candidatesTokenCount || 0;
+        if (chunk.usageMetadata.promptTokenCount)
+          usage.inputTokens = chunk.usageMetadata.promptTokenCount;
+        if (chunk.usageMetadata.candidatesTokenCount)
+          usage.outputTokens = chunk.usageMetadata.candidatesTokenCount;
       }
     }
 
