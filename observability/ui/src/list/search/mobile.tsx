@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { BlockletComponent, type SearchState } from "../../components/blocklet-comp.tsx";
+import LiveSwitch from "../../components/live-switch.tsx";
 import SwitchComponent from "../../components/switch.tsx";
 
 const MobileSearch = ({
@@ -98,8 +99,18 @@ const MobileSearch = ({
         </Box> */}
 
         <Box sx={{ mb: 3 }}>
-          <SwitchComponent live={live} setLive={setLive} />
+          <LiveSwitch live={live} setLive={setLive} />
         </Box>
+
+        {!isBlocklet && (
+          <Box sx={{ mb: 3 }}>
+            <SwitchComponent
+              checked={search.showImportedOnly ?? false}
+              onChange={(checked) => setSearch({ showImportedOnly: checked })}
+              label={t("showImportedOnly")}
+            />
+          </Box>
+        )}
       </Box>
 
       <Box
