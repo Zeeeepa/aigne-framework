@@ -55,7 +55,9 @@ export const formatModelName = async (
     return { provider, model: name };
   }
 
-  const envs = parse(await readFile(AIGNE_ENV_FILE, "utf8").catch(() => stringify({})));
+  const envs: Record<string, { AIGNE_HUB_API_URL: string }> | null = parse(
+    await readFile(AIGNE_ENV_FILE, "utf8").catch(() => stringify({})),
+  );
   if (process.env.AIGNE_HUB_API_KEY || envs?.default?.AIGNE_HUB_API_URL) {
     return { provider: AIGNE_HUB_PROVIDER, model: `${provider}/${name}` };
   }
@@ -86,7 +88,7 @@ export const formatModelName = async (
     process.exit(0);
   }
 
-  if (!envs.default?.AIGNE_HUB_API_URL) {
+  if (envs && Object.keys(envs).length > 0 && !envs.default?.AIGNE_HUB_API_URL) {
     const host = new URL(AIGNE_HUB_URL).host;
 
     const defaultEnv = envs[host]?.AIGNE_HUB_API_URL
