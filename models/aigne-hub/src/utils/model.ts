@@ -6,20 +6,27 @@ import type {
   ChatModelInputOptions,
   ImageModel,
   ImageModelInputOptions,
+  VideoModel,
 } from "@aigne/core";
 import { DeepSeekChatModel } from "@aigne/deepseek";
 import { DoubaoChatModel, DoubaoImageModel } from "@aigne/doubao";
-import { GeminiChatModel, GeminiImageModel } from "@aigne/gemini";
+import { GeminiChatModel, GeminiImageModel, GeminiVideoModel } from "@aigne/gemini";
 import { IdeogramImageModel } from "@aigne/ideogram";
 import { OllamaChatModel } from "@aigne/ollama";
 import { OpenRouterChatModel } from "@aigne/open-router";
-import { OpenAIChatModel, type OpenAIChatModelOptions, OpenAIImageModel } from "@aigne/openai";
+import {
+  OpenAIChatModel,
+  type OpenAIChatModelOptions,
+  OpenAIImageModel,
+  OpenAIVideoModel,
+} from "@aigne/openai";
 import { PoeChatModel } from "@aigne/poe";
 import { XAIChatModel } from "@aigne/xai";
 import { NodeHttpHandler, streamCollector } from "@smithy/node-http-handler";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { AIGNEHubImageModel } from "../aigne-hub-image-model.js";
 import { AIGNEHubChatModel } from "../aigne-hub-model.js";
+import { AIGNEHubVideoModel } from "../aigne-hub-video-model.js";
 
 const getClientOptions = () => {
   const proxy = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"]
@@ -42,6 +49,9 @@ const getClientOptions = () => {
     httpAgent,
   };
 };
+
+const GOOGLE = "google";
+
 export interface LoadableModel {
   name: string | string[];
   apiKeyEnvName?: string | string[];
@@ -85,7 +95,7 @@ export function availableModels(): LoadableModel[] {
       create: (params) => new DeepSeekChatModel({ ...params, clientOptions }),
     },
     {
-      name: [GeminiChatModel.name, "google"],
+      name: [GeminiChatModel.name, GOOGLE],
       apiKeyEnvName: ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
       create: (params) =>
         new GeminiChatModel({
@@ -137,6 +147,17 @@ export interface LoadableImageModel {
   }) => ImageModel;
 }
 
+export interface LoadableVideoModel {
+  name: string | string[];
+  apiKeyEnvName: string;
+  create: (options: {
+    apiKey?: string;
+    baseURL?: string;
+    model?: string;
+    modelOptions?: { [key: string]: any };
+  }) => VideoModel;
+}
+
 export function availableImageModels(): LoadableImageModel[] {
   const { clientOptions } = getClientOptions();
 
@@ -147,7 +168,7 @@ export function availableImageModels(): LoadableImageModel[] {
       create: (params) => new OpenAIImageModel({ ...params, clientOptions }),
     },
     {
-      name: [GeminiImageModel.name, "google"],
+      name: [GeminiImageModel.name, GOOGLE],
       apiKeyEnvName: "GEMINI_API_KEY",
       create: (params) => new GeminiImageModel({ ...params, clientOptions }),
     },
@@ -165,6 +186,28 @@ export function availableImageModels(): LoadableImageModel[] {
       name: AIGNEHubImageModel.name,
       apiKeyEnvName: "AIGNE_HUB_API_KEY",
       create: (params) => new AIGNEHubImageModel({ ...params, clientOptions }),
+    },
+  ];
+}
+
+export function availableVideoModels(): LoadableVideoModel[] {
+  const { clientOptions } = getClientOptions();
+
+  return [
+    {
+      name: OpenAIVideoModel.name,
+      apiKeyEnvName: "OPENAI_API_KEY",
+      create: (params) => new OpenAIVideoModel({ ...params, clientOptions }),
+    },
+    {
+      name: [GeminiVideoModel.name, GOOGLE],
+      apiKeyEnvName: "GEMINI_API_KEY",
+      create: (params) => new GeminiVideoModel({ ...params, clientOptions }),
+    },
+    {
+      name: AIGNEHubVideoModel.name,
+      apiKeyEnvName: "AIGNE_HUB_API_KEY",
+      create: (params) => new AIGNEHubVideoModel({ ...params, clientOptions }),
     },
   ];
 }
@@ -195,6 +238,25 @@ export function findImageModel(provider: string): {
   provider = provider.toLowerCase().replace(/-/g, "");
 
   const all = availableImageModels();
+
+  const match = all.find((m) => {
+    if (typeof m.name === "string") {
+      return m.name.toLowerCase().includes(provider);
+    }
+
+    return m.name.some((n) => n.toLowerCase().includes(provider));
+  });
+
+  return { all, match };
+}
+
+export function findVideoModel(provider: string): {
+  all: LoadableVideoModel[];
+  match: LoadableVideoModel | undefined;
+} {
+  provider = provider.toLowerCase().replace(/-/g, "");
+
+  const all = availableVideoModels();
 
   const match = all.find((m) => {
     if (typeof m.name === "string") {
