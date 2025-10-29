@@ -28,6 +28,7 @@ export default function RunDetailDrawer({
   return (
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
       <RunStatsHeader
+        traceInfo={traceInfo}
         inputTokens={stats.inputTokens}
         inputCost={stats.inputCost}
         outputTokens={stats.outputTokens}
@@ -44,8 +45,7 @@ export default function RunDetailDrawer({
         <Box
           sx={{
             flex: 1,
-            py: 3,
-            px: 2,
+            p: 2,
             borderRight: (theme) => `1px solid ${theme.palette.divider}`,
             minWidth: 300,
             overflow: "auto",
@@ -59,8 +59,24 @@ export default function RunDetailDrawer({
           />
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-          <TraceDetailPanel trace={selectedTrace} />
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              p: 3,
+              overflow: "hidden",
+              width: 1,
+              height: 1,
+              bgcolor: (theme) => `${theme.palette.action.hover}`,
+            }}
+          >
+            <TraceDetailPanel trace={selectedTrace} sx={{}} />
+          </Box>
         </Box>
       </Box>
     </Box>

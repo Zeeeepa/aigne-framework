@@ -22,11 +22,17 @@ export interface TraceData {
     agentTag?: string;
     userContext?: Record<string, unknown>;
     memories?: Record<string, unknown>[];
+    metadata?: {
+      cliVersion?: string;
+      appName?: string;
+      appVersion?: string;
+    };
   };
   componentId?: string;
   userId?: string;
   token?: number;
   cost?: number;
+  remark?: string;
 }
 
 export interface RunDetailDrawerProps {

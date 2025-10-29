@@ -1,5 +1,11 @@
-import { readFile } from "node:fs/promises";
-import { AIGNE_HUB_DEFAULT_MODEL, findImageModel, findModel } from "@aigne/aigne-hub";
+import { readFile, writeFile } from "node:fs/promises";
+import {
+  AIGNE_HUB_DEFAULT_MODEL,
+  AIGNE_HUB_URL,
+  findImageModel,
+  findModel,
+  parseModel,
+} from "@aigne/aigne-hub";
 import type {
   ChatModel,
   ChatModelInputOptions,
@@ -21,17 +27,11 @@ export function maskApiKey(apiKey?: string) {
   return `${start}${"*".repeat(8)}${end}`;
 }
 
-export const parseModelOption = (model: string) => {
-  model = model.replace(":", "/");
-  const { provider, name } = model.match(/(?<provider>[^/]*)(\/(?<name>.*))?/)?.groups ?? {};
-  return { provider: provider?.replace(/-/g, ""), model: name };
-};
-
 export const formatModelName = async (
   model: string,
   inquirerPrompt: NonNullable<LoadCredentialOptions["inquirerPromptFn"]>,
 ): Promise<{ provider: string; model?: string }> => {
-  let { provider, model: name } = parseModelOption(model);
+  let { provider, model: name } = parseModel(model);
   provider ||= AIGNE_HUB_PROVIDER;
 
   const { match, all } = findModel(provider);
@@ -50,7 +50,9 @@ export const formatModelName = async (
     return { provider, model: name };
   }
 
-  const envs = parse(await readFile(AIGNE_ENV_FILE, "utf8").catch(() => stringify({})));
+  const envs: Record<string, { AIGNE_HUB_API_URL: string }> | null = parse(
+    await readFile(AIGNE_ENV_FILE, "utf8").catch(() => stringify({})),
+  );
   if (process.env.AIGNE_HUB_API_KEY || envs?.default?.AIGNE_HUB_API_URL) {
     return { provider: AIGNE_HUB_PROVIDER, model: `${provider}/${name}` };
   }
@@ -79,6 +81,19 @@ export const formatModelName = async (
       ),
     );
     process.exit(0);
+  }
+
+  if (envs && Object.keys(envs).length > 0 && !envs.default?.AIGNE_HUB_API_URL) {
+    const host = new URL(AIGNE_HUB_URL).host;
+
+    const defaultEnv = envs[host]?.AIGNE_HUB_API_URL
+      ? envs[host]
+      : Object.values(envs)[0] || { AIGNE_HUB_API_URL: "" };
+
+    await writeFile(
+      AIGNE_ENV_FILE,
+      stringify({ ...envs, default: { AIGNE_HUB_API_URL: defaultEnv?.AIGNE_HUB_API_URL } }),
+    );
   }
 
   return { provider: AIGNE_HUB_PROVIDER, model: `${provider}/${name}` };
@@ -134,6 +149,7 @@ export async function loadImageModel(
 
   return match.create({
     ...credential,
+    baseURL: credential?.url,
     model,
     modelOptions: options && omit(options, "model", "aigneHubUrl", "inquirerPromptFn"),
   });

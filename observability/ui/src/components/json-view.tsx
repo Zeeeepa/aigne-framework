@@ -1,19 +1,32 @@
+import Editor from "@monaco-editor/react";
 import Box from "@mui/material/Box";
-import ReactJson from "react-json-view";
 
-export default function JsonView({ value }: { value: object }) {
+export default function JsonView({ value: data }: { value: any }) {
+  const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+
   return (
     <Box
-      sx={{ p: 2, m: 0, "& .string-value": { whiteSpace: "pre-line", wordBreak: "break-word" } }}
+      sx={{
+        p: 2,
+        m: 0,
+        height: "100%",
+        backgroundColor: "#1e1e1e",
+        userSelect: "text",
+        position: "relative",
+      }}
     >
-      <ReactJson
-        src={value}
-        name={false}
-        collapsed={3}
-        enableClipboard={false}
-        displayDataTypes={false}
-        style={{ background: "none", color: "inherit", fontSize: 14 }}
-        theme="monokai"
+      <Editor
+        path={`${jsonString.slice(0, 5)}.json`}
+        height="100%"
+        language="json"
+        theme="vs-dark"
+        value={jsonString}
+        options={{
+          readOnly: true,
+          minimap: { enabled: false },
+          wordWrap: "on",
+          contextmenu: false,
+        }}
       />
     </Box>
   );

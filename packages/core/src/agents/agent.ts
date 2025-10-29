@@ -55,7 +55,8 @@ const DEFAULT_RETRY_FACTOR = 2;
  */
 export interface Message extends Record<string, unknown> {
   $meta?: {
-    usage: ContextUsage;
+    usage?: ContextUsage;
+    [key: string]: unknown;
   };
 }
 
@@ -182,6 +183,8 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
 
   afs?: true | AFSOptions | AFS | ((afs: AFS) => AFS);
 
+  afsConfig?: AFSConfig;
+
   asyncMemoryRecord?: boolean;
 
   /**
@@ -192,6 +195,11 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
   hooks?: AgentHooks<I, O> | AgentHooks<I, O>[];
 
   retryOnError?: Agent<I, O>["retryOnError"] | boolean;
+}
+
+export interface AFSConfig {
+  injectHistory?: boolean;
+  historyWindowSize?: number;
 }
 
 const hooksSchema = z.object({
@@ -342,6 +350,7 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
           : options.afs instanceof AFS
             ? options.afs
             : new AFS(options.afs);
+    this.afsConfig = options.afsConfig;
     this.asyncMemoryRecord = options.asyncMemoryRecord;
 
     this.maxRetrieveMemoryCount = options.maxRetrieveMemoryCount;
@@ -364,6 +373,8 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
   readonly memories: MemoryAgent[] = [];
 
   afs?: AFS;
+
+  afsConfig?: AFSConfig;
 
   asyncMemoryRecord?: boolean;
 
@@ -764,7 +775,11 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
           yield chunk as AgentResponseChunk<O>;
         }
 
-        const result = await this.processAgentOutput(input, output, options);
+        let result = await this.processAgentOutput(input, output, options);
+
+        if (attempt > 0) {
+          result = { ...result, $meta: { ...result.$meta, retries: attempt } };
+        }
 
         if (result && !equal(result, output)) {
           yield { delta: { json: result } };
@@ -782,7 +797,8 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
             shouldRetry,
           } = this.retryOnError;
 
-          if (attempt++ < retries && (!shouldRetry || (await shouldRetry(error)))) {
+          if (attempt < retries && (!shouldRetry || (await shouldRetry(error)))) {
+            attempt++;
             const timeout =
               minTimeout * factor ** (attempt - 1) * (randomize ? 1 + Math.random() : 1);
             logger.warn(
@@ -794,7 +810,11 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
         }
 
         const res = await this.processAgentError(input, error, options);
-        if (!res.retry) throw res.error ?? error;
+        if (!res.retry) {
+          const e = res.error ?? error;
+          if (attempt > 0) e.message += ` (after ${attempt + 1} retries)`;
+          throw e;
+        }
       }
     }
   }

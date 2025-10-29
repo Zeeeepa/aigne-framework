@@ -3,20 +3,32 @@ import Confirm from "@arcblock/ux/lib/Dialog/confirm";
 import Empty from "@arcblock/ux/lib/Empty";
 import { useLocaleContext } from "@arcblock/ux/lib/Locale/context";
 import RelativeTime from "@arcblock/ux/lib/RelativeTime";
+import Toast from "@arcblock/ux/lib/Toast";
 import UserCard from "@arcblock/ux/lib/UserCard";
 import { CardType, InfoType } from "@arcblock/ux/lib/UserCard/types";
+import TrashIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import { useMediaQuery } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
 import { compact } from "lodash";
 import prettyMs from "pretty-ms";
 import { useState } from "react";
+import { joinURL } from "ufo";
 import { BlockletComponent } from "../components/blocklet-comp.tsx";
 import type { TraceData } from "../components/run/types.ts";
 import Status from "../components/status.tsx";
 import formatNumber from "../utils/format-number.ts";
+import { origin } from "../utils/index.ts";
 import { parseDuration } from "../utils/latency.ts";
+import Download from "./download.tsx";
 
 const Table = ({
   traces,
@@ -27,6 +39,9 @@ const Table = ({
   setPage,
   isLive,
   onDelete,
+  selectedRows,
+  setSelectedRows,
+  onRemarkUpdate,
 }: {
   traces: TraceData[];
   total: number;
@@ -36,12 +51,20 @@ const Table = ({
   setPage: (page: { page: number; pageSize: number }) => void;
   isLive?: boolean;
   onDelete: (item: string[]) => void;
+  selectedRows: string[];
+  setSelectedRows: (rows: string[]) => void;
+  onRemarkUpdate?: (id: string, remark: string) => void;
 }) => {
   const isBlocklet = !!window.blocklet?.prefix;
   const { t, locale } = useLocaleContext();
   const isMobile = useMediaQuery((x) => x.breakpoints.down("md"));
   const [open, setOpen] = useState<boolean>(false);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [remarkDialogOpen, setRemarkDialogOpen] = useState<boolean>(false);
+  const [currentRemark, setCurrentRemark] = useState<{ id: string; remark: string }>({
+    id: "",
+    remark: "",
+  });
+  const [saving, setSaving] = useState<boolean>(false);
 
   const columns = compact([
     {
@@ -55,9 +78,83 @@ const Table = ({
     {
       label: t("agentName"),
       name: "name",
-      minWidth: 150,
+      width: 200,
       options: {
-        customBodyRender: (value: string) => <Box>{value}</Box>,
+        customBodyRender: (value: string, { rowIndex }: { rowIndex: number }) => {
+          const item = traces[rowIndex];
+          return (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                py: 0.5,
+                position: "relative",
+                "&:hover .edit-remark-btn": { opacity: 1 },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 3 }}>
+                <Box sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {value}
+                </Box>
+                {item?.attributes?.metadata?.cliVersion && (
+                  <Chip
+                    label={`cli@${item.attributes?.metadata?.cliVersion}`}
+                    size="small"
+                    color={"default"}
+                    variant="outlined"
+                    sx={{ height: 21, borderRadius: "4px" }}
+                  />
+                )}
+
+                {item?.attributes?.metadata?.appName && (
+                  <Chip
+                    label={`${item.attributes?.metadata?.appName}@${item.attributes?.metadata?.appVersion}`}
+                    size="small"
+                    color={"default"}
+                    variant="outlined"
+                    sx={{ height: 21, borderRadius: "4px" }}
+                  />
+                )}
+              </Box>
+              {item.remark && (
+                <Box
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    opacity: 0.7,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    width: 150,
+                  }}
+                >
+                  {item.remark}
+                </Box>
+              )}
+              <IconButton
+                className="edit-remark-btn"
+                size="small"
+                sx={{
+                  position: "absolute",
+                  right: -8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  opacity: 0,
+                  transition: "opacity 0.2s",
+                  zIndex: 1,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentRemark({ id: item.id, remark: item.remark || "" });
+                  setRemarkDialogOpen(true);
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          );
+        },
       },
     },
     {
@@ -192,7 +289,7 @@ const Table = ({
                 size="small"
                 color={map[item.status?.code as keyof typeof map]?.color ?? "default"}
                 variant="outlined"
-                sx={{ height: 21 }}
+                sx={{ height: 21, borderRadius: "4px" }}
               />
             </Box>
           );
@@ -298,20 +395,44 @@ const Table = ({
     setSelectedRows([]);
   };
 
+  const handleRemarkSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(joinURL(origin, "/api/trace/remark"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentRemark.id, remark: currentRemark.remark }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save remark");
+      }
+
+      Toast.success(t("remarkSaved"));
+      setRemarkDialogOpen(false);
+      onRemarkUpdate?.(currentRemark.id, currentRemark.remark);
+    } catch (error) {
+      Toast.error((error as Error)?.message || t("remarkSaveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemarkClose = () => {
+    setRemarkDialogOpen(false);
+    setCurrentRemark({ id: "", remark: "" });
+  };
+
   const customToolbarSelect = (_selectedRows: { data: { index: number; dataIndex: number }[] }) => {
     if (!_selectedRows.data.length) return null;
 
     return (
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Button
-          className="resend-btn"
-          color="primary"
-          variant="contained"
-          sx={{ my: "2px", ".MuiButton-startIcon": { mr: "2px" } }}
-          onClick={() => setOpen(true)}
-        >
-          {t("actionLabel")}
-        </Button>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <IconButton onClick={() => setOpen(true)}>
+          <TrashIcon sx={{ color: "error.main" }} />
+        </IconButton>
+
+        <Download selectedIds={selectedRows} onReset={() => setSelectedRows([])} />
       </Box>
     );
   };
@@ -345,6 +466,10 @@ const Table = ({
               },
             }
           : {},
+        ".MuiPaper-elevation1": {
+          paddingTop: "16px",
+          paddingBottom: "16px",
+        },
       }}
     >
       <Datatable
@@ -362,7 +487,7 @@ const Table = ({
           rowsPerPage: page.pageSize,
           count: total,
           pagination: !isLive,
-          rowsPerPageOptions: [10, 20, 50, 100],
+          rowsPerPageOptions: [5, 10, 20, 50, 100],
           onRowClick(_rowData: string[], rowMeta: { dataIndex: number; rowIndex: number }) {
             const item = traces[rowMeta.dataIndex];
             onRowClick(item);
@@ -404,6 +529,34 @@ const Table = ({
           {t("delConfirmDescription", { id: selectedRows.join(",") })}
         </Box>
       </Confirm>
+
+      <Dialog open={remarkDialogOpen} onClose={handleRemarkClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontSize: 20 }}>{t("editRemark")}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            multiline
+            rows={4}
+            fullWidth
+            placeholder={t("remarkPlaceholder")}
+            value={currentRemark.remark}
+            onChange={(e) => {
+              const value = e.target.value.slice(0, 50);
+              setCurrentRemark({ ...currentRemark, remark: value });
+            }}
+            helperText={`${currentRemark.remark.length}/50`}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRemarkClose} variant="outlined">
+            {t("cancel")}
+          </Button>
+          <Button onClick={handleRemarkSave} variant="contained" disabled={saving}>
+            {saving ? t("saving") : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

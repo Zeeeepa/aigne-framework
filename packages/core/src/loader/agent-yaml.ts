@@ -3,11 +3,12 @@ import { jsonSchemaToZod } from "@aigne/json-schema-to-zod";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { parse } from "yaml";
 import { type ZodType, z } from "zod";
-import type { AgentHooks, FunctionAgentFn, TaskRenderMode } from "../agents/agent.js";
+import type { AFSConfig, AgentHooks, FunctionAgentFn, TaskRenderMode } from "../agents/agent.js";
 import { AIAgentToolChoice } from "../agents/ai-agent.js";
 import { type Role, roleSchema } from "../agents/chat-model.js";
 import { ProcessMode, type ReflectionMode } from "../agents/team-agent.js";
 import { tryOrThrow } from "../utils/type-utils.js";
+import { codeToFunctionAgentFn } from "./function-agent.js";
 import {
   camelizeSchema,
   chatModelSchema,
@@ -64,6 +65,7 @@ export interface BaseAgentSchema {
     | (Omit<AFSOptions, "modules"> & {
         modules?: AFSModuleSchema[];
       });
+  afsConfig?: AFSConfig;
 }
 
 export type Instructions = { role: Exclude<Role, "tool">; content: string; path: string }[];
@@ -71,9 +73,12 @@ export type Instructions = { role: Exclude<Role, "tool">; content: string; path:
 export interface AIAgentSchema extends BaseAgentSchema {
   type: "ai";
   instructions?: Instructions;
+  autoReorderSystemMessages?: boolean;
+  autoMergeSystemMessages?: boolean;
   inputKey?: string;
   inputFileKey?: string;
   outputKey?: string;
+  outputFileKey?: string;
   toolChoice?: AIAgentToolChoice;
   toolCallsConcurrency?: number;
   keepTextInToolUses?: boolean;
@@ -82,6 +87,7 @@ export interface AIAgentSchema extends BaseAgentSchema {
 export interface ImageAgentSchema extends BaseAgentSchema {
   type: "image";
   instructions: Instructions;
+  inputFileKey?: string;
   modelOptions?: Record<string, any>;
 }
 
@@ -203,6 +209,14 @@ export async function parseAgentFile(path: string, data: any): Promise<AgentSche
           ),
         ]),
       ),
+      afsConfig: optionalize(
+        camelizeSchema(
+          z.object({
+            injectHistory: optionalize(z.boolean()),
+            historyWindowSize: optionalize(z.number().int().min(1)),
+          }),
+        ),
+      ),
     });
 
     const instructionItemSchema = z.union([
@@ -255,6 +269,8 @@ export async function parseAgentFile(path: string, data: any): Promise<AgentSche
           .object({
             type: z.literal("ai"),
             instructions: optionalize(instructionsSchema),
+            autoReorderSystemMessages: optionalize(z.boolean()),
+            autoMergeSystemMessages: optionalize(z.boolean()),
             inputKey: optionalize(z.string()),
             outputKey: optionalize(z.string()),
             inputFileKey: optionalize(z.string()),
@@ -262,6 +278,7 @@ export async function parseAgentFile(path: string, data: any): Promise<AgentSche
             toolChoice: optionalize(z.nativeEnum(AIAgentToolChoice)),
             toolCallsConcurrency: optionalize(z.number().int().min(0)),
             keepTextInToolUses: optionalize(z.boolean()),
+            catchToolsError: optionalize(z.boolean()),
             structuredStreamMode: optionalize(z.boolean()),
           })
           .extend(baseAgentSchema.shape),
@@ -269,6 +286,7 @@ export async function parseAgentFile(path: string, data: any): Promise<AgentSche
           .object({
             type: z.literal("image"),
             instructions: instructionsSchema,
+            inputFileKey: optionalize(z.string()),
             modelOptions: optionalize(camelizeSchema(z.record(z.any()))),
           })
           .extend(baseAgentSchema.shape),
@@ -310,7 +328,10 @@ export async function parseAgentFile(path: string, data: any): Promise<AgentSche
         z
           .object({
             type: z.literal("function"),
-            process: z.custom<FunctionAgentFn>(),
+            process: z.preprocess(
+              (v) => (typeof v === "string" ? codeToFunctionAgentFn(v) : v),
+              z.custom<FunctionAgentFn>(),
+            ) as ZodType<FunctionAgentFn>,
           })
           .extend(baseAgentSchema.shape),
       ]),

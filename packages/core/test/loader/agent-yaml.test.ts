@@ -1,6 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { join } from "node:path";
+import { AFS } from "@aigne/afs";
 import {
   type Agent,
   AIAgent,
@@ -33,11 +34,14 @@ test("loadAgentFromYaml should load AIAgent correctly", async () => {
     alias: agent.alias,
     description: agent.description,
     instructions: extractInstructions(agent.instructions),
+    auto_reorder_system_messages: agent.autoReorderSystemMessages,
+    auto_merge_system_messages: agent.autoMergeSystemMessages,
     input_key: agent.inputKey,
     output_key: agent.outputKey,
     input_file_key: agent.inputFileKey,
     output_file_key: agent.outputFileKey,
     keep_text_in_tool_uses: agent.keepTextInToolUses,
+    catch_tools_error: agent.catchToolsError,
     skills: agent.skills.map((skill) => ({
       name: skill.name,
       description: skill.description,
@@ -291,3 +295,29 @@ function extractInstructions(builder: PromptBuilder): string {
   if (typeof builder.instructions === "string") return builder.instructions;
   return builder.instructions?.messages.map((i) => `${i.role}: ${i.content}`).join("\n\n") || "";
 }
+
+test("loadAgentFromYaml should load AIAgent with AFS correctly", async () => {
+  const agent = await loadAgent(join(import.meta.dirname, "../../test-agents/test-afs.yaml"));
+
+  assert(agent instanceof AIAgent, "agent should be an instance of AIAgent");
+
+  expect(agent.afs).toBeInstanceOf(AFS);
+  expect(agent.afsConfig).toMatchInlineSnapshot(`
+    {
+      "historyWindowSize": 5,
+      "injectHistory": true,
+    }
+  `);
+});
+
+test("loadAgentFromYaml should inline function correctly", async () => {
+  const agent = await loadAgent(
+    join(import.meta.dirname, "../../test-agents/test-inline-function.yaml"),
+  );
+
+  expect(agent.invoke({ num: 2 })).resolves.toMatchInlineSnapshot(`
+    {
+      "result": 4,
+    }
+  `);
+});

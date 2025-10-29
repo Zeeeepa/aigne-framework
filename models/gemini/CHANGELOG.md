@@ -1,5 +1,274 @@
 # Changelog
 
+## [0.14.4-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.5...gemini-v0.14.4-beta.6) (2025-10-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.4
+
+## [0.14.4-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.4...gemini-v0.14.4-beta.5) (2025-10-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.3
+
+## [0.14.4-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.3...gemini-v0.14.4-beta.4) (2025-10-27)
+
+
+### Bug Fixes
+
+* **gemini:** include thoughts token count in output token usage ([#669](https://github.com/AIGNE-io/aigne-framework/issues/669)) ([f6ff10c](https://github.com/AIGNE-io/aigne-framework/commit/f6ff10c33b0612a0bc416842c5a5bec3850a3fe6))
+
+## [0.14.4-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.2...gemini-v0.14.4-beta.3) (2025-10-26)
+
+
+### Bug Fixes
+
+* **models:** add mineType for transform file ([#667](https://github.com/AIGNE-io/aigne-framework/issues/667)) ([155a173](https://github.com/AIGNE-io/aigne-framework/commit/155a173e75aff1dbe870a1305455a4300942e07a))
+* **models:** aigne hub video params ([#665](https://github.com/AIGNE-io/aigne-framework/issues/665)) ([d00f836](https://github.com/AIGNE-io/aigne-framework/commit/d00f8368422d8e3707b974e1aff06714731ebb28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.2
+
+## [0.14.4-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.1...gemini-v0.14.4-beta.2) (2025-10-24)
+
+
+### Features
+
+* **model:** support video model ([#647](https://github.com/AIGNE-io/aigne-framework/issues/647)) ([de81742](https://github.com/AIGNE-io/aigne-framework/commit/de817421ef1dd3246d0d8c51ff12f0a855658f9f))
+
+
+### Bug Fixes
+
+* **model:** updated default video duration settings for AI video models ([#663](https://github.com/AIGNE-io/aigne-framework/issues/663)) ([1203941](https://github.com/AIGNE-io/aigne-framework/commit/12039411aaef77ba665e8edfb0fe6f8097c43e39))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.1
+
+## [0.14.4-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta...gemini-v0.14.4-beta.1) (2025-10-24)
+
+
+### Bug Fixes
+
+* **gemini:** use StructuredOutputError to trigger retry for missing JSON response ([#660](https://github.com/AIGNE-io/aigne-framework/issues/660)) ([e8826ed](https://github.com/AIGNE-io/aigne-framework/commit/e8826ed96db57bfcce0b577881bf0d2fd828c269))
+
+## [0.14.4-beta](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.3...gemini-v0.14.4-beta) (2025-10-23)
+
+
+### Bug Fixes
+
+* **models:** improve message structure handling and enable auto-message options ([#657](https://github.com/AIGNE-io/aigne-framework/issues/657)) ([233d70c](https://github.com/AIGNE-io/aigne-framework/commit/233d70cb292b937200fada8434f33d957d766ad6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.1-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta
+
+## [0.14.3](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.3-beta.1...gemini-v0.14.3) (2025-10-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56
+
+## [0.14.3-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.3-beta...gemini-v0.14.3-beta.1) (2025-10-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56-beta.1
+
+## [0.14.3-beta](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2...gemini-v0.14.3-beta) (2025-10-21)
+
+
+### Features
+
+* add thinking support to Gemini chat models ([#650](https://github.com/AIGNE-io/aigne-framework/issues/650)) ([09b828b](https://github.com/AIGNE-io/aigne-framework/commit/09b828ba668d90cc6aac68a5e8190adb146b5e45))
+
+
+### Bug Fixes
+
+* **gemini:** handle empty responses when files are present ([#648](https://github.com/AIGNE-io/aigne-framework/issues/648)) ([f4e259c](https://github.com/AIGNE-io/aigne-framework/commit/f4e259c5e5c687c347bb5cf29cbb0b5bf4d0d4a1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56-beta
+
+## [0.14.2](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.12...gemini-v0.14.2) (2025-10-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55
+
+## [0.14.2-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.11...gemini-v0.14.2-beta.12) (2025-10-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.12
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.12
+
+## [0.14.2-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.10...gemini-v0.14.2-beta.11) (2025-10-17)
+
+
+### Bug Fixes
+
+* **gemini:** implement retry mechanism for empty responses with structured output fallback ([#638](https://github.com/AIGNE-io/aigne-framework/issues/638)) ([d33c8bb](https://github.com/AIGNE-io/aigne-framework/commit/d33c8bb9711aadddef9687d6cf472a179cd8ed9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.11
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.11
+
+## [0.14.2-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.9...gemini-v0.14.2-beta.10) (2025-10-16)
+
+
+### Bug Fixes
+
+* correct calculate token usage for gemini model ([7fd1328](https://github.com/AIGNE-io/aigne-framework/commit/7fd13289d3d0f8e062211f7c6dd5cb56e5318c1b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.10
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.10
+
+## [0.14.2-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.8...gemini-v0.14.2-beta.9) (2025-10-16)
+
+
+### Bug Fixes
+
+* **models:** auto retry when got emtpy response from gemini ([#636](https://github.com/AIGNE-io/aigne-framework/issues/636)) ([9367cef](https://github.com/AIGNE-io/aigne-framework/commit/9367cef49ea4c0c87b8a36b454deb2efaee6886f))
+* **models:** enhance gemini model tool use with status fields ([#634](https://github.com/AIGNE-io/aigne-framework/issues/634)) ([067b175](https://github.com/AIGNE-io/aigne-framework/commit/067b175c8e31bb5b1a6d0fc5a5cfb2d070d8d709))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.9
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.9
+
+## [0.14.2-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.7...gemini-v0.14.2-beta.8) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.2-beta.8
+  * devDependencies
+    * @aigne/core bumped to 1.63.0-beta.8
+    * @aigne/test-utils bumped to 0.5.55-beta.8
+
+## [0.14.2-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.6...gemini-v0.14.2-beta.7) (2025-10-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.2-beta.7
+  * devDependencies
+    * @aigne/core bumped to 1.63.0-beta.7
+    * @aigne/test-utils bumped to 0.5.55-beta.7
+
+## [0.14.2-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.5...gemini-v0.14.2-beta.6) (2025-10-15)
+
+
+### Bug Fixes
+
+* **models:** add imageConfig to gemini image model ([#621](https://github.com/AIGNE-io/aigne-framework/issues/621)) ([252de7a](https://github.com/AIGNE-io/aigne-framework/commit/252de7a10701c4f5302c2fff977c88e5e833b7b1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.2-beta.6
+  * devDependencies
+    * @aigne/core bumped to 1.63.0-beta.6
+    * @aigne/test-utils bumped to 0.5.55-beta.6
+
+## [0.14.2-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.4...gemini-v0.14.2-beta.5) (2025-10-13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.2-beta.5
+  * devDependencies
+    * @aigne/core bumped to 1.63.0-beta.5
+    * @aigne/test-utils bumped to 0.5.55-beta.5
+
+## [0.14.2-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.3...gemini-v0.14.2-beta.4) (2025-10-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.2-beta.4
+  * devDependencies
+    * @aigne/core bumped to 1.63.0-beta.4
+    * @aigne/test-utils bumped to 0.5.55-beta.4
+
 ## [0.14.2-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.2-beta.2...gemini-v0.14.2-beta.3) (2025-10-11)
 
 

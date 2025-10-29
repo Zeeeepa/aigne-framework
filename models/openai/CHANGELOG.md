@@ -1,5 +1,219 @@
 # Changelog
 
+## [0.16.4-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.4-beta.3...openai-v0.16.4-beta.4) (2025-10-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.4
+
+## [0.16.4-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.4-beta.2...openai-v0.16.4-beta.3) (2025-10-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.3
+
+## [0.16.4-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.4-beta.1...openai-v0.16.4-beta.2) (2025-10-26)
+
+
+### Bug Fixes
+
+* **models:** add mineType for transform file ([#667](https://github.com/AIGNE-io/aigne-framework/issues/667)) ([155a173](https://github.com/AIGNE-io/aigne-framework/commit/155a173e75aff1dbe870a1305455a4300942e07a))
+* **models:** aigne hub video params ([#665](https://github.com/AIGNE-io/aigne-framework/issues/665)) ([d00f836](https://github.com/AIGNE-io/aigne-framework/commit/d00f8368422d8e3707b974e1aff06714731ebb28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.2
+
+## [0.16.4-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.4-beta...openai-v0.16.4-beta.1) (2025-10-24)
+
+
+### Features
+
+* **model:** support video model ([#647](https://github.com/AIGNE-io/aigne-framework/issues/647)) ([de81742](https://github.com/AIGNE-io/aigne-framework/commit/de817421ef1dd3246d0d8c51ff12f0a855658f9f))
+
+
+### Bug Fixes
+
+* **model:** updated default video duration settings for AI video models ([#663](https://github.com/AIGNE-io/aigne-framework/issues/663)) ([1203941](https://github.com/AIGNE-io/aigne-framework/commit/12039411aaef77ba665e8edfb0fe6f8097c43e39))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.1
+
+## [0.16.4-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.3...openai-v0.16.4-beta) (2025-10-23)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.1-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta
+
+## [0.16.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.3-beta.1...openai-v0.16.3) (2025-10-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56
+
+## [0.16.3-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.3-beta...openai-v0.16.3-beta.1) (2025-10-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56-beta.1
+
+## [0.16.3-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2...openai-v0.16.3-beta) (2025-10-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.64.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.56-beta
+
+## [0.16.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.12...openai-v0.16.2) (2025-10-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55
+
+## [0.16.2-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.11...openai-v0.16.2-beta.12) (2025-10-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.12
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.12
+
+## [0.16.2-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.10...openai-v0.16.2-beta.11) (2025-10-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.11
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.11
+
+## [0.16.2-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.9...openai-v0.16.2-beta.10) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.10
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.10
+
+## [0.16.2-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.8...openai-v0.16.2-beta.9) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.9
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.9
+
+## [0.16.2-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.7...openai-v0.16.2-beta.8) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.8
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.8
+
+## [0.16.2-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.6...openai-v0.16.2-beta.7) (2025-10-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.7
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.7
+
+## [0.16.2-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.5...openai-v0.16.2-beta.6) (2025-10-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.6
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.6
+
+## [0.16.2-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.4...openai-v0.16.2-beta.5) (2025-10-13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.5
+
+## [0.16.2-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.3...openai-v0.16.2-beta.4) (2025-10-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.63.0-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.55-beta.4
+
 ## [0.16.2-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.2-beta.2...openai-v0.16.2-beta.3) (2025-10-11)
 
 

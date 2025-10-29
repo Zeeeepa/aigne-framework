@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import { type Agent, AIGNE, type Message } from "@aigne/core";
+import type { Agent, Message } from "@aigne/core";
+import type { AIGNEMetadata } from "@aigne/core/aigne/type.js";
 import { findCliAgent, mapCliAgent } from "@aigne/core/utils/agent-utils.js";
 import { type LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { loadAIGNE } from "../load-aigne.js";
@@ -37,19 +38,19 @@ process.on(
       const result = await handler(...args);
       await send({ method, result });
     } catch (error) {
-      await send({ method, error: { message: error.message } });
+      await send({ method, error: { name: error.name, message: error.message } });
     } finally {
       process.exit(0);
     }
   },
 );
 
-export async function loadAIGNEInChildProcess(...args: Parameters<typeof AIGNE.load>): Promise<{
+export async function loadAIGNEInChildProcess(options: Parameters<typeof loadAIGNE>[0]): Promise<{
   agents?: AgentInChildProcess[];
   cli?: { chat?: AgentInChildProcess; agents?: CLIAgentInChildProcess[] };
   mcpServer?: { agents?: AgentInChildProcess[] };
 }> {
-  const aigne = await AIGNE.load(...args);
+  const aigne = await loadAIGNE(options);
   return {
     agents: aigne.agents.map(serializeAgent),
     cli: {
@@ -67,13 +68,14 @@ export async function invokeCLIAgentFromDirInChildProcess(options: {
   parent?: string[];
   agent: string;
   input: Message & AgentRunCommonOptions;
+  metadata?: AIGNEMetadata;
 }) {
   const aigne = await loadAIGNE({
     path: options.dir,
     modelOptions: options.input,
-    imageModelOptions: {
-      model: options.input.imageModel,
-    },
+    printTips: true,
+    imageModelOptions: { model: options.input.imageModel },
+    metadata: options.metadata,
   });
 
   try {

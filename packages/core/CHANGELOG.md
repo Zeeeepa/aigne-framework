@@ -1,5 +1,183 @@
 # Changelog
 
+## [1.65.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.2...core-v1.65.0-beta.3) (2025-10-28)
+
+
+### Bug Fixes
+
+* **core:** support custom `catchToolsError` in yaml agent definition ([#676](https://github.com/AIGNE-io/aigne-framework/issues/676)) ([fe43f5f](https://github.com/AIGNE-io/aigne-framework/commit/fe43f5f32d18d2180abb0717287fc680f1444a0d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.4-beta
+
+## [1.65.0-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.1...core-v1.65.0-beta.2) (2025-10-28)
+
+
+### Bug Fixes
+
+* **core:** added support for URL file type handling, expanding the range of supported file formats ([#671](https://github.com/AIGNE-io/aigne-framework/issues/671)) ([fea4519](https://github.com/AIGNE-io/aigne-framework/commit/fea45197e87cf7b19499c48b41626062824d1355))
+
+## [1.65.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta...core-v1.65.0-beta.1) (2025-10-26)
+
+
+### Features
+
+* support define function agent by yaml ([#668](https://github.com/AIGNE-io/aigne-framework/issues/668)) ([2fde8cc](https://github.com/AIGNE-io/aigne-framework/commit/2fde8cc44b213fc2d4c20d91c3c8a8b3c2eb140e))
+
+
+### Bug Fixes
+
+* **models:** aigne hub video params ([#665](https://github.com/AIGNE-io/aigne-framework/issues/665)) ([d00f836](https://github.com/AIGNE-io/aigne-framework/commit/d00f8368422d8e3707b974e1aff06714731ebb28))
+
+## [1.65.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.64.1-beta...core-v1.65.0-beta) (2025-10-24)
+
+
+### Features
+
+* **model:** support video model ([#647](https://github.com/AIGNE-io/aigne-framework/issues/647)) ([de81742](https://github.com/AIGNE-io/aigne-framework/commit/de817421ef1dd3246d0d8c51ff12f0a855658f9f))
+
+## [1.64.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.64.0...core-v1.64.1-beta) (2025-10-23)
+
+
+### Bug Fixes
+
+* **models:** improve message structure handling and enable auto-message options ([#657](https://github.com/AIGNE-io/aigne-framework/issues/657)) ([233d70c](https://github.com/AIGNE-io/aigne-framework/commit/233d70cb292b937200fada8434f33d957d766ad6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.1.1-beta
+
+## [1.64.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.64.0-beta.1...core-v1.64.0) (2025-10-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.3
+
+## [1.64.0-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.64.0-beta...core-v1.64.0-beta.1) (2025-10-22)
+
+
+### Bug Fixes
+
+* standardize AFS skills return format with status and metadata ([#653](https://github.com/AIGNE-io/aigne-framework/issues/653)) ([66b6b00](https://github.com/AIGNE-io/aigne-framework/commit/66b6b005a846ab795e65e9f20b950c854a69ffd2))
+
+## [1.64.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0...core-v1.64.0-beta) (2025-10-21)
+
+
+### Features
+
+* add thinking support to Gemini chat models ([#650](https://github.com/AIGNE-io/aigne-framework/issues/650)) ([09b828b](https://github.com/AIGNE-io/aigne-framework/commit/09b828ba668d90cc6aac68a5e8190adb146b5e45))
+* add user context support to prompt template variables ([#649](https://github.com/AIGNE-io/aigne-framework/issues/649)) ([a02d9b4](https://github.com/AIGNE-io/aigne-framework/commit/a02d9b412878050b8c1e32127b505c0346f19bba))
+* **cli:** add metadata traces including CLI version, app name, and version ([#646](https://github.com/AIGNE-io/aigne-framework/issues/646)) ([c64bd76](https://github.com/AIGNE-io/aigne-framework/commit/c64bd761ba4c9f3854be5feee208c711bff7a170))
+
+
+### Bug Fixes
+
+* **gemini:** handle empty responses when files are present ([#648](https://github.com/AIGNE-io/aigne-framework/issues/648)) ([f4e259c](https://github.com/AIGNE-io/aigne-framework/commit/f4e259c5e5c687c347bb5cf29cbb0b5bf4d0d4a1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.3-beta
+
+## [1.63.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.12...core-v1.63.0) (2025-10-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.1.0
+    * @aigne/observability-api bumped to 0.11.2
+
+## [1.63.0-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.11...core-v1.63.0-beta.12) (2025-10-17)
+
+
+### Bug Fixes
+
+* custom queue instead of fastq to compatible with browser ([#640](https://github.com/AIGNE-io/aigne-framework/issues/640)) ([51e0f8f](https://github.com/AIGNE-io/aigne-framework/commit/51e0f8fdeaf26f2765f392218f04a2af4c0d2e1a))
+
+## [1.63.0-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.10...core-v1.63.0-beta.11) (2025-10-17)
+
+
+### Bug Fixes
+
+* **gemini:** implement retry mechanism for empty responses with structured output fallback ([#638](https://github.com/AIGNE-io/aigne-framework/issues/638)) ([d33c8bb](https://github.com/AIGNE-io/aigne-framework/commit/d33c8bb9711aadddef9687d6cf472a179cd8ed9c))
+
+## [1.63.0-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.9...core-v1.63.0-beta.10) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.2-beta.5
+
+## [1.63.0-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.8...core-v1.63.0-beta.9) (2025-10-16)
+
+
+### Bug Fixes
+
+* allow custom user messages and prevent duplicate user content ([#632](https://github.com/AIGNE-io/aigne-framework/issues/632)) ([6c883b2](https://github.com/AIGNE-io/aigne-framework/commit/6c883b2d57a65e9b46232cece91fc6aa1de03aba))
+* **models:** auto retry when got emtpy response from gemini ([#636](https://github.com/AIGNE-io/aigne-framework/issues/636)) ([9367cef](https://github.com/AIGNE-io/aigne-framework/commit/9367cef49ea4c0c87b8a36b454deb2efaee6886f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.2-beta.4
+
+## [1.63.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.7...core-v1.63.0-beta.8) (2025-10-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.2-beta.3
+
+## [1.63.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.6...core-v1.63.0-beta.7) (2025-10-15)
+
+
+### Bug Fixes
+
+* add options for system message reordering and merging ([#624](https://github.com/AIGNE-io/aigne-framework/issues/624)) ([8ca466d](https://github.com/AIGNE-io/aigne-framework/commit/8ca466d49d1e4ed08bc90922f39c0d3ed60c4fd5))
+
+## [1.63.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.5...core-v1.63.0-beta.6) (2025-10-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.2-beta.2
+
+## [1.63.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.4...core-v1.63.0-beta.5) (2025-10-13)
+
+
+### Bug Fixes
+
+* **core:** auto merge multiple system messages ([#619](https://github.com/AIGNE-io/aigne-framework/issues/619)) ([e9e62c0](https://github.com/AIGNE-io/aigne-framework/commit/e9e62c03c45f5a9b75d44a07588b2b179e262aad))
+
+## [1.63.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.3...core-v1.63.0-beta.4) (2025-10-12)
+
+
+### Features
+
+* **afs:** add configurable history injection to AFS system ([#611](https://github.com/AIGNE-io/aigne-framework/issues/611)) ([689b5d7](https://github.com/AIGNE-io/aigne-framework/commit/689b5d76d8cc82f548e8be74e63f18e7a6216c31))
+
 ## [1.63.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.63.0-beta.2...core-v1.63.0-beta.3) (2025-10-11)
 
 
