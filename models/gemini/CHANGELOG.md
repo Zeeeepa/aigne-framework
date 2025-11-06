@@ -1,5 +1,124 @@
 # Changelog
 
+## [0.14.5-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.5-beta.4...gemini-v0.14.5-beta.5) (2025-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.66.0-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.5
+
+## [0.14.5-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.5-beta.3...gemini-v0.14.5-beta.4) (2025-11-06)
+
+
+### Features
+
+* add dynamic model options resolution with getter pattern ([#708](https://github.com/AIGNE-io/aigne-framework/issues/708)) ([5ed5085](https://github.com/AIGNE-io/aigne-framework/commit/5ed5085203763c70194853c56edc13acf56d81c6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.66.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.4
+
+## [0.14.5-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.5-beta.2...gemini-v0.14.5-beta.3) (2025-11-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.1-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.3
+
+## [0.14.5-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.5-beta.1...gemini-v0.14.5-beta.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* **docs:** update video mode docs ([#695](https://github.com/AIGNE-io/aigne-framework/issues/695)) ([d691001](https://github.com/AIGNE-io/aigne-framework/commit/d69100169457c16c14f2f3e2f7fcd6b2a99330f3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.1-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.2
+
+## [0.14.5-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.5-beta...gemini-v0.14.5-beta.1) (2025-11-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.1-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.1
+
+## [0.14.5-beta](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4...gemini-v0.14.5-beta) (2025-11-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.1-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta
+
+## [0.14.4](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.8...gemini-v0.14.4) (2025-10-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57
+
+## [0.14.4-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.7...gemini-v0.14.4-beta.8) (2025-10-31)
+
+
+### Bug Fixes
+
+* **models:** add image parameters support for video generation ([#684](https://github.com/AIGNE-io/aigne-framework/issues/684)) ([b048b7f](https://github.com/AIGNE-io/aigne-framework/commit/b048b7f92bd7a532dbdbeb6fb5fa5499bae6b953))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.6
+
+## [0.14.4-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.6...gemini-v0.14.4-beta.7) (2025-10-29)
+
+
+### Features
+
+* add reasoningEffort option for chat model ([#680](https://github.com/AIGNE-io/aigne-framework/issues/680)) ([f69d232](https://github.com/AIGNE-io/aigne-framework/commit/f69d232d714d4a3e4946bdc8c6598747c9bcbd57))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.65.0-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.5
+
 ## [0.14.4-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/gemini-v0.14.4-beta.5...gemini-v0.14.4-beta.6) (2025-10-28)
 
 

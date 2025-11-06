@@ -6,6 +6,7 @@ import type {
   AgentProcessResult,
   AgentResponse,
   AgentResponseStream,
+  GetterSchema,
   Message,
 } from "./agent.js";
 import { type ChatModelOutputUsage, chatModelOutputUsageSchema } from "./chat-model.js";
@@ -108,11 +109,15 @@ export interface VideoModelInput extends Message {
   outputFileType?: FileType;
 
   modelOptions?: VideoModelInputOptions;
+
+  image?: FileUnionContent;
 }
 
 export interface VideoModelInputOptions extends Record<string, unknown> {
   model?: string;
 }
+
+export type VideoModelInputOptionsWithGetter = GetterSchema<VideoModelInputOptions>;
 
 export const videoModelInputSchema = z.object({
   prompt: z.string().describe("Text prompt describing the video to generate"),
@@ -121,6 +126,7 @@ export const videoModelInputSchema = z.object({
   seconds: z.string().optional().describe("Duration of the video in seconds"),
   outputFileType: fileTypeSchema.optional(),
   modelOptions: z.record(z.unknown()).optional(),
+  image: fileUnionContentSchema.optional(),
 });
 
 export interface VideoModelOutput extends Message {

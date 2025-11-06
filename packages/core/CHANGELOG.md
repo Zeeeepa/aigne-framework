@@ -1,5 +1,109 @@
 # Changelog
 
+## [1.66.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.66.0-beta.3...core-v1.66.0-beta.4) (2025-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.5-beta.3
+
+## [1.66.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.1-beta.3...core-v1.66.0-beta.3) (2025-11-06)
+
+
+### Features
+
+* add dynamic model options resolution with getter pattern ([#708](https://github.com/AIGNE-io/aigne-framework/issues/708)) ([5ed5085](https://github.com/AIGNE-io/aigne-framework/commit/5ed5085203763c70194853c56edc13acf56d81c6))
+
+
+### Bug Fixes
+
+* **core:** change skills loading from Promise.all to sequential for loop ([#704](https://github.com/AIGNE-io/aigne-framework/issues/704)) ([08ac827](https://github.com/AIGNE-io/aigne-framework/commit/08ac8270285bdbafe171705f43ac32654430b745))
+
+## [1.65.1-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.1-beta.2...core-v1.65.1-beta.3) (2025-11-05)
+
+
+### Bug Fixes
+
+* add taskTitle to observability traces and fix GPT-5/o1 model parameters ([#700](https://github.com/AIGNE-io/aigne-framework/issues/700)) ([30b513b](https://github.com/AIGNE-io/aigne-framework/commit/30b513b46ab5edb58a37f29e566e311bbb389f44))
+* **cli:** only auto-reinstall on agent loading errors ([#702](https://github.com/AIGNE-io/aigne-framework/issues/702)) ([52f61a4](https://github.com/AIGNE-io/aigne-framework/commit/52f61a47537f2be8763f7bd45b8baea94cf43e60))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.5-beta.2
+
+## [1.65.1-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.1-beta.1...core-v1.65.1-beta.2) (2025-11-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.5-beta.1
+
+## [1.65.1-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.1-beta...core-v1.65.1-beta.1) (2025-11-04)
+
+
+### Bug Fixes
+
+* add fetch utility with timeout and enhanced error handling ([#694](https://github.com/AIGNE-io/aigne-framework/issues/694)) ([c2d4076](https://github.com/AIGNE-io/aigne-framework/commit/c2d4076ec590150d2751591a4f723721f78381e9))
+
+## [1.65.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0...core-v1.65.1-beta) (2025-11-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.5-beta
+
+## [1.65.0](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.5...core-v1.65.0) (2025-10-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.1.1
+    * @aigne/observability-api bumped to 0.11.4
+
+## [1.65.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.4...core-v1.65.0-beta.5) (2025-10-31)
+
+
+### Features
+
+* **core:** add json/yaml stringify filters for prompt template ([#685](https://github.com/AIGNE-io/aigne-framework/issues/685)) ([4e414bf](https://github.com/AIGNE-io/aigne-framework/commit/4e414bf5a43d0677fb16fcdceacaed501542ee85))
+
+
+### Bug Fixes
+
+* **models:** add image parameters support for video generation ([#684](https://github.com/AIGNE-io/aigne-framework/issues/684)) ([b048b7f](https://github.com/AIGNE-io/aigne-framework/commit/b048b7f92bd7a532dbdbeb6fb5fa5499bae6b953))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.4-beta.2
+
+## [1.65.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.3...core-v1.65.0-beta.4) (2025-10-29)
+
+
+### Features
+
+* add reasoningEffort option for chat model ([#680](https://github.com/AIGNE-io/aigne-framework/issues/680)) ([f69d232](https://github.com/AIGNE-io/aigne-framework/commit/f69d232d714d4a3e4946bdc8c6598747c9bcbd57))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.4-beta.1
+
 ## [1.65.0-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.65.0-beta.2...core-v1.65.0-beta.3) (2025-10-28)
 
 

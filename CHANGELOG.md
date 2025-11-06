@@ -1,5 +1,101 @@
 # Changelog
 
+## [1.84.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.84.0-beta.4...aigne-framework-v1.84.0-beta.5) (2025-11-06)
+
+
+### Bug Fixes
+
+* **models:** apply dynamic model options resolution and use url output type ([#710](https://github.com/AIGNE-io/aigne-framework/issues/710)) ([1026034](https://github.com/AIGNE-io/aigne-framework/commit/102603402d8fa3ccd52e06f378a73f66ab7464ed))
+* update package to latest ([#709](https://github.com/AIGNE-io/aigne-framework/issues/709)) ([47661ab](https://github.com/AIGNE-io/aigne-framework/commit/47661ab78cd13ce039d6ebf596e4e603c0220139))
+
+## [1.84.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.1-beta.4...aigne-framework-v1.84.0-beta.4) (2025-11-06)
+
+
+### Features
+
+* add dynamic model options resolution with getter pattern ([#708](https://github.com/AIGNE-io/aigne-framework/issues/708)) ([5ed5085](https://github.com/AIGNE-io/aigne-framework/commit/5ed5085203763c70194853c56edc13acf56d81c6))
+
+
+### Bug Fixes
+
+* add configurable timeout for fetch requests and set 3min timeout for hub video model ([4eb7f3d](https://github.com/AIGNE-io/aigne-framework/commit/4eb7f3df590992742706197bcb48b4db35ccc948))
+* **core:** change skills loading from Promise.all to sequential for loop ([#704](https://github.com/AIGNE-io/aigne-framework/issues/704)) ([08ac827](https://github.com/AIGNE-io/aigne-framework/commit/08ac8270285bdbafe171705f43ac32654430b745))
+
+## [1.83.1-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.1-beta.3...aigne-framework-v1.83.1-beta.4) (2025-11-05)
+
+
+### Bug Fixes
+
+* add taskTitle to observability traces and fix GPT-5/o1 model parameters ([#700](https://github.com/AIGNE-io/aigne-framework/issues/700)) ([30b513b](https://github.com/AIGNE-io/aigne-framework/commit/30b513b46ab5edb58a37f29e566e311bbb389f44))
+* **cli:** only auto-reinstall on agent loading errors ([#702](https://github.com/AIGNE-io/aigne-framework/issues/702)) ([52f61a4](https://github.com/AIGNE-io/aigne-framework/commit/52f61a47537f2be8763f7bd45b8baea94cf43e60))
+* **transport:** improve HTTP error status code validation ([#703](https://github.com/AIGNE-io/aigne-framework/issues/703)) ([76791d7](https://github.com/AIGNE-io/aigne-framework/commit/76791d760fc319c0c0edb82d19474d6141240a8e))
+
+## [1.83.1-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.1-beta.2...aigne-framework-v1.83.1-beta.3) (2025-11-04)
+
+
+### Bug Fixes
+
+* **cli:** optimize app startup by restructuring CLI application loading ([#698](https://github.com/AIGNE-io/aigne-framework/issues/698)) ([20c5059](https://github.com/AIGNE-io/aigne-framework/commit/20c50591bbd9a958b29409eca3ede5e341db2b7d))
+* **docs:** update video mode docs ([#695](https://github.com/AIGNE-io/aigne-framework/issues/695)) ([d691001](https://github.com/AIGNE-io/aigne-framework/commit/d69100169457c16c14f2f3e2f7fcd6b2a99330f3))
+* update package to latest ([#699](https://github.com/AIGNE-io/aigne-framework/issues/699)) ([9877f6d](https://github.com/AIGNE-io/aigne-framework/commit/9877f6d1975362338db4eb47a2bf3564114c3cf8))
+
+## [1.83.1-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.1-beta.1...aigne-framework-v1.83.1-beta.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* add fetch utility with timeout and enhanced error handling ([#694](https://github.com/AIGNE-io/aigne-framework/issues/694)) ([c2d4076](https://github.com/AIGNE-io/aigne-framework/commit/c2d4076ec590150d2751591a4f723721f78381e9))
+
+## [1.83.1-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.1-beta...aigne-framework-v1.83.1-beta.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* **afs:** return matched lines instead of full content for search method ([#692](https://github.com/AIGNE-io/aigne-framework/issues/692)) ([1130405](https://github.com/AIGNE-io/aigne-framework/commit/1130405bdd7e6244801023acc7a820c08f400412))
+
+## [1.83.1-beta](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0...aigne-framework-v1.83.1-beta) (2025-11-03)
+
+
+### Bug Fixes
+
+* **examples:** enable history for memory example & update readme ([#690](https://github.com/AIGNE-io/aigne-framework/issues/690)) ([93b4185](https://github.com/AIGNE-io/aigne-framework/commit/93b41850425cc762aae9dec2516e655aa249bfef))
+* **observability:** enhance trace detail panel with improved JSON viewer and cost tracking ([#689](https://github.com/AIGNE-io/aigne-framework/issues/689)) ([1cddb6b](https://github.com/AIGNE-io/aigne-framework/commit/1cddb6ba1737c32aba045e34758d77416fb91fa0))
+
+## [1.83.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0-beta.8...aigne-framework-v1.83.0) (2025-10-31)
+
+## [1.83.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0-beta.7...aigne-framework-v1.83.0-beta.8) (2025-10-31)
+
+
+### Bug Fixes
+
+* **cli:** wrap onSubmit call in setTimeout to fix cursor visibility issue ([#686](https://github.com/AIGNE-io/aigne-framework/issues/686)) ([7c69f1d](https://github.com/AIGNE-io/aigne-framework/commit/7c69f1ddf134ad297dc51f0ed944234a287415d7))
+
+## [1.83.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0-beta.6...aigne-framework-v1.83.0-beta.7) (2025-10-31)
+
+
+### Features
+
+* **core:** add json/yaml stringify filters for prompt template ([#685](https://github.com/AIGNE-io/aigne-framework/issues/685)) ([4e414bf](https://github.com/AIGNE-io/aigne-framework/commit/4e414bf5a43d0677fb16fcdceacaed501542ee85))
+
+
+### Bug Fixes
+
+* **models:** add image parameters support for video generation ([#684](https://github.com/AIGNE-io/aigne-framework/issues/684)) ([b048b7f](https://github.com/AIGNE-io/aigne-framework/commit/b048b7f92bd7a532dbdbeb6fb5fa5499bae6b953))
+* **observability:** add image/video model cost calculation and improve trace detail UX ([#683](https://github.com/AIGNE-io/aigne-framework/issues/683)) ([07964e4](https://github.com/AIGNE-io/aigne-framework/commit/07964e47d84636b49a291bfe5c1cc1c4dd31f722))
+* update package to latest ([#681](https://github.com/AIGNE-io/aigne-framework/issues/681)) ([645327f](https://github.com/AIGNE-io/aigne-framework/commit/645327f7562311b42b281c55a2184600d1676059))
+
+## [1.83.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0-beta.5...aigne-framework-v1.83.0-beta.6) (2025-10-29)
+
+
+### Features
+
+* add reasoningEffort option for chat model ([#680](https://github.com/AIGNE-io/aigne-framework/issues/680)) ([f69d232](https://github.com/AIGNE-io/aigne-framework/commit/f69d232d714d4a3e4946bdc8c6598747c9bcbd57))
+
+
+### Bug Fixes
+
+* update package ([#677](https://github.com/AIGNE-io/aigne-framework/issues/677)) ([a4ad78a](https://github.com/AIGNE-io/aigne-framework/commit/a4ad78a79e4f34eb6c0b00909e7707cd5dd9dd97))
+
 ## [1.83.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.83.0-beta.4...aigne-framework-v1.83.0-beta.5) (2025-10-28)
 
 

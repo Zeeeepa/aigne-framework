@@ -13,6 +13,7 @@ import type { TraceData } from "./types.ts";
 
 type TraceItemProps = {
   name: string;
+  taskTitle?: string;
   duration: number;
   selected?: boolean;
   depth?: number;
@@ -32,6 +33,7 @@ type TraceItemProps = {
 
 function TraceItem({
   name,
+  taskTitle,
   duration,
   selected,
   depth = 0,
@@ -136,15 +138,20 @@ function TraceItem({
           {name}
         </Typography>
 
+        <Typography
+          sx={{
+            fontSize: 12,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            color: hasError ? "error.light" : "action.active",
+          }}
+        >
+          {`${taskTitle ? `(${taskTitle})` : ""}`}
+        </Typography>
+
         {hasError && (
-          <ErrorIcon
-            sx={{
-              fontSize: 16,
-              color: "error.light",
-              opacity: 0.8,
-              flexShrink: 0,
-            }}
-          />
+          <ErrorIcon sx={{ fontSize: 16, color: "error.light", opacity: 0.8, flexShrink: 0 }} />
         )}
       </Box>
 
@@ -285,6 +292,7 @@ export function renderTraceItems({
         depth={depth}
         model={item.run?.attributes?.output?.model}
         agentTag={item.agentTag}
+        taskTitle={item.run?.attributes?.taskTitle}
         onSelect={() => onSelect?.(item.run)}
         hasChildren={hasChildren}
         isExpanded={isExpanded}
@@ -367,6 +375,8 @@ export default function TraceItemList({
     <Box>
       <Box
         sx={{
+          position: "sticky",
+          top: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -374,6 +384,8 @@ export default function TraceItemList({
           pb: 2,
           borderBottom: "1px solid",
           borderColor: "divider",
+          backgroundColor: "background.paper",
+          zIndex: 3,
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: 600 }}>

@@ -98,6 +98,7 @@ export class AIGNEHubVideoModel extends VideoModel {
         streaming: false,
         fetchOptions: {
           ...options.fetchOptions,
+          timeout: 60e3 * 3,
           headers: {
             ...options.fetchOptions?.headers,
             "x-aigne-hub-client-did": clientId,
@@ -107,6 +108,7 @@ export class AIGNEHubVideoModel extends VideoModel {
     );
 
     return {
+      ...response,
       videos: response.videos,
       usage: {
         inputTokens: response.usage?.inputTokens ?? 0,

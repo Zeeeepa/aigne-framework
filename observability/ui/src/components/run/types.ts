@@ -13,11 +13,12 @@ export interface TraceData {
     input?: Record<string, unknown>;
     output?: {
       model?: string;
+      seconds?: number;
       usage?: {
         inputTokens: number;
         outputTokens: number;
       };
-      [key: string]: unknown;
+      [key: string]: any;
     };
     agentTag?: string;
     userContext?: Record<string, unknown>;
@@ -27,6 +28,7 @@ export interface TraceData {
       appName?: string;
       appVersion?: string;
     };
+    taskTitle?: string;
   };
   componentId?: string;
   userId?: string;

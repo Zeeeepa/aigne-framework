@@ -22,7 +22,11 @@ import { OpenAIChatModel } from "../_mocks/mock-models.js";
 
 test("loadAgentFromYaml should load AIAgent correctly", async () => {
   const agent = await loadAgent(join(import.meta.dirname, "../../test-agents/chat.yaml"), {
-    model: (o) => new OpenAIChatModel({ model: o?.model }),
+    model: (o) =>
+      new OpenAIChatModel({
+        model: typeof o?.model === "string" ? o.model : undefined,
+        modelOptions: o,
+      }),
   });
 
   expect(agent).toBeInstanceOf(AIAgent);
@@ -30,7 +34,10 @@ test("loadAgentFromYaml should load AIAgent correctly", async () => {
 
   expect({
     name: agent.name,
-    model: agent.model?.options?.model,
+    model: {
+      ...agent.model?.options?.modelOptions,
+      model: agent.model?.options?.model,
+    },
     alias: agent.alias,
     description: agent.description,
     instructions: extractInstructions(agent.instructions),

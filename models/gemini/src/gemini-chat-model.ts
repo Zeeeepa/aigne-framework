@@ -1,9 +1,11 @@
 import {
+  type AgentInvokeOptions,
   type AgentProcessAsyncGenerator,
   type AgentProcessResult,
   agentProcessResultToObject,
   ChatModel,
   type ChatModelInput,
+  type ChatModelInputOptions,
   type ChatModelOptions,
   type ChatModelOutput,
   type ChatModelOutputToolCall,
@@ -106,27 +108,89 @@ export class GeminiChatModel extends ChatModel {
     return this.options?.modelOptions;
   }
 
-  override process(input: ChatModelInput): PromiseOrValue<AgentProcessResult<ChatModelOutput>> {
-    return this.processInput(input);
+  override process(
+    input: ChatModelInput,
+    options: AgentInvokeOptions,
+  ): PromiseOrValue<AgentProcessResult<ChatModelOutput>> {
+    return this.processInput(input, options);
   }
 
-  private async *processInput(input: ChatModelInput): AgentProcessAsyncGenerator<ChatModelOutput> {
-    const model = input.modelOptions?.model || this.credential.model;
+  // References: https://ai.google.dev/gemini-api/docs/thinking#set-budget
+  protected thinkingBudgetModelMap = [
+    {
+      pattern: /gemini-2.5-pro/,
+      support: true,
+      min: 128,
+      max: 32768,
+    },
+    {
+      pattern: /gemini-2.5-flash/,
+      support: true,
+      min: 0,
+      max: 24576,
+    },
+    {
+      pattern: /2.5-flash-lite/,
+      support: true,
+      min: 512,
+      max: 24576,
+    },
+    {
+      pattern: /.*/,
+      support: false,
+    },
+  ];
+
+  protected thinkingBudgetLevelMap = {
+    high: 100000, // use 100k for high, finally capped by model max
+    medium: 10000,
+    low: 5000,
+    minimal: 200,
+  };
+
+  protected getThinkingBudget(
+    model: string,
+    effort: ChatModelInputOptions["reasoningEffort"],
+  ): { support: boolean; budget?: number } {
+    const m = this.thinkingBudgetModelMap.find((i) => i.pattern.test(model));
+    if (!m?.support) return { support: false };
+
+    let budget =
+      typeof effort === "string" ? this.thinkingBudgetLevelMap[effort] || undefined : effort;
+    if (typeof budget === "undefined") return { support: true };
+
+    if (typeof m.min === "number") budget = Math.max(m.min, budget);
+    if (typeof m.max === "number") budget = Math.min(m.max, budget);
+
+    return { support: true, budget };
+  }
+
+  private async *processInput(
+    input: ChatModelInput,
+    options: AgentInvokeOptions,
+  ): AgentProcessAsyncGenerator<ChatModelOutput> {
+    const modelOptions = await this.getModelOptions(input, options);
+
+    const model = modelOptions.model || this.credential.model;
     const { contents, config } = await this.buildContents(input);
+
+    const thinkingBudget = this.getThinkingBudget(model, modelOptions.reasoningEffort);
 
     const parameters: GenerateContentParameters = {
       model,
       contents,
       config: {
-        thinkingConfig: this.supportThinkingModels.includes(model)
-          ? { includeThoughts: true }
+        thinkingConfig: thinkingBudget.support
+          ? {
+              includeThoughts: true,
+              thinkingBudget: thinkingBudget.budget,
+            }
           : undefined,
-        responseModalities: input.modelOptions?.modalities,
-        temperature: input.modelOptions?.temperature || this.modelOptions?.temperature,
-        topP: input.modelOptions?.topP || this.modelOptions?.topP,
-        frequencyPenalty:
-          input.modelOptions?.frequencyPenalty || this.modelOptions?.frequencyPenalty,
-        presencePenalty: input.modelOptions?.presencePenalty || this.modelOptions?.presencePenalty,
+        responseModalities: modelOptions.modalities,
+        temperature: modelOptions.temperature,
+        topP: modelOptions.topP,
+        frequencyPenalty: modelOptions.frequencyPenalty,
+        presencePenalty: modelOptions.presencePenalty,
         ...config,
         ...(await this.buildConfig(input)),
       },
@@ -222,16 +286,19 @@ export class GeminiChatModel extends ChatModel {
             output: z.string().describe("The final answer from the model"),
           });
 
-          const response = await this.process({
-            ...input,
-            responseFormat: {
-              type: "json_schema",
-              jsonSchema: {
-                name: "output",
-                schema: zodToJsonSchema(outputSchema),
+          const response = await this.process(
+            {
+              ...input,
+              responseFormat: {
+                type: "json_schema",
+                jsonSchema: {
+                  name: "output",
+                  schema: zodToJsonSchema(outputSchema),
+                },
               },
             },
-          });
+            options,
+          );
 
           const result = await agentProcessResultToObject(response);
 
@@ -270,10 +337,18 @@ export class GeminiChatModel extends ChatModel {
       }
     }
 
-    yield { delta: { json: { usage, files: files.length ? files : undefined } } };
+    yield {
+      delta: {
+        json: {
+          usage,
+          files: files.length ? files : undefined,
+          modelOptions: {
+            reasoningEffort: parameters.config?.thinkingConfig?.thinkingBudget,
+          },
+        },
+      },
+    };
   }
-
-  protected supportThinkingModels = ["gemini-2.5-pro", "gemini-2.5-flash"];
 
   private async buildConfig(input: ChatModelInput): Promise<GenerateContentParameters["config"]> {
     const config: GenerateContentParameters["config"] = {};

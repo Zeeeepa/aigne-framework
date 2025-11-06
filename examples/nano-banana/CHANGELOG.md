@@ -1,5 +1,167 @@
 # Changelog
 
+## [1.1.6-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta.5...example-nano-banana-v1.1.6-beta.6) (2025-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta.5
+    * @aigne/aigne-hub bumped to 0.10.5-beta.5
+    * @aigne/cli bumped to 1.54.0-beta.5
+    * @aigne/core bumped to 1.66.0-beta.4
+    * @aigne/default-memory bumped to 1.2.14-beta.5
+    * @aigne/fs-memory bumped to 1.0.51-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.5
+
+## [1.1.6-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta.4...example-nano-banana-v1.1.6-beta.5) (2025-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta.4
+    * @aigne/aigne-hub bumped to 0.10.5-beta.4
+    * @aigne/cli bumped to 1.54.0-beta.4
+    * @aigne/core bumped to 1.66.0-beta.3
+    * @aigne/default-memory bumped to 1.2.14-beta.4
+    * @aigne/fs-memory bumped to 1.0.51-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.4
+
+## [1.1.6-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta.3...example-nano-banana-v1.1.6-beta.4) (2025-11-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta.3
+    * @aigne/aigne-hub bumped to 0.10.5-beta.3
+    * @aigne/cli bumped to 1.53.1-beta.4
+    * @aigne/core bumped to 1.65.1-beta.3
+    * @aigne/default-memory bumped to 1.2.14-beta.3
+    * @aigne/fs-memory bumped to 1.0.51-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.3
+
+## [1.1.6-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta.2...example-nano-banana-v1.1.6-beta.3) (2025-11-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta.2
+    * @aigne/aigne-hub bumped to 0.10.5-beta.2
+    * @aigne/cli bumped to 1.53.1-beta.3
+    * @aigne/core bumped to 1.65.1-beta.2
+    * @aigne/default-memory bumped to 1.2.14-beta.2
+    * @aigne/fs-memory bumped to 1.0.51-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.2
+
+## [1.1.6-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta.1...example-nano-banana-v1.1.6-beta.2) (2025-11-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta.1
+    * @aigne/aigne-hub bumped to 0.10.5-beta.1
+    * @aigne/cli bumped to 1.53.1-beta.2
+    * @aigne/core bumped to 1.65.1-beta.1
+    * @aigne/default-memory bumped to 1.2.14-beta.1
+    * @aigne/fs-memory bumped to 1.0.51-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta.1
+
+## [1.1.6-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.6-beta...example-nano-banana-v1.1.6-beta.1) (2025-11-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.53.1-beta.1
+
+## [1.1.6-beta](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5...example-nano-banana-v1.1.6-beta) (2025-11-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.51-beta
+    * @aigne/aigne-hub bumped to 0.10.5-beta
+    * @aigne/cli bumped to 1.53.1-beta
+    * @aigne/core bumped to 1.65.1-beta
+    * @aigne/default-memory bumped to 1.2.14-beta
+    * @aigne/fs-memory bumped to 1.0.51-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.58-beta
+
+## [1.1.5](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5-beta.9...example-nano-banana-v1.1.5) (2025-10-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.50
+    * @aigne/aigne-hub bumped to 0.10.4
+    * @aigne/cli bumped to 1.53.0
+    * @aigne/core bumped to 1.65.0
+    * @aigne/default-memory bumped to 1.2.13
+    * @aigne/fs-memory bumped to 1.0.50
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57
+
+## [1.1.5-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5-beta.8...example-nano-banana-v1.1.5-beta.9) (2025-10-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.53.0-beta.8
+
+## [1.1.5-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5-beta.7...example-nano-banana-v1.1.5-beta.8) (2025-10-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.50-beta.6
+    * @aigne/aigne-hub bumped to 0.10.4-beta.8
+    * @aigne/cli bumped to 1.53.0-beta.7
+    * @aigne/core bumped to 1.65.0-beta.5
+    * @aigne/default-memory bumped to 1.2.13-beta.6
+    * @aigne/fs-memory bumped to 1.0.50-beta.6
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.6
+
+## [1.1.5-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5-beta.6...example-nano-banana-v1.1.5-beta.7) (2025-10-29)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/agent-library bumped to 1.21.50-beta.5
+    * @aigne/aigne-hub bumped to 0.10.4-beta.7
+    * @aigne/cli bumped to 1.53.0-beta.6
+    * @aigne/core bumped to 1.65.0-beta.4
+    * @aigne/default-memory bumped to 1.2.13-beta.5
+    * @aigne/fs-memory bumped to 1.0.50-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.57-beta.5
+
 ## [1.1.5-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/example-nano-banana-v1.1.5-beta.5...example-nano-banana-v1.1.5-beta.6) (2025-10-28)
 
 

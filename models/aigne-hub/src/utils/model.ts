@@ -3,7 +3,7 @@ import { AnthropicChatModel } from "@aigne/anthropic";
 import { BedrockChatModel } from "@aigne/bedrock";
 import type {
   ChatModel,
-  ChatModelInputOptions,
+  ChatModelInputOptionsWithGetter,
   ImageModel,
   ImageModelInputOptions,
   VideoModel,
@@ -57,7 +57,7 @@ export interface LoadableModel {
   apiKeyEnvName?: string | string[];
   create: (options: {
     model?: string;
-    modelOptions?: ChatModelInputOptions;
+    modelOptions?: ChatModelInputOptionsWithGetter;
     apiKey?: string;
     baseURL?: string;
   }) => ChatModel;
@@ -197,17 +197,17 @@ export function availableVideoModels(): LoadableVideoModel[] {
     {
       name: OpenAIVideoModel.name,
       apiKeyEnvName: "OPENAI_API_KEY",
-      create: (params) => new OpenAIVideoModel({ ...params, clientOptions }),
+      create: (params) => new OpenAIVideoModel({ ...params, clientOptions }) as VideoModel,
     },
     {
       name: [GeminiVideoModel.name, GOOGLE],
       apiKeyEnvName: "GEMINI_API_KEY",
-      create: (params) => new GeminiVideoModel({ ...params, clientOptions }),
+      create: (params) => new GeminiVideoModel({ ...params, clientOptions }) as VideoModel,
     },
     {
       name: AIGNEHubVideoModel.name,
       apiKeyEnvName: "AIGNE_HUB_API_KEY",
-      create: (params) => new AIGNEHubVideoModel({ ...params, clientOptions }),
+      create: (params) => new AIGNEHubVideoModel({ ...params, clientOptions }) as VideoModel,
     },
   ];
 }
@@ -271,7 +271,7 @@ export function findVideoModel(provider: string): {
 
 export const parseModel = (model: string) => {
   // replace first ':' with '/' to compatible with `provider:model-name` format
-  model = model.replace(/^(\w+)(:)/, "$1/");
+  model = model.replace(/^([\w-]+)(:)/, "$1/");
   const { provider, name } = model.match(/(?<provider>[^/]*)(\/(?<name>.*))?/)?.groups ?? {};
   return { provider: provider?.replace(/-/g, ""), model: name };
 };
