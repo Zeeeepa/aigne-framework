@@ -4,7 +4,9 @@ import {
   AIGNE_HUB_URL,
   findImageModel,
   findModel,
+  getSupportedProviders,
   parseModel,
+  resolveProviderModelId,
 } from "@aigne/aigne-hub";
 import type {
   ChatModel,
@@ -27,13 +29,37 @@ export function maskApiKey(apiKey?: string) {
   return `${start}${"*".repeat(8)}${end}`;
 }
 
+export function findConfiguredProvider(provider?: string, name?: string) {
+  if (provider && provider.trim().toLowerCase() !== AIGNE_HUB_PROVIDER.trim().toLowerCase()) {
+    return undefined;
+  }
+  if (!name) return undefined;
+
+  const supportedProviders = getSupportedProviders(name);
+  for (const supportedProvider of supportedProviders) {
+    const { match } = findModel(supportedProvider);
+    if (match) {
+      const requireEnvs = flat(match.apiKeyEnvName);
+      if (requireEnvs.some((name) => name && process.env[name])) {
+        return {
+          provider: supportedProvider,
+          model: resolveProviderModelId(supportedProvider, name),
+        };
+      }
+    }
+  }
+}
+
 export const formatModelName = async (
   model: string,
   inquirerPrompt: NonNullable<LoadCredentialOptions["inquirerPromptFn"]>,
 ): Promise<{ provider: string; model?: string }> => {
   let { provider, model: name } = parseModel(model);
-  provider ||= AIGNE_HUB_PROVIDER;
 
+  const configuredEnvProvider = findConfiguredProvider(provider, name);
+  if (configuredEnvProvider) return configuredEnvProvider;
+
+  provider ||= AIGNE_HUB_PROVIDER;
   const { match, all } = findModel(provider);
   if (!match) {
     throw new Error(
