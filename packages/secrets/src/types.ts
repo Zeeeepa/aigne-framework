@@ -3,44 +3,33 @@ export interface CredentialEntry {
   password: string | null;
 }
 
-export const AIGNE_HUB_API_KEY = "AIGNE_HUB_API_KEY";
-export const AIGNE_HUB_API_URL = "AIGNE_HUB_API_URL";
-
 export interface GetDefaultOptions {
   fallbackToFirst?: boolean;
   presetIfFallback?: boolean;
 }
 
-export interface StoreOptions<
-  K extends string = typeof AIGNE_HUB_API_KEY,
-  U extends string = typeof AIGNE_HUB_API_URL,
-> {
+export interface StoreOptions {
   filepath?: string;
-  secretStoreKey?: string;
+  serviceName: string;
   forceUnavailable?: boolean;
-  outputConfig?: { key: K; url: U };
 }
 
-export type AIGNEHubAPIInfo<
-  K extends string = typeof AIGNE_HUB_API_KEY,
-  U extends string = typeof AIGNE_HUB_API_URL,
-> = {
-  [key in K | U]: string;
+export type ItemInfo = {
+  [key: string]: any;
 };
 
-export interface ISecretStore<
-  K extends string = typeof AIGNE_HUB_API_KEY,
-  U extends string = typeof AIGNE_HUB_API_URL,
-> {
+export interface ISecretStore {
   available(): Promise<boolean>;
-  setKey(url: string, secret: string): Promise<void>;
-  getKey(url: string): Promise<AIGNEHubAPIInfo<K, U> | null>;
-  deleteKey(url: string): Promise<boolean>;
-  listCredentials(): Promise<CredentialEntry[] | null>;
-  listHosts(): Promise<AIGNEHubAPIInfo<K, U>[]>;
-  listHostsMap(): Promise<Record<string, AIGNEHubAPIInfo<K, U>>>;
-  setDefault(value: string): Promise<void>;
-  getDefault(options?: GetDefaultOptions): Promise<AIGNEHubAPIInfo<K, U> | null>;
-  deleteDefault(): Promise<void>;
-  normalizeHostFrom(url: string): string;
+
+  setItem(key: string, value: ItemInfo): Promise<void>;
+  getItem(key: string): Promise<ItemInfo | null>;
+  deleteItem(key: string): Promise<boolean>;
+
+  listItems(): Promise<CredentialEntry[] | null>;
+  listEntries(): Promise<ItemInfo[]>;
+  listMap(): Promise<Record<string, ItemInfo>>;
+
+  setDefaultItem(value: ItemInfo): Promise<void>;
+  getDefaultItem(options?: GetDefaultOptions): Promise<ItemInfo | null>;
+  deleteDefaultItem(): Promise<void>;
 }
