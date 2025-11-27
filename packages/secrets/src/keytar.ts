@@ -1,7 +1,9 @@
+import { logger } from "@aigne/core/utils/logger.js";
 import { BaseSecretStore } from "./base.js";
 import type { CredentialEntry, ItemInfo, StoreOptions } from "./types.js";
+import { isKeyringEnvironmentReady } from "./util.js";
 
-const DEFAULT_SERVICE_NAME = "-secrets";
+const DEFAULT_SERVICE_NAME = "-api-key";
 const DEFAULT_ACCOUNT_NAME_FOR_DEFAULT = "-default";
 
 export class KeyringStore extends BaseSecretStore {
@@ -9,6 +11,8 @@ export class KeyringStore extends BaseSecretStore {
   private serviceName: string;
   private defaultAccount: string;
   private _forceUnavailable: boolean;
+  private _environmentChecked: boolean = false;
+  private _environmentReady: boolean = false;
 
   constructor(options: StoreOptions) {
     super();
@@ -23,6 +27,22 @@ export class KeyringStore extends BaseSecretStore {
   async available() {
     if (this._forceUnavailable) return false;
 
+    // Check environment prerequisites before attempting to load the module
+    if (!this._environmentChecked) {
+      const { ready, reason } = isKeyringEnvironmentReady();
+      this._environmentReady = ready;
+
+      if (!ready) {
+        logger.warn(`Keyring environment not ready: ${reason}`);
+      }
+
+      this._environmentChecked = true;
+    }
+
+    if (!this._environmentReady) {
+      return false;
+    }
+
     try {
       if (!this._impl) {
         const module = await import("@zowe/secrets-for-zowe-sdk");
@@ -35,7 +55,9 @@ export class KeyringStore extends BaseSecretStore {
         typeof this._impl.setPassword === "function" &&
         typeof this._impl.deletePassword === "function"
       );
-    } catch {
+    } catch (error) {
+      logger.error(`Failed to load keyring: ${error.message}`);
+
       return false;
     }
   }

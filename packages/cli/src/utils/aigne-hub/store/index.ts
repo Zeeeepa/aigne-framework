@@ -37,8 +37,8 @@ const getSecretStore = async () => {
   if (!cachedSecretStore) {
     cachedSecretStore = await createSecretStore({
       filepath: AIGNE_ENV_FILE,
-      serviceName: "aigne-hub-keyring",
-      forceKeytarUnavailable: true,
+      serviceName: "aigne-hub",
+      // forceKeytarUnavailable: true,
     });
   }
 
