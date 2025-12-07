@@ -114,7 +114,7 @@ test("OrchestratorAgent.load should use default planner/worker/completer", async
     zodToJsonSchema(completerInputSchema.passthrough()),
   );
   expect(zodToJsonSchema(completer.outputSchema)).toEqual(
-    zodToJsonSchema((agent.outputSchema as unknown as z.ZodObject<{}>).passthrough()),
+    zodToJsonSchema((agent.outputSchema as any).passthrough()),
   );
   expect(await completer.afs?.listModules()).toEqual(afsModules);
   expect(completer.skills.map((i) => i.name)).toMatchInlineSnapshot(`
@@ -260,7 +260,7 @@ test("OrchestratorAgent.load should use custom planner/worker/completer", async 
     zodToJsonSchema(completerInputSchema.passthrough()),
   );
   expect(zodToJsonSchema(completer.outputSchema)).toEqual(
-    zodToJsonSchema((agent.outputSchema as unknown as z.ZodObject<{}>).passthrough()),
+    zodToJsonSchema((agent.outputSchema as any).passthrough()),
   );
   expect(await completer.afs?.listModules()).toEqual(afsModules);
   expect(completer.skills.map((i) => i.name)).toMatchInlineSnapshot(`

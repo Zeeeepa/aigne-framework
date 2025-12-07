@@ -360,14 +360,13 @@ async function deleteHub(url: string) {
       await secretStore.deleteDefault();
       const remainingHubs = await getHubs();
 
-      if (remainingHubs.length > 0) {
-        const nextHub = remainingHubs[0];
-
-        await secretStore.setDefault(nextHub?.apiUrl!);
+      const nextHub = remainingHubs[0];
+      if (nextHub) {
+        await secretStore.setDefault(nextHub?.apiUrl);
 
         console.log(
           chalk.green(
-            `✓ Hub ${getUrlOrigin(url)} removed, switched to ${getUrlOrigin(nextHub?.apiUrl!)}`,
+            `✓ Hub ${getUrlOrigin(url)} removed, switched to ${getUrlOrigin(nextHub?.apiUrl)}`,
           ),
         );
         return;
