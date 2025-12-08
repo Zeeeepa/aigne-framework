@@ -10,11 +10,6 @@
     "url": "git+https://github.com/AIGNE-io/aigne-framework"
   },
   "bin": "aigne.yaml",
-  "files": [
-    ".env.local.example",
-    "*.ts",
-    "README.md"
-  ],
   "scripts": {
     "start": "aigne run ."
   },
