@@ -26,9 +26,11 @@ import {
   isNonNullable,
   isRecord,
   partition,
+  pick,
   unique,
 } from "../utils/type-utils.js";
 import {
+  AFS_DESCRIPTION_PROMPT_TEMPLATE,
   AFS_EXECUTABLE_TOOLS_PROMPT_TEMPLATE,
   getAFSSystemPrompt,
 } from "./prompts/afs-builtin-prompt.js";
@@ -159,11 +161,39 @@ export class PromptBuilder {
     };
   }
 
-  private getTemplateVariables(options: Pick<PromptBuildOptions, "input" | "context">) {
+  private getTemplateVariables(options: PromptBuildOptions) {
+    const self = this;
+
     return {
       userContext: options.context?.userContext,
       ...options.context?.userContext,
       ...options.input,
+      $afs: {
+        get enabled() {
+          return !!options.agent?.afs;
+        },
+        description: AFS_DESCRIPTION_PROMPT_TEMPLATE,
+        get modules() {
+          return options.agent?.afs
+            ?.listModules()
+            .then((list) => list.map((i) => pick(i, ["name", "path", "description"])));
+        },
+        get histories() {
+          return self.getHistories(options);
+        },
+        get skills() {
+          const afs = options.agent?.afs;
+          if (!afs) return [];
+          return getAFSSkills(afs).then((skills) =>
+            skills.map((s) => pick(s, ["name", "description"])),
+          );
+        },
+      },
+      $agent: {
+        get skills() {
+          return options.agent?.skills.map((s) => pick(s, ["name", "description"]));
+        },
+      },
     };
   }
 
@@ -209,7 +239,7 @@ export class PromptBuilder {
 
     const afs = options.agent?.afs;
 
-    if (afs) {
+    if (afs && options.agent?.historyConfig?.disabled !== true) {
       const historyModule = (await afs.listModules()).find((m) => m.module instanceof AFSHistory);
 
       messages.push(await SystemMessageTemplate.from(await getAFSSystemPrompt(afs)).format({}));
@@ -311,6 +341,38 @@ export class PromptBuilder {
     messages.push(...otherCustomMessages);
 
     return this.refineMessages(options, messages);
+  }
+
+  async getHistories(
+    options: PromptBuildOptions,
+  ): Promise<{ role: "user" | "agent"; content: unknown }[]> {
+    const { agent } = options;
+    const afs = agent?.afs;
+    if (!afs) return [];
+
+    const historyModule = (await afs.listModules()).find((m) => m.module instanceof AFSHistory);
+    if (!historyModule) return [];
+
+    const { list: history } = await afs.list(historyModule.path, {
+      limit: agent.historyConfig?.maxItems || 10,
+      orderBy: [["createdAt", "desc"]],
+    });
+
+    return history
+      .reverse()
+      .map((i) => {
+        if (!i.content) return;
+
+        const { input, output } = i.content;
+        if (!input || !output) return;
+
+        return [
+          { role: "user" as const, content: input },
+          { role: "agent" as const, content: output },
+        ];
+      })
+      .filter(isNonNullable)
+      .flat();
   }
 
   private refineMessages(

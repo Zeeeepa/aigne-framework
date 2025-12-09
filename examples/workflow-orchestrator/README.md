@@ -10,6 +10,17 @@
 
 This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) to build an orchestrator workflow using YAML configuration. The orchestrator pattern enables autonomous task planning and execution through a planner-worker-completer architecture.
 
+## 💡 Key Concept
+
+**The orchestrator uses your current directory as its workspace.** When you run the orchestrator in any directory, it can access and analyze files in that location. This makes it perfect for:
+
+- 📊 **Project Analysis**: Analyze any codebase by running it in the project root
+- 🔍 **Code Auditing**: Review project structure, dependencies, and configurations
+- 📝 **Documentation Generation**: Automatically generate documentation based on actual code
+- 🛠️ **Workspace Automation**: Perform complex multi-step operations on your files
+
+> **Example**: Running `npx -y @aigne/example-workflow-orchestrator` in your project directory will analyze that specific project, not a fixed demo directory.
+
 ## Architecture
 
 The orchestrator follows a three-phase workflow:
@@ -40,6 +51,29 @@ flowchart LR
 - **Completer**: Synthesizes all results and provides the final response
 - **Execution State**: Tracks task history, results, and progress
 
+## How It Works
+
+When you run the orchestrator in a directory:
+
+1. **Directory Mounting**: Your current directory is automatically mounted as `/modules/workspace/`
+2. **Planning Phase**: The Planner analyzes your objective and decides what information to gather
+3. **Execution Phase**: The Worker uses filesystem tools to read files, explore directories, etc.
+4. **Iteration**: Steps 2-3 repeat until the objective is complete
+5. **Completion**: The Completer synthesizes all gathered information into a final response
+
+**Example Workflow**:
+```
+User runs: npx -y @aigne/example-workflow-orchestrator
+Current directory: /home/user/my-project/
+
+→ Planner: "Need to explore project structure"
+→ Worker: Lists files in /modules/workspace/ (maps to /home/user/my-project/)
+→ Planner: "Need to read package.json"
+→ Worker: Reads /modules/workspace/package.json
+→ Planner: "Have enough information, generate report"
+→ Completer: Creates final project summary
+```
+
 ## Prerequisites
 
 * [Node.js](https://nodejs.org) (>=20.0) and npm installed on your machine
@@ -58,19 +92,76 @@ The orchestrator is configured using YAML files. This example uses:
 
 ### Run with npx (No Installation Required)
 
-```bash
-export OPENAI_API_KEY=YOUR_OPENAI_API_KEY # Set your API key
-export GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Or use Gemini
+**Important**: The orchestrator will analyze the directory where you run it. Navigate to your target project first:
 
-# Run the orchestrator with default objective "Explore the project directory structure and generate a project summary report"
+```bash
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Run the orchestrator - it will analyze the current directory
 npx -y @aigne/example-workflow-orchestrator
 
-# Run with chat mode, you can interactively provide instructions
+# Run with chat mode for interactive instructions
 npx -y @aigne/example-workflow-orchestrator --chat
 
 # Run with custom message
-npx -y @aigne/example-workflow-orchestrator -- -m "Analyze the project structure"
+npx -y @aigne/example-workflow-orchestrator --message "Analyze the project dependencies and security issues"
 ```
+
+**What happens**: The orchestrator mounts your current directory as `/modules/workspace/` and can read, analyze, and work with all files in that location.
+
+### Test Cases
+
+#### 1. Basic Analysis (2-3 steps)
+Run the orchestrator in a simple project directory to generate a summary report.
+
+```bash
+cd /path/to/simple-project
+npx -y @aigne/example-workflow-orchestrator --message "Generate a project summary report"
+```
+
+**What this tests**: Basic file exploration and information extraction
+
+---
+
+#### 2. Security Audit (5-8 steps)
+Run the orchestrator in a codebase to identify potential security issues.
+
+```bash
+cd /path/to/codebase
+npx -y @aigne/example-workflow-orchestrator --message "Perform a security audit: check for outdated dependencies, exposed secrets, insecure configurations, missing security headers, and vulnerable code patterns. Provide a risk-rated report"
+```
+
+**What this tests**: Multi-dimensional analysis and risk assessment
+
+---
+
+#### 3. Code Review (4-6 steps)
+Run the orchestrator to review code quality and suggest improvements.
+
+```bash
+cd /path/to/codebase
+npx -y @aigne/example-workflow-orchestrator --message "Review the code quality: identify code smells, adherence to best practices, and suggest improvements. Provide a summary report"
+```
+
+**What this tests**: Code quality analysis and pattern recognition
+
+---
+
+#### 4. Documentation Suite Generation ⭐ (12-15 steps)
+**Advanced test case**: Analyze repository and create comprehensive, well-organized documentation.
+
+```bash
+cd /path/to/any/project
+npx -y @aigne/example-workflow-orchestrator --message "Analyze this repository and create a comprehensive documentation suite in the docs/ directory. Include: 1) Architecture overview, 2) Getting started guide, 3) API reference, 4) Contributing guidelines, 5) Component/module documentation. Organize the docs logically with a clear navigation structure."
+```
+
+**What this tests**:
+- Multi-file creation workflow
+- Comprehensive analysis and synthesis
+- Structured output generation
+- File system write operations
+- Logical organization and planning
 
 ### Connect to an AI Model
 
@@ -171,10 +262,10 @@ You can pass custom messages to the orchestrator:
 
 ```bash
 # Pass message via command line
-pnpm start -- -m "Analyze the project structure"
+pnpm start --message "Analyze the project structure"
 
 # Or use YAML input
-pnpm start -- --input-yaml '{ message: "Generate a README for this project" }'
+pnpm start --input-yaml '{ message: "Generate a README for this project" }'
 ```
 
 ## Configuration
@@ -230,29 +321,28 @@ state_management:
   max_tokens: 100000            # Optional: limit total tokens for state management
   keep_recent: 20               # Optional: keep only N most recent states in memory
 
-# Agent File System configuration
+# Agent File System (AFS) configuration - Critical for accessing files
 afs:
   modules:
-    - module: local-fs
+    - module: history      # Enables access to conversation history
+    - module: local-fs     # Mounts local filesystem
       options:
-        name: workspace
-        localPath: .
+        name: workspace    # Mounted as /modules/workspace/
+        localPath: .       # Current directory (where you run the command)
         description: Workspace directory for the orchestrator agent.
 ```
 
 ### Objective Template (agents/objective.md)
 
 ```markdown
-Explore the project directory `/modules/workspace/` structure and generate a project summary report in Markdown format.
-
-- Ignore directories like node_modules, .git, dist, build, etc.
-- Provide accurate information based on actual file contents
-
 {% if message %}
-## User Instructions
 {{ message }}
+{% else %}
+Explore the workspace structure and generate a project summary report in Markdown format.
 {% endif %}
 ```
+
+When you run without the `--message` flag, it uses the default objective. With `--message`, your custom message replaces the entire objective.
 
 ### Custom Planner Instructions (agents/planner.md)
 
@@ -260,11 +350,12 @@ The planner is responsible for iterative task planning. See [agents/planner.md](
 
 ### Key Features
 
-1. **YAML-based Configuration**: Define your orchestrator workflow declaratively
-2. **Customizable Components**: Override planner, worker, or completer with custom instructions
-3. **State Management**: Control iteration limits and memory usage
-4. **Agent File System**: Shared storage accessible to all agent components
-5. **Template Support**: Use Jinja2-style templates in objective prompts
+1. **Current Directory as Workspace**: Automatically mounts your current directory for file access
+2. **YAML-based Configuration**: Define your orchestrator workflow declaratively
+3. **Customizable Components**: Override planner, worker, or completer with custom instructions
+4. **State Management**: Control iteration limits and memory usage
+5. **Agent File System**: Shared storage accessible to all agent components
+6. **Template Support**: Use Jinja2-style templates in objective prompts
 
 ## License
 
