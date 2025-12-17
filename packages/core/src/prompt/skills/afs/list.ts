@@ -1,4 +1,4 @@
-import type { AFSEntry, AFSListOptions } from "@aigne/afs";
+import type { AFSListOptions } from "@aigne/afs";
 import { z } from "zod";
 import {
   Agent,
@@ -18,7 +18,7 @@ export interface AFSListOutput extends Message {
   path: string;
   options?: AFSListOptions;
   message?: string;
-  result: string;
+  data?: unknown;
 }
 
 export interface AFSListAgentOptions extends AgentOptions<AFSListInput, AFSListOutput> {
@@ -37,6 +37,19 @@ export class AFSListAgent extends Agent<AFSListInput, AFSListOutput> {
         options: z
           .object({
             maxDepth: z.number().optional().describe("Tree depth limit (default: 1)"),
+            disableGitignore: z
+              .boolean()
+              .optional()
+              .describe("Disable .gitignore filtering, default is enabled"),
+            maxChildren: z
+              .number()
+              .optional()
+              .describe("Maximum number of children to list per directory"),
+            format: z
+              .union([z.literal("tree"), z.literal("list")])
+              .optional()
+              .default("tree")
+              .describe("Output format, either 'tree' or 'list' (default: 'tree')"),
           })
           .optional(),
       }),
@@ -47,10 +60,13 @@ export class AFSListAgent extends Agent<AFSListInput, AFSListOutput> {
         options: z
           .object({
             maxDepth: z.number().optional(),
+            disableGitignore: z.boolean().optional(),
+            maxChildren: z.number().optional(),
+            format: z.union([z.literal("tree"), z.literal("list")]).optional(),
           })
           .optional(),
         message: z.string().optional(),
-        result: z.string(),
+        data: z.unknown(),
       }),
     });
   }
@@ -58,8 +74,7 @@ export class AFSListAgent extends Agent<AFSListInput, AFSListOutput> {
   async process(input: AFSListInput, _options: AgentInvokeOptions): Promise<AFSListOutput> {
     if (!this.afs) throw new Error("AFS is not configured for this agent.");
 
-    const { list, message } = await this.afs.list(input.path, input.options);
-    const result = this.buildTreeView(list);
+    const { data, message } = await this.afs.list(input.path, input.options);
 
     return {
       status: "success",
@@ -67,58 +82,7 @@ export class AFSListAgent extends Agent<AFSListInput, AFSListOutput> {
       path: input.path,
       options: input.options,
       message,
-      result,
+      data,
     };
-  }
-
-  private buildTreeView(entries: AFSEntry[]): string {
-    const tree: Record<string, any> = {};
-    const entryMap = new Map<string, AFSEntry>();
-
-    for (const entry of entries) {
-      entryMap.set(entry.path, entry);
-      const parts = entry.path.split("/").filter(Boolean);
-      let current = tree;
-
-      for (const part of parts) {
-        if (!current[part]) {
-          current[part] = {};
-        }
-        current = current[part];
-      }
-    }
-
-    const renderTree = (node: Record<string, any>, prefix = "", currentPath = ""): string => {
-      let result = "";
-      const keys = Object.keys(node);
-      keys.forEach((key, index) => {
-        const isLast = index === keys.length - 1;
-        const fullPath = currentPath ? `${currentPath}/${key}` : `/${key}`;
-        const entry = entryMap.get(fullPath);
-
-        // Build metadata suffix
-        const metadataParts: string[] = [];
-
-        // Children count
-        const childrenCount = entry?.metadata?.childrenCount;
-        if (childrenCount !== undefined && childrenCount > 0) {
-          metadataParts.push(`${childrenCount} items`);
-        }
-
-        // Executable
-        if (entry?.metadata?.execute) {
-          metadataParts.push("executable");
-        }
-
-        const metadataSuffix = metadataParts.length > 0 ? ` [${metadataParts.join(", ")}]` : "";
-
-        result += `${prefix}${isLast ? "└── " : "├── "}${key}${metadataSuffix}`;
-        result += `\n`;
-        result += renderTree(node[key], `${prefix}${isLast ? "    " : "│   "}`, fullPath);
-      });
-      return result;
-    };
-
-    return renderTree(tree);
   }
 }

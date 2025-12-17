@@ -8,16 +8,17 @@ test("AFS'skill list should invoke afs.list", async () => {
   const skills = await getAFSSkills(afs);
   const list = skills.find((i) => i.name === "afs_list");
 
-  const listSpy = spyOn(afs, "list").mockResolvedValue({ list: [] });
+  const listSpy = spyOn(afs, "list").mockResolvedValue({ data: [] });
 
   assert(list);
   expect(await list.invoke({ path: "/foo/bar", options: { maxDepth: 2 } })).toMatchInlineSnapshot(`
     {
+      "data": [],
       "options": {
+        "format": "tree",
         "maxDepth": 2,
       },
       "path": "/foo/bar",
-      "result": "",
       "status": "success",
       "tool": "afs_list",
     }
@@ -28,6 +29,7 @@ test("AFS'skill list should invoke afs.list", async () => {
       [
         "/foo/bar",
         {
+          "format": "tree",
           "maxDepth": 2,
         },
       ],
@@ -40,7 +42,7 @@ test("AFS'skill list should use default maxDepth when not provided", async () =>
   const skills = await getAFSSkills(afs);
   const list = skills.find((i) => i.name === "afs_list");
 
-  const listSpy = spyOn(afs, "list").mockResolvedValue({ list: [] });
+  const listSpy = spyOn(afs, "list").mockResolvedValue({ data: [] });
 
   assert(list);
   await list.invoke({ path: "/foo/bar" });
@@ -65,24 +67,40 @@ test("AFS'skill list should return formatted tree structure", async () => {
     { id: "agent1", path: "/agents/agent1", metadata: { execute: { name: "agent1" } } },
   ];
 
-  spyOn(afs, "list").mockResolvedValue({ list: mockList });
+  spyOn(afs, "list").mockResolvedValue({ data: mockList });
 
   assert(list);
   const result = await list.invoke({ path: "/foo/bar" });
 
   expect(result).toMatchInlineSnapshot(`
     {
+      "data": [
+        {
+          "id": "file1.txt",
+          "path": "/foo/bar/file1.txt",
+        },
+        {
+          "id": "dir1",
+          "metadata": {
+            "childrenCount": 1,
+          },
+          "path": "/foo/bar/dir1",
+        },
+        {
+          "id": "file2.txt",
+          "path": "/foo/bar/dir1/file2.txt",
+        },
+        {
+          "id": "agent1",
+          "metadata": {
+            "execute": {
+              "name": "agent1",
+            },
+          },
+          "path": "/agents/agent1",
+        },
+      ],
       "path": "/foo/bar",
-      "result": 
-    "├── foo
-    │   └── bar
-    │       ├── file1.txt
-    │       └── dir1 [1 items]
-    │           └── file2.txt
-    └── agents
-        └── agent1 [executable]
-    "
-    ,
       "status": "success",
       "tool": "afs_list",
     }
@@ -94,7 +112,7 @@ test("AFS'skill list should handle empty directory", async () => {
   const skills = await getAFSSkills(afs);
   const list = skills.find((i) => i.name === "afs_list");
 
-  spyOn(afs, "list").mockResolvedValue({ list: [] });
+  spyOn(afs, "list").mockResolvedValue({ data: [] });
 
   assert(list);
   const result = await list.invoke({ path: "/empty/dir" });
@@ -109,7 +127,7 @@ test("AFS'skill list should handle different maxDepth values", async () => {
   const skills = await getAFSSkills(afs);
   const list = skills.find((i) => i.name === "afs_list");
 
-  const listSpy = spyOn(afs, "list").mockResolvedValue({ list: [] });
+  const listSpy = spyOn(afs, "list").mockResolvedValue({ data: [] });
 
   assert(list);
 

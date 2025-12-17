@@ -24,6 +24,23 @@ test("getAFSSkills should return all AFS skills", async () => {
             "options": {
               "additionalProperties": false,
               "properties": {
+                "disableGitignore": {
+                  "description": "Disable .gitignore filtering, default is enabled",
+                  "type": "boolean",
+                },
+                "format": {
+                  "default": "tree",
+                  "description": "Output format, either 'tree' or 'list' (default: 'tree')",
+                  "enum": [
+                    "tree",
+                    "list",
+                  ],
+                  "type": "string",
+                },
+                "maxChildren": {
+                  "description": "Maximum number of children to list per directory",
+                  "type": "number",
+                },
                 "maxDepth": {
                   "description": "Tree depth limit (default: 1)",
                   "type": "number",
@@ -46,12 +63,26 @@ test("getAFSSkills should return all AFS skills", async () => {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "additionalProperties": true,
           "properties": {
+            "data": {},
             "message": {
               "type": "string",
             },
             "options": {
               "additionalProperties": false,
               "properties": {
+                "disableGitignore": {
+                  "type": "boolean",
+                },
+                "format": {
+                  "enum": [
+                    "tree",
+                    "list",
+                  ],
+                  "type": "string",
+                },
+                "maxChildren": {
+                  "type": "number",
+                },
                 "maxDepth": {
                   "type": "number",
                 },
@@ -59,9 +90,6 @@ test("getAFSSkills should return all AFS skills", async () => {
               "type": "object",
             },
             "path": {
-              "type": "string",
-            },
-            "result": {
               "type": "string",
             },
             "status": {
@@ -75,7 +103,6 @@ test("getAFSSkills should return all AFS skills", async () => {
             "status",
             "tool",
             "path",
-            "result",
           ],
           "type": "object",
         },
@@ -120,7 +147,7 @@ test("getAFSSkills should return all AFS skills", async () => {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "additionalProperties": true,
           "properties": {
-            "list": {
+            "data": {
               "type": "array",
             },
             "message": {
@@ -156,7 +183,7 @@ test("getAFSSkills should return all AFS skills", async () => {
             "tool",
             "path",
             "query",
-            "list",
+            "data",
           ],
           "type": "object",
         },
@@ -186,13 +213,13 @@ test("getAFSSkills should return all AFS skills", async () => {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "additionalProperties": true,
           "properties": {
+            "data": {},
             "message": {
               "type": "string",
             },
             "path": {
               "type": "string",
             },
-            "result": {},
             "status": {
               "type": "string",
             },
@@ -317,7 +344,7 @@ test("getAFSSkills should return all AFS skills", async () => {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "additionalProperties": true,
           "properties": {
-            "content": {
+            "data": {
               "type": "string",
             },
             "message": {
@@ -338,7 +365,7 @@ test("getAFSSkills should return all AFS skills", async () => {
             "tool",
             "path",
             "message",
-            "content",
+            "data",
           ],
           "type": "object",
         },
@@ -472,13 +499,13 @@ test("getAFSSkills should return all AFS skills", async () => {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "additionalProperties": true,
           "properties": {
-            "result": {
+            "data": {
               "additionalProperties": {},
               "type": "object",
             },
           },
           "required": [
-            "result",
+            "data",
           ],
           "type": "object",
         },

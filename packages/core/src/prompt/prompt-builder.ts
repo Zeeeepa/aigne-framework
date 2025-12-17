@@ -26,11 +26,10 @@ import {
   isNonNullable,
   isRecord,
   partition,
-  pick,
   unique,
 } from "../utils/type-utils.js";
+import { createPromptBuilderContext } from "./context/index.js";
 import {
-  AFS_DESCRIPTION_PROMPT_TEMPLATE,
   AFS_EXECUTABLE_TOOLS_PROMPT_TEMPLATE,
   getAFSSystemPrompt,
 } from "./prompts/afs-builtin-prompt.js";
@@ -162,39 +161,7 @@ export class PromptBuilder {
   }
 
   private getTemplateVariables(options: PromptBuildOptions) {
-    const self = this;
-
-    return {
-      userContext: options.context?.userContext,
-      ...options.context?.userContext,
-      ...options.input,
-      $afs: {
-        get enabled() {
-          return !!options.agent?.afs;
-        },
-        description: AFS_DESCRIPTION_PROMPT_TEMPLATE,
-        get modules() {
-          return options.agent?.afs
-            ?.listModules()
-            .then((list) => list.map((i) => pick(i, ["name", "path", "description"])));
-        },
-        get histories() {
-          return self.getHistories(options);
-        },
-        get skills() {
-          const afs = options.agent?.afs;
-          if (!afs) return [];
-          return getAFSSkills(afs).then((skills) =>
-            skills.map((s) => pick(s, ["name", "description"])),
-          );
-        },
-      },
-      $agent: {
-        get skills() {
-          return options.agent?.skills.map((s) => pick(s, ["name", "description"]));
-        },
-      },
-    };
+    return createPromptBuilderContext(options);
   }
 
   private async buildMessages(options: PromptBuildOptions): Promise<ChatModelInputMessage[]> {
@@ -251,14 +218,14 @@ export class PromptBuilder {
         });
 
         memories.push(
-          ...history.list
+          ...(history.data as AFSEntry[])
             .reverse()
             .filter((i): i is Required<AFSEntry> => isNonNullable(i.content)),
         );
 
         if (message) {
-          const result = await afs.search("/", message);
-          const ms = result.list
+          const result: AFSEntry[] = (await afs.search("/", message)).data;
+          const ms = result
             .map((entry) => {
               if (entry.metadata?.execute) return null;
 
@@ -273,7 +240,7 @@ export class PromptBuilder {
             .filter(isNonNullable);
           memories.push(...ms);
 
-          const executable = result.list.filter(
+          const executable = result.filter(
             (i): i is typeof i & { metadata: Required<Pick<AFSEntryMetadata, "execute">> } =>
               !!i.metadata?.execute,
           );
@@ -353,10 +320,12 @@ export class PromptBuilder {
     const historyModule = (await afs.listModules()).find((m) => m.module instanceof AFSHistory);
     if (!historyModule) return [];
 
-    const { list: history } = await afs.list(historyModule.path, {
-      limit: agent.historyConfig?.maxItems || 10,
-      orderBy: [["createdAt", "desc"]],
-    });
+    const history: AFSEntry[] = (
+      await afs.list(historyModule.path, {
+        limit: agent.historyConfig?.maxItems || 10,
+        orderBy: [["createdAt", "desc"]],
+      })
+    ).data;
 
     return history
       .reverse()
