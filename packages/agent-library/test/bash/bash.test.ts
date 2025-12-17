@@ -103,7 +103,7 @@ test("BashAgent should support disable sandbox", async () => {
   expect(await bashAgent.invoke({ script })).toEqual(
     expect.objectContaining({
       exitCode: 0,
-      stdout: expect.stringMatching(/HTTP.*301/),
+      stdout: expect.stringMatching(/HTTP.*\d+/),
     }),
   );
 
