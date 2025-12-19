@@ -5,6 +5,7 @@ export interface ContextUsage {
   inputTokens: number;
   outputTokens: number;
   aigneHubCredits: number;
+  creditPrefix?: "$" | "€" | "¥";
   agentCalls: number;
   duration: number;
 }
