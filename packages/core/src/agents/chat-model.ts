@@ -261,6 +261,10 @@ export abstract class ChatModel extends Model<ChatModelInput, ChatModelOutput> {
       options.context.usage.outputTokens += usage.outputTokens;
       options.context.usage.inputTokens += usage.inputTokens;
       if (usage.aigneHubCredits) options.context.usage.aigneHubCredits += usage.aigneHubCredits;
+      if (usage.cacheCreationInputTokens)
+        options.context.usage.cacheCreationInputTokens += usage.cacheCreationInputTokens;
+      if (usage.cacheReadInputTokens)
+        options.context.usage.cacheReadInputTokens += usage.cacheReadInputTokens;
       if (usage.creditPrefix) options.context.usage.creditPrefix = usage.creditPrefix;
     }
   }
@@ -470,6 +474,14 @@ export interface ChatModelInputMessage {
    * Name of the message sender (for multi-agent scenarios)
    */
   name?: string;
+
+  /**
+   * Cache control marker for the entire message (only supported by Claude)
+   *
+   * This is syntactic sugar that applies cacheControl to the last content block
+   * of the message. See {@link CacheControl} for details.
+   */
+  cacheControl?: CacheControl;
 }
 
 /**
@@ -484,11 +496,28 @@ export type ChatModelInputMessageContent = string | UnionContent[];
  *
  * Used for text parts of message content
  */
-export type TextContent = { type: "text"; text: string };
+export type TextContent = {
+  type: "text";
+  text: string;
+
+  /**
+   * Cache control marker (only supported by Claude)
+   *
+   * When set, this content block will be marked as a cache breakpoint.
+   * See {@link CacheControl} for details.
+   */
+  cacheControl?: CacheControl;
+};
 
 export const textContentSchema = z.object({
   type: z.literal("text"),
   text: z.string(),
+  cacheControl: optionalize(
+    z.object({
+      type: z.literal("ephemeral"),
+      ttl: optionalize(z.union([z.literal("5m"), z.literal("1h")])),
+    }),
+  ),
 });
 
 export type UnionContent = TextContent | FileUnionContent;
@@ -518,6 +547,12 @@ const chatModelInputMessageSchema = z.object({
   ),
   toolCallId: optionalize(z.string()),
   name: optionalize(z.string()),
+  cacheControl: optionalize(
+    z.object({
+      type: z.literal("ephemeral"),
+      ttl: optionalize(z.union([z.literal("5m"), z.literal("1h")])),
+    }),
+  ),
 });
 
 /**
@@ -590,6 +625,15 @@ export interface ChatModelInputTool {
    * For example, Gemini's thought_signature
    */
   metadata?: Record<string, any>;
+
+  /**
+   * Cache control marker (only supported by Claude)
+   *
+   * When set, this tool definition will be marked as a cache breakpoint.
+   * Typically applied to the last tool in the tools array.
+   * See {@link CacheControl} for details.
+   */
+  cacheControl?: CacheControl;
 }
 
 const chatModelInputToolSchema = z.object({
@@ -600,6 +644,12 @@ const chatModelInputToolSchema = z.object({
     parameters: z.record(z.string(), z.unknown()),
   }),
   metadata: optionalize(z.record(z.string(), z.unknown())),
+  cacheControl: optionalize(
+    z.object({
+      type: z.literal("ephemeral"),
+      ttl: optionalize(z.union([z.literal("5m"), z.literal("1h")])),
+    }),
+  ),
 });
 
 /**
@@ -629,6 +679,98 @@ const chatModelInputToolChoiceSchema = z.union([
 ]);
 
 export type Modality = "text" | "image" | "audio";
+
+/**
+ * Cache control marker for prompt caching
+ *
+ * Used to mark content blocks, messages, or tools for caching.
+ * Currently only supported by Anthropic (Claude) models.
+ */
+export interface CacheControl {
+  /**
+   * Cache type (currently only "ephemeral" is supported)
+   */
+  type: "ephemeral";
+
+  /**
+   * Cache TTL (Time To Live)
+   * - "5m": 5 minutes (default)
+   * - "1h": 1 hour
+   */
+  ttl?: "5m" | "1h";
+}
+
+/**
+ * Cache configuration options
+ *
+ * Controls how prompt caching is used for supported providers.
+ * Prompt caching can significantly reduce costs and latency by reusing
+ * previously processed prompts (system messages, tool definitions, etc.).
+ */
+export interface CacheConfig {
+  /**
+   * Whether to enable prompt caching
+   *
+   * - OpenAI: Ignored (always enabled automatically)
+   * - Gemini: Controls explicit caching
+   * - Claude: Controls whether to add cache_control markers
+   *
+   * @default true
+   */
+  enabled?: boolean;
+
+  /**
+   * Cache TTL (Time To Live)
+   *
+   * - OpenAI: Ignored (automatic)
+   * - Gemini: Supports custom seconds
+   * - Claude: Only supports "5m" or "1h"
+   *
+   * @default "5m"
+   */
+  ttl?: "5m" | "1h" | number;
+
+  /**
+   * Caching strategy
+   *
+   * - "auto": Automatically add cache breakpoints at optimal locations
+   * - "manual": Require explicit cacheControl markers on messages/tools
+   *
+   * @default "auto"
+   */
+  strategy?: "auto" | "manual";
+
+  /**
+   * Auto cache breakpoint locations (only effective when strategy="auto")
+   *
+   * @default { tools: true, system: true, lastMessage: false }
+   */
+  autoBreakpoints?: {
+    /** Cache tool definitions */
+    tools?: boolean;
+    /** Cache system messages */
+    system?: boolean;
+    /** Cache last message in conversation history */
+    lastMessage?: boolean;
+  };
+}
+
+/**
+ * Default cache configuration
+ *
+ * Enables automatic caching for system messages and tool definitions,
+ * which typically provides the best cost/performance tradeoff.
+ */
+export const DEFAULT_CACHE_CONFIG: CacheConfig = {
+  enabled: true,
+  ttl: "5m",
+  strategy: "auto",
+  autoBreakpoints: {
+    tools: true,
+    system: true,
+    lastMessage: false,
+  },
+};
 
 /**
  * Model-specific configuration options
@@ -671,6 +813,16 @@ export interface ChatModelInputOptions extends Record<string, unknown> {
   preferInputFileType?: "file" | "url";
 
   reasoningEffort?: number | "minimal" | "low" | "medium" | "high";
+
+  /**
+   * Cache configuration for prompt caching
+   *
+   * Enables caching of system messages, tool definitions, and conversation history
+   * to reduce costs and latency. See {@link CacheConfig} for details.
+   *
+   * @default DEFAULT_CACHE_CONFIG (enabled with auto strategy)
+   */
+  cacheConfig?: CacheConfig;
 }
 
 export type ChatModelInputOptionsWithGetter = GetterSchema<ChatModelInputOptions>;
@@ -844,6 +996,18 @@ export interface ChatModelOutputUsage {
   aigneHubCredits?: number;
 
   /**
+   * Number of tokens written to cache (first time caching)
+   * Only applicable for providers that support explicit cache creation (e.g., Anthropic)
+   */
+  cacheCreationInputTokens?: number;
+
+  /**
+   * Number of tokens read from cache (cache hit)
+   * Supported by OpenAI, Anthropic, and Gemini
+   */
+  cacheReadInputTokens?: number;
+
+  /**
    * Credit prefix
    */
   creditPrefix?: "$" | "€" | "¥";
@@ -853,6 +1017,8 @@ export const chatModelOutputUsageSchema = z.object({
   inputTokens: z.number(),
   outputTokens: z.number(),
   aigneHubCredits: optionalize(z.number()),
+  cacheCreationInputTokens: optionalize(z.number()),
+  cacheReadInputTokens: optionalize(z.number()),
   creditPrefix: optionalize(z.union([z.literal("$"), z.literal("€"), z.literal("¥")])),
 });
 

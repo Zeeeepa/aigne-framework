@@ -166,7 +166,11 @@ export class TerminalTracer {
             input: task.input,
             task,
             usage: Boolean(
-              task.usage.inputTokens || task.usage.outputTokens || task.usage.aigneHubCredits,
+              task.usage.inputTokens ||
+                task.usage.outputTokens ||
+                task.usage.aigneHubCredits ||
+                task.usage.cacheCreationInputTokens ||
+                task.usage.cacheReadInputTokens,
             ),
             time: context.id === collapsed.ancestor.contextId,
           });
@@ -341,6 +345,12 @@ export class TerminalTracer {
   formatTokenUsage(usage: Partial<ContextUsage>, extra?: { [key: string]: string }) {
     const items = [
       [chalk.yellow(usage.inputTokens), chalk.grey("input tokens")],
+      usage.cacheReadInputTokens
+        ? [chalk.green(usage.cacheReadInputTokens), chalk.grey("cached")]
+        : undefined,
+      usage.cacheCreationInputTokens
+        ? [chalk.yellow(usage.cacheCreationInputTokens), chalk.grey("cache write")]
+        : undefined,
       [chalk.cyan(usage.outputTokens), chalk.grey("output tokens")],
       usage.aigneHubCredits
         ? this.formatAigneHubCredits(usage.aigneHubCredits, usage.creditPrefix)

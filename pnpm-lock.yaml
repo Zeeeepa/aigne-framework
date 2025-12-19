@@ -1394,8 +1394,8 @@ importers:
         specifier: ^13.0.1
         version: 13.0.1
       openai:
-        specifier: ^6.5.0
-        version: 6.6.0(ws@8.18.2)(zod@3.25.67)
+        specifier: ^6.14.0
+        version: 6.14.0(ws@8.18.2)(zod@3.25.67)
       zod:
         specifier: ^3.25.67
         version: 3.25.67
@@ -2019,8 +2019,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.0
       openai:
-        specifier: ^6.6.0
-        version: 6.6.0(ws@8.18.2)(zod@3.25.67)
+        specifier: ^6.14.0
+        version: 6.14.0(ws@8.18.2)(zod@3.25.67)
       p-wait-for:
         specifier: ^5.0.2
         version: 5.0.2
@@ -9948,8 +9948,8 @@ packages:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
 
-  openai@6.6.0:
-    resolution: {integrity: sha512-1yWk4cBsHF5Bq9TreHYOHY7pbqdlT74COnm8vPx7WKn36StS+Hyk8DdAitnLaw67a5Cudkz5EmlFQjSrNnrA2w==}
+  openai@6.14.0:
+    resolution: {integrity: sha512-ZPD9MG5/sPpyGZ0idRoDK0P5MWEMuXe0Max/S55vuvoxqyEVkN94m9jSpE3YgNgz3WoESFvozs57dxWqAco31w==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -23361,7 +23361,7 @@ snapshots:
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0
 
-  openai@6.6.0(ws@8.18.2)(zod@3.25.67):
+  openai@6.14.0(ws@8.18.2)(zod@3.25.67):
     optionalDependencies:
       ws: 8.18.2
       zod: 3.25.67
