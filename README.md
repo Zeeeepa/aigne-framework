@@ -371,8 +371,8 @@ It's pronounced **\[ ˈei dʒən ]** — like *"agent" without the "t."*
 In **Old Irish**, *aigne* means **"spirit"** — a perfect metaphor for agents that think and act.
 
 🔡 **Acronym**
-**AIGNE** = *Artificial Intelligence & Generative Natural-Language Ecosystem*
-An open framework for building real AI agents that live across cloud, browser, and edge.
+**AIGNE** = *AI Genesis Native Engineering *
+An open engineering paradigm for systems born with AI-native rules and brought to life through autonomous agents.
 
 ## Community and Support
 
