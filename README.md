@@ -361,17 +361,24 @@ This project is licensed under the [Elastic-2.0](./LICENSE.md) - see the [LICENS
 ## About the Name
 
 📛 **AIGNE Name & Meaning**
+
+
 \[ ˈei dʒən ] — like "agent" without the t
 
 🔤 **Pronunciation**
+
 It's pronounced **\[ ˈei dʒən ]** — like *"agent" without the "t."*
 
 🏞️ **Origin**
+
 *Aigne* is a small medieval village in southern France.
+
 In **Old Irish**, *aigne* means **"spirit"** — a perfect metaphor for agents that think and act.
 
 🔡 **Acronym**
-**AIGNE** = *AI Genesis Native Engineering *
+
+*AIGNE* = AI Genesis Native Engineering.
+
 An open engineering paradigm for systems born with AI-native rules and brought to life through autonomous agents.
 
 ## Community and Support
