@@ -1,5 +1,511 @@
 # Changelog
 
+## [0.16.16-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.16-beta.2...openai-v0.16.16-beta.3) (2025-12-19)
+
+
+### Features
+
+* add prompt caching for OpenAI/Gemini/Anthropic and cache token display ([#838](https://github.com/AIGNE-io/aigne-framework/issues/838)) ([46c628f](https://github.com/AIGNE-io/aigne-framework/commit/46c628f180572ea1b955d1a9888aad6145204842))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.3
+
+## [0.16.16-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.16-beta.1...openai-v0.16.16-beta.2) (2025-12-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.2
+
+## [0.16.16-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.16-beta...openai-v0.16.16-beta.1) (2025-12-17)
+
+
+### Bug Fixes
+
+* bump version ([70d217c](https://github.com/AIGNE-io/aigne-framework/commit/70d217c8360dd0dda7f5f17011c4e92ec836e801))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.1
+    * @aigne/platform-helpers bumped to 0.6.7-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.1
+
+## [0.16.16-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15...openai-v0.16.16-beta) (2025-12-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta
+
+## [0.16.15](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.6...openai-v0.16.15) (2025-12-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0
+    * @aigne/platform-helpers bumped to 0.6.6
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68
+
+## [0.16.15-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.5...openai-v0.16.15-beta.6) (2025-12-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.6
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.6
+
+## [0.16.15-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.4...openai-v0.16.15-beta.5) (2025-12-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.5
+
+## [0.16.15-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.3...openai-v0.16.15-beta.4) (2025-12-10)
+
+
+### Bug Fixes
+
+* bump version ([af04b69](https://github.com/AIGNE-io/aigne-framework/commit/af04b6931951afa35d52065430acc7fef4b10087))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.4
+    * @aigne/platform-helpers bumped to 0.6.6-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.4
+
+## [0.16.15-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.2...openai-v0.16.15-beta.3) (2025-12-10)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.3
+
+## [0.16.15-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta.1...openai-v0.16.15-beta.2) (2025-12-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.2
+
+## [0.16.15-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.15-beta...openai-v0.16.15-beta.1) (2025-12-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta.1
+
+## [0.16.15-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.14...openai-v0.16.15-beta) (2025-12-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.71.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.68-beta
+
+## [0.16.14](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.14-beta...openai-v0.16.14) (2025-12-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.70.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.67
+
+## [0.16.14-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.13...openai-v0.16.14-beta) (2025-12-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.70.1-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.67-beta
+
+## [0.16.13](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.13-beta.1...openai-v0.16.13) (2025-12-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.70.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.66
+
+## [0.16.13-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.13-beta...openai-v0.16.13-beta.1) (2025-12-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.70.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.66-beta.1
+
+## [0.16.13-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.12...openai-v0.16.13-beta) (2025-12-02)
+
+
+### Features
+
+* **core:** add nested getter pattern support for model options ([#796](https://github.com/AIGNE-io/aigne-framework/issues/796)) ([824b2fe](https://github.com/AIGNE-io/aigne-framework/commit/824b2fe55cb2a24620e2bb73b470532918fa2996))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.70.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.66-beta
+
+## [0.16.12](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.12-beta.1...openai-v0.16.12) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.2
+    * @aigne/platform-helpers bumped to 0.6.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.65
+
+## [0.16.12-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.12-beta...openai-v0.16.12-beta.1) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.2-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.65-beta.1
+
+## [0.16.12-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.11...openai-v0.16.12-beta) (2025-11-28)
+
+
+### Bug Fixes
+
+* bump version ([ba7ad18](https://github.com/AIGNE-io/aigne-framework/commit/ba7ad184fcf32b49bf0507a3cb638d20fb00690d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.2-beta
+    * @aigne/platform-helpers bumped to 0.6.5-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.65-beta
+
+## [0.16.11](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.11-beta...openai-v0.16.11) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.64
+
+## [0.16.11-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.10...openai-v0.16.11-beta) (2025-11-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.1-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.64-beta
+
+## [0.16.10](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.10-beta.3...openai-v0.16.10) (2025-11-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.63
+
+## [0.16.10-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.10-beta.2...openai-v0.16.10-beta.3) (2025-11-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.63-beta.3
+
+## [0.16.10-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.10-beta.1...openai-v0.16.10-beta.2) (2025-11-18)
+
+
+### Features
+
+* add dynamic model options resolution with getter pattern ([#708](https://github.com/AIGNE-io/aigne-framework/issues/708)) ([5ed5085](https://github.com/AIGNE-io/aigne-framework/commit/5ed5085203763c70194853c56edc13acf56d81c6))
+* add ImageModel/ImageAgent support ([#383](https://github.com/AIGNE-io/aigne-framework/issues/383)) ([96a2093](https://github.com/AIGNE-io/aigne-framework/commit/96a209368d91d98f47db6de1e404640368a86fa8))
+* add modalities support for chat model ([#454](https://github.com/AIGNE-io/aigne-framework/issues/454)) ([70d1bf6](https://github.com/AIGNE-io/aigne-framework/commit/70d1bf631f4e711235d89c6df8ee210a19179b30))
+* add reasoningEffort option for chat model ([#680](https://github.com/AIGNE-io/aigne-framework/issues/680)) ([f69d232](https://github.com/AIGNE-io/aigne-framework/commit/f69d232d714d4a3e4946bdc8c6598747c9bcbd57))
+* **cli:** add retry functionality and improve error handling for AIGNE Hub ([#348](https://github.com/AIGNE-io/aigne-framework/issues/348)) ([672c93a](https://github.com/AIGNE-io/aigne-framework/commit/672c93abbba8b4b234f6d810536ff4b603a97e1e))
+* **core:** add automatic JSON parsing and validation for structured outputs ([#548](https://github.com/AIGNE-io/aigne-framework/issues/548)) ([9077f93](https://github.com/AIGNE-io/aigne-framework/commit/9077f93856865915aaf5e8caa5638ef0b7f05b1e))
+* improve image model architecture and file handling ([#527](https://github.com/AIGNE-io/aigne-framework/issues/527)) ([4db50aa](https://github.com/AIGNE-io/aigne-framework/commit/4db50aa0387a1a0f045ca11aaa61613e36ca7597))
+* **memory:** support did space memory adapter ([#229](https://github.com/AIGNE-io/aigne-framework/issues/229)) ([6f69b64](https://github.com/AIGNE-io/aigne-framework/commit/6f69b64e98b963db9d6ab5357306b445385eaa68))
+* **models:** support gemini and ideogram images models ([#412](https://github.com/AIGNE-io/aigne-framework/issues/412)) ([6534fec](https://github.com/AIGNE-io/aigne-framework/commit/6534fecb0bdfb4b0a4440d44c0e563b9a029a68f))
+* **models:** support gemini and ideogram images models ([#412](https://github.com/AIGNE-io/aigne-framework/issues/412)) ([6534fec](https://github.com/AIGNE-io/aigne-framework/commit/6534fecb0bdfb4b0a4440d44c0e563b9a029a68f))
+* **model:** support video model ([#647](https://github.com/AIGNE-io/aigne-framework/issues/647)) ([de81742](https://github.com/AIGNE-io/aigne-framework/commit/de817421ef1dd3246d0d8c51ff12f0a855658f9f))
+* support custom prefer input file type ([#469](https://github.com/AIGNE-io/aigne-framework/issues/469)) ([db0161b](https://github.com/AIGNE-io/aigne-framework/commit/db0161bbac52542c771ee2f40f361636b0668075))
+
+
+### Bug Fixes
+
+* add prefer input file type option for image model ([#536](https://github.com/AIGNE-io/aigne-framework/issues/536)) ([3cba8a5](https://github.com/AIGNE-io/aigne-framework/commit/3cba8a5562233a1567b49b6dd5c446c0760f5c4c))
+* add taskTitle to observability traces and fix GPT-5/o1 model parameters ([#700](https://github.com/AIGNE-io/aigne-framework/issues/700)) ([30b513b](https://github.com/AIGNE-io/aigne-framework/commit/30b513b46ab5edb58a37f29e566e311bbb389f44))
+* bump version ([93a1c10](https://github.com/AIGNE-io/aigne-framework/commit/93a1c10cf35f88eaafe91092481f5d087bd5b3a9))
+* call tools args is null ([#313](https://github.com/AIGNE-io/aigne-framework/issues/313)) ([2cf9487](https://github.com/AIGNE-io/aigne-framework/commit/2cf9487b606cb7884086938def834f89a3c3a775))
+* **cli:** log only once in loadAIGNE ([#357](https://github.com/AIGNE-io/aigne-framework/issues/357)) ([6e6d968](https://github.com/AIGNE-io/aigne-framework/commit/6e6d96814fbc87f210522ae16daf94c1f84f311a))
+* **cli:** print pretty error message for cli ([#249](https://github.com/AIGNE-io/aigne-framework/issues/249)) ([d68e0f7](https://github.com/AIGNE-io/aigne-framework/commit/d68e0f7151259a05696de77d9f00793b6f5b36b2))
+* **core:** make getCredential async for aigne-hub mount point retrieval ([#372](https://github.com/AIGNE-io/aigne-framework/issues/372)) ([34ce7a6](https://github.com/AIGNE-io/aigne-framework/commit/34ce7a645fa83994d3dfe0f29ca70098cfecac9c))
+* **docs:** update video mode docs ([#695](https://github.com/AIGNE-io/aigne-framework/issues/695)) ([d691001](https://github.com/AIGNE-io/aigne-framework/commit/d69100169457c16c14f2f3e2f7fcd6b2a99330f3))
+* improve image model parameters ([#530](https://github.com/AIGNE-io/aigne-framework/issues/530)) ([d66b5ca](https://github.com/AIGNE-io/aigne-framework/commit/d66b5ca01e14baad2712cc1a84930cdb63703232))
+* input schema of AI agent should includes input key and input file key ([#600](https://github.com/AIGNE-io/aigne-framework/issues/600)) ([b4ca076](https://github.com/AIGNE-io/aigne-framework/commit/b4ca076d6b4a1a1ecb8d4ebb008abd0d7561aadd))
+* **models:** add image parameters support for video generation ([#684](https://github.com/AIGNE-io/aigne-framework/issues/684)) ([b048b7f](https://github.com/AIGNE-io/aigne-framework/commit/b048b7f92bd7a532dbdbeb6fb5fa5499bae6b953))
+* **models:** add mineType for transform file ([#667](https://github.com/AIGNE-io/aigne-framework/issues/667)) ([155a173](https://github.com/AIGNE-io/aigne-framework/commit/155a173e75aff1dbe870a1305455a4300942e07a))
+* **models:** aigne hub video params ([#665](https://github.com/AIGNE-io/aigne-framework/issues/665)) ([d00f836](https://github.com/AIGNE-io/aigne-framework/commit/d00f8368422d8e3707b974e1aff06714731ebb28))
+* **models:** aigne-hub adapter not working in node.js v21 ([#320](https://github.com/AIGNE-io/aigne-framework/issues/320)) ([2884d00](https://github.com/AIGNE-io/aigne-framework/commit/2884d00b83e153ae7465ef1369fcd22d7c6d43e0))
+* **model:** transform local file to base64 before request llm ([#462](https://github.com/AIGNE-io/aigne-framework/issues/462)) ([58ef5d7](https://github.com/AIGNE-io/aigne-framework/commit/58ef5d77046c49f3c4eed15b7f0cc283cbbcd74a))
+* **model:** updated default video duration settings for AI video models ([#663](https://github.com/AIGNE-io/aigne-framework/issues/663)) ([1203941](https://github.com/AIGNE-io/aigne-framework/commit/12039411aaef77ba665e8edfb0fe6f8097c43e39))
+* remove useless parameter ([efb0690](https://github.com/AIGNE-io/aigne-framework/commit/efb0690cf1ada6de95896e160c7cc5ffc7524ab2))
+* standardize file parameter naming across models ([#534](https://github.com/AIGNE-io/aigne-framework/issues/534)) ([f159a9d](https://github.com/AIGNE-io/aigne-framework/commit/f159a9d6af21ec0e99641996b150560929845845))
+* support optional field sturectured output for gemini ([#468](https://github.com/AIGNE-io/aigne-framework/issues/468)) ([70c6279](https://github.com/AIGNE-io/aigne-framework/commit/70c62795039a2862e3333f26707329489bf938de))
+* update deps compatibility in CommonJS environment ([#580](https://github.com/AIGNE-io/aigne-framework/issues/580)) ([a1e35d0](https://github.com/AIGNE-io/aigne-framework/commit/a1e35d016405accb51c1aeb6a544503a1c78e912))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.69.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.63-beta.2
+
+## [0.16.10-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.10-beta...openai-v0.16.10-beta.1) (2025-11-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.3-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.63-beta.1
+
+## [0.16.10-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.9...openai-v0.16.10-beta) (2025-11-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.3-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.63-beta
+
+## [0.16.9](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.9-beta...openai-v0.16.9) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.62
+
+## [0.16.9-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.8...openai-v0.16.9-beta) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.2-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.62-beta
+
+## [0.16.8](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.8-beta...openai-v0.16.8) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.1
+    * @aigne/platform-helpers bumped to 0.6.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.61
+
+## [0.16.8-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.7...openai-v0.16.8-beta) (2025-11-15)
+
+
+### Bug Fixes
+
+* bump version ([93a1c10](https://github.com/AIGNE-io/aigne-framework/commit/93a1c10cf35f88eaafe91092481f5d087bd5b3a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.1-beta
+    * @aigne/platform-helpers bumped to 0.6.4-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.61-beta
+
+## [0.16.7](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.7-beta...openai-v0.16.7) (2025-11-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.60
+
+## [0.16.7-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6...openai-v0.16.7-beta) (2025-11-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.68.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.60-beta
+
+## [0.16.6](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6-beta.4...openai-v0.16.6) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59
+
+## [0.16.6-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6-beta.3...openai-v0.16.6-beta.4) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59-beta.4
+
+## [0.16.6-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6-beta.2...openai-v0.16.6-beta.3) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0-beta.3
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59-beta.3
+
+## [0.16.6-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6-beta.1...openai-v0.16.6-beta.2) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59-beta.2
+
+## [0.16.6-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.6-beta...openai-v0.16.6-beta.1) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59-beta.1
+
+## [0.16.6-beta](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.5...openai-v0.16.6-beta) (2025-11-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.67.0-beta
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.59-beta
+
 ## [0.16.5](https://github.com/AIGNE-io/aigne-framework/compare/openai-v0.16.5-beta.6...openai-v0.16.5) (2025-11-07)
 
 

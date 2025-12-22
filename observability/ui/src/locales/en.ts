@@ -17,6 +17,8 @@ export default flatten({
   outputTokens: "Output Tokens",
   totalTokens: "Total Tokens",
   tokens: "Tokens",
+  cacheReadTokens: "Cache Read",
+  cacheCreationTokens: "Cache Write",
   count: "Count",
   timestamp: "Timestamp",
   duration: "Duration",
@@ -69,6 +71,7 @@ export default flatten({
     button: "Delete",
     restConfirmTitle: "Delete Traces",
     restConfirmDesc: "Are you sure you want to delete all traces?",
+    deleting: "Data is being deleted... Please wait.",
   },
   dateRange: "Date Range",
   reset: "Reset",
@@ -138,4 +141,5 @@ export default flatten({
     fullscreen: "Fullscreen",
     exitFullscreen: "Exit Fullscreen",
   },
+  deleting: "Deleting...",
 });

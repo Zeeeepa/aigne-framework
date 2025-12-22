@@ -1,9 +1,22 @@
-import { AFS, type AFSOptions } from "@aigne/afs";
+import {
+  AFS,
+  type AFSEntry,
+  type AFSExecOptions,
+  type AFSExecResult,
+  type AFSListOptions,
+  type AFSListResult,
+  type AFSModule,
+  type AFSOptions,
+  type AFSReadResult,
+  type AFSSearchOptions,
+} from "@aigne/afs";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import type * as prompts from "@inquirer/prompts";
 import equal from "fast-deep-equal";
 import nunjucks from "nunjucks";
+import { joinURL } from "ufo";
 import { type ZodObject, type ZodType, z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import type { AgentEvent, Context, UserContext } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
 import type { ContextUsage } from "../aigne/usage.js";
@@ -11,7 +24,7 @@ import type { Memory, MemoryAgent } from "../memory/memory.js";
 import type { MemoryRecorderInput } from "../memory/recorder.js";
 import type { MemoryRetrieverInput } from "../memory/retriever.js";
 import { sortHooks } from "../utils/agent-utils.js";
-import { isZodSchema } from "../utils/json-schema.js";
+import { getZodObjectKeys, isZodSchema } from "../utils/json-schema.js";
 import { logger } from "../utils/logger.js";
 import {
   agentResponseStreamToObject,
@@ -177,14 +190,14 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
    */
   disableEvents?: boolean;
 
+  historyConfig?: Agent["historyConfig"];
+
   /**
    * One or more memory agents this agent can use
    */
   memory?: MemoryAgent | MemoryAgent[];
 
   afs?: true | AFSOptions | AFS | ((afs: AFS) => AFS);
-
-  afsConfig?: AFSConfig;
 
   asyncMemoryRecord?: boolean;
 
@@ -196,11 +209,6 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
   hooks?: AgentHooks<I, O> | AgentHooks<I, O>[];
 
   retryOnError?: Agent<I, O>["retryOnError"] | boolean;
-}
-
-export interface AFSConfig {
-  injectHistory?: boolean;
-  historyWindowSize?: number;
 }
 
 const hooksSchema = z.object({
@@ -312,7 +320,14 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
  * Here's an example of how to create a custom agent:
  * {@includeCode ../../test/agents/agent.test.ts#example-custom-agent}
  */
-export abstract class Agent<I extends Message = any, O extends Message = any> {
+export abstract class Agent<I extends Message = any, O extends Message = any> implements AFSModule {
+  static async load<I extends Message = any, O extends Message = any>(_options: {
+    filepath: string;
+    parsed: object;
+  }): Promise<Agent<I, O>> {
+    throw new Error("Not implemented");
+  }
+
   constructor(options: AgentOptions<I, O> = {}) {
     checkArguments("Agent options", agentOptionsSchema, options);
 
@@ -336,6 +351,7 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     this.publishTopic = options.publishTopic as PublishTopic<Message>;
     if (options.skills?.length) this.skills.push(...options.skills.map(functionToAgent));
     this.disableEvents = options.disableEvents;
+    this.historyConfig = options.historyConfig;
 
     if (Array.isArray(options.memory)) {
       this.memories.push(...options.memory);
@@ -351,7 +367,6 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
           : options.afs instanceof AFS
             ? options.afs
             : new AFS(options.afs);
-    this.afsConfig = options.afsConfig;
     this.asyncMemoryRecord = options.asyncMemoryRecord;
 
     this.maxRetrieveMemoryCount = options.maxRetrieveMemoryCount;
@@ -374,8 +389,6 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
   readonly memories: MemoryAgent[] = [];
 
   afs?: AFS;
-
-  afsConfig?: AFSConfig;
 
   asyncMemoryRecord?: boolean;
 
@@ -495,6 +508,10 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     return schema.passthrough() as unknown as ZodType<I>;
   }
 
+  get inputKeys(): string[] {
+    return getZodObjectKeys(this.inputSchema);
+  }
+
   /**
    * Get the output data schema for this agent
    *
@@ -508,6 +525,10 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     const schema = typeof s === "function" ? s(this) : s || z.object({});
     checkAgentInputOutputSchema(schema);
     return schema.passthrough() as unknown as ZodType<O>;
+  }
+
+  get outputKeys(): string[] {
+    return getZodObjectKeys(this.outputSchema);
   }
 
   /**
@@ -547,6 +568,12 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
    * agentSucceed, or agentFailed
    */
   private disableEvents?: boolean;
+
+  historyConfig?: {
+    disabled?: boolean;
+    maxTokens?: number;
+    maxItems?: number;
+  };
 
   private subscriptions: Unsubscribe[] = [];
 
@@ -949,7 +976,8 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
     const o = await this.callHooks(["onSuccess", "onEnd"], { input, output: finalOutput }, options);
     if (o?.output) finalOutput = o.output as O;
 
-    this.afs?.emit("agentSucceed", { input, output: finalOutput });
+    if (this.historyConfig?.disabled !== true)
+      this.afs?.emit("agentSucceed", { input, output: finalOutput });
 
     if (!this.disableEvents) context.emit("agentSucceed", { agent: this, output: finalOutput });
 
@@ -1199,6 +1227,71 @@ export abstract class Agent<I extends Message = any, O extends Message = any> {
   async [Symbol.asyncDispose]() {
     await this.shutdown();
   }
+
+  /** For AFSModule interface **/
+  private agentToAFSEntry(agent: Agent): AFSEntry {
+    return {
+      id: `/${this.name}/${agent.name}`,
+      path: agent === this ? "/" : joinURL("/", agent.name),
+      summary: agent.description,
+      metadata: {
+        execute: agent.isInvokable
+          ? {
+              name: agent.name,
+              description: agent.description,
+              inputSchema: zodToJsonSchema(agent.inputSchema),
+              outputSchema: zodToJsonSchema(agent.outputSchema),
+            }
+          : undefined,
+      },
+    };
+  }
+
+  private findAgentByAFSPath(path: string): Agent | undefined {
+    let agent: Agent | undefined;
+    if (path === "/") {
+      agent = this;
+    } else {
+      const name = path.split("/")[1];
+      agent = this.skills.find((s) => s.name === name);
+    }
+    return agent;
+  }
+
+  // TODO: support list skills inside agent path, and use options to filter skills
+  async list(_path: string, _options?: AFSListOptions): Promise<AFSListResult> {
+    const agents = [this, ...this.skills];
+
+    return { data: agents.map((agent) => this.agentToAFSEntry(agent)) };
+  }
+
+  async read(path: string): Promise<AFSReadResult> {
+    const agent = this.findAgentByAFSPath(path);
+    if (!agent) {
+      return { message: `Agent not found at path: ${path}` };
+    }
+
+    return {
+      data: this.agentToAFSEntry(agent),
+    };
+  }
+
+  // TODO: implement search inside agent skills
+  async search(path: string, _query: string, options?: AFSSearchOptions): Promise<AFSListResult> {
+    return this.list(path, options);
+  }
+
+  async exec(
+    path: string,
+    args: Record<string, any>,
+    options: AFSExecOptions,
+  ): Promise<AFSExecResult> {
+    const agent = this.findAgentByAFSPath(path);
+    if (!agent) throw new Error(`Agent not found at path: ${path}`);
+    return { data: await options.context.invoke(agent, args) };
+  }
+
+  /** End AFSModule interface **/
 }
 
 export type AgentInput<T extends Agent> = T extends Agent<infer I, any> ? I : never;
@@ -1633,7 +1726,7 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
    * @returns Processing result
    */
   process(input: I, options: AgentInvokeOptions) {
-    return this._process(input, options);
+    return this._process.apply(this, [input, options]);
   }
 }
 
@@ -1648,10 +1741,11 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
  * @param context Execution context
  * @returns Processing result, can be synchronous or asynchronous
  */
-export type FunctionAgentFn<I extends Message = any, O extends Message = any> = (
-  input: I,
-  options: AgentInvokeOptions,
-) => PromiseOrValue<AgentProcessResult<O>>;
+export type FunctionAgentFn<
+  I extends Message = any,
+  O extends Message = any,
+  A extends FunctionAgent<I, O> = FunctionAgent<I, O>,
+> = (this: A, input: I, options: AgentInvokeOptions) => PromiseOrValue<AgentProcessResult<O>>;
 
 function functionToAgent<I extends Message, O extends Message>(
   agent: FunctionAgentFn<I, O>,

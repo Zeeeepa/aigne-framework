@@ -1,5 +1,509 @@
 # Changelog
 
+## [0.7.62-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.2...open-router-v0.7.62-beta.3) (2025-12-19)
+
+
+### Bug Fixes
+
+* **models:** enable parallel tool calls for open router model ([0aa7d1b](https://github.com/AIGNE-io/aigne-framework/commit/0aa7d1ba30907ee820b793e20e42c4201ca763cc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.3
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.3
+    * @aigne/test-utils bumped to 0.5.69-beta.3
+
+## [0.7.62-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.1...open-router-v0.7.62-beta.2) (2025-12-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.2
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.2
+    * @aigne/test-utils bumped to 0.5.69-beta.2
+
+## [0.7.62-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta...open-router-v0.7.62-beta.1) (2025-12-17)
+
+
+### Bug Fixes
+
+* bump version ([70d217c](https://github.com/AIGNE-io/aigne-framework/commit/70d217c8360dd0dda7f5f17011c4e92ec836e801))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.1
+    * @aigne/test-utils bumped to 0.5.69-beta.1
+
+## [0.7.62-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61...open-router-v0.7.62-beta) (2025-12-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta
+    * @aigne/test-utils bumped to 0.5.69-beta
+
+## [0.7.61](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.6...open-router-v0.7.61) (2025-12-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15
+  * devDependencies
+    * @aigne/core bumped to 1.71.0
+    * @aigne/test-utils bumped to 0.5.68
+
+## [0.7.61-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.5...open-router-v0.7.61-beta.6) (2025-12-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.6
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.6
+    * @aigne/test-utils bumped to 0.5.68-beta.6
+
+## [0.7.61-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.4...open-router-v0.7.61-beta.5) (2025-12-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.5
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.5
+    * @aigne/test-utils bumped to 0.5.68-beta.5
+
+## [0.7.61-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.3...open-router-v0.7.61-beta.4) (2025-12-10)
+
+
+### Bug Fixes
+
+* bump version ([af04b69](https://github.com/AIGNE-io/aigne-framework/commit/af04b6931951afa35d52065430acc7fef4b10087))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.4
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.4
+    * @aigne/test-utils bumped to 0.5.68-beta.4
+
+## [0.7.61-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.2...open-router-v0.7.61-beta.3) (2025-12-10)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.3
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.3
+    * @aigne/test-utils bumped to 0.5.68-beta.3
+
+## [0.7.61-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta.1...open-router-v0.7.61-beta.2) (2025-12-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.2
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.2
+    * @aigne/test-utils bumped to 0.5.68-beta.2
+
+## [0.7.61-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.61-beta...open-router-v0.7.61-beta.1) (2025-12-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta.1
+    * @aigne/test-utils bumped to 0.5.68-beta.1
+
+## [0.7.61-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.60...open-router-v0.7.61-beta) (2025-12-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.15-beta
+  * devDependencies
+    * @aigne/core bumped to 1.71.0-beta
+    * @aigne/test-utils bumped to 0.5.68-beta
+
+## [0.7.60](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.60-beta...open-router-v0.7.60) (2025-12-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.14
+  * devDependencies
+    * @aigne/core bumped to 1.70.1
+    * @aigne/test-utils bumped to 0.5.67
+
+## [0.7.60-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.59...open-router-v0.7.60-beta) (2025-12-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.14-beta
+  * devDependencies
+    * @aigne/core bumped to 1.70.1-beta
+    * @aigne/test-utils bumped to 0.5.67-beta
+
+## [0.7.59](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.59-beta.1...open-router-v0.7.59) (2025-12-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.13
+  * devDependencies
+    * @aigne/core bumped to 1.70.0
+    * @aigne/test-utils bumped to 0.5.66
+
+## [0.7.59-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.59-beta...open-router-v0.7.59-beta.1) (2025-12-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.13-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.70.0-beta.1
+    * @aigne/test-utils bumped to 0.5.66-beta.1
+
+## [0.7.59-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.58...open-router-v0.7.59-beta) (2025-12-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.13-beta
+  * devDependencies
+    * @aigne/core bumped to 1.70.0-beta
+    * @aigne/test-utils bumped to 0.5.66-beta
+
+## [0.7.58](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.58-beta.1...open-router-v0.7.58) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.12
+  * devDependencies
+    * @aigne/core bumped to 1.69.2
+    * @aigne/test-utils bumped to 0.5.65
+
+## [0.7.58-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.58-beta...open-router-v0.7.58-beta.1) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.12-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.69.2-beta.1
+    * @aigne/test-utils bumped to 0.5.65-beta.1
+
+## [0.7.58-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.57...open-router-v0.7.58-beta) (2025-11-28)
+
+
+### Bug Fixes
+
+* bump version ([ba7ad18](https://github.com/AIGNE-io/aigne-framework/commit/ba7ad184fcf32b49bf0507a3cb638d20fb00690d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.12-beta
+  * devDependencies
+    * @aigne/core bumped to 1.69.2-beta
+    * @aigne/test-utils bumped to 0.5.65-beta
+
+## [0.7.57](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.57-beta...open-router-v0.7.57) (2025-11-28)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.11
+  * devDependencies
+    * @aigne/core bumped to 1.69.1
+    * @aigne/test-utils bumped to 0.5.64
+
+## [0.7.57-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.56...open-router-v0.7.57-beta) (2025-11-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.11-beta
+  * devDependencies
+    * @aigne/core bumped to 1.69.1-beta
+    * @aigne/test-utils bumped to 0.5.64-beta
+
+## [0.7.56](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.56-beta.3...open-router-v0.7.56) (2025-11-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.10
+  * devDependencies
+    * @aigne/core bumped to 1.69.0
+    * @aigne/test-utils bumped to 0.5.63
+
+## [0.7.56-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.56-beta.2...open-router-v0.7.56-beta.3) (2025-11-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.10-beta.3
+  * devDependencies
+    * @aigne/core bumped to 1.69.0-beta.2
+    * @aigne/test-utils bumped to 0.5.63-beta.3
+
+## [0.7.56-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.56-beta.1...open-router-v0.7.56-beta.2) (2025-11-18)
+
+
+### Features
+
+* **memory:** support did space memory adapter ([#229](https://github.com/AIGNE-io/aigne-framework/issues/229)) ([6f69b64](https://github.com/AIGNE-io/aigne-framework/commit/6f69b64e98b963db9d6ab5357306b445385eaa68))
+
+
+### Bug Fixes
+
+* bump version ([93a1c10](https://github.com/AIGNE-io/aigne-framework/commit/93a1c10cf35f88eaafe91092481f5d087bd5b3a9))
+* **core:** make getCredential async for aigne-hub mount point retrieval ([#372](https://github.com/AIGNE-io/aigne-framework/issues/372)) ([34ce7a6](https://github.com/AIGNE-io/aigne-framework/commit/34ce7a645fa83994d3dfe0f29ca70098cfecac9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.10-beta.2
+  * devDependencies
+    * @aigne/core bumped to 1.69.0-beta.1
+    * @aigne/test-utils bumped to 0.5.63-beta.2
+
+## [0.7.56-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.56-beta...open-router-v0.7.56-beta.1) (2025-11-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.10-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.68.3-beta.1
+    * @aigne/test-utils bumped to 0.5.63-beta.1
+
+## [0.7.56-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.55...open-router-v0.7.56-beta) (2025-11-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.10-beta
+  * devDependencies
+    * @aigne/core bumped to 1.68.3-beta
+    * @aigne/test-utils bumped to 0.5.63-beta
+
+## [0.7.55](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.55-beta...open-router-v0.7.55) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.9
+  * devDependencies
+    * @aigne/core bumped to 1.68.2
+    * @aigne/test-utils bumped to 0.5.62
+
+## [0.7.55-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.54...open-router-v0.7.55-beta) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.9-beta
+  * devDependencies
+    * @aigne/core bumped to 1.68.2-beta
+    * @aigne/test-utils bumped to 0.5.62-beta
+
+## [0.7.54](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.54-beta...open-router-v0.7.54) (2025-11-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.8
+  * devDependencies
+    * @aigne/core bumped to 1.68.1
+    * @aigne/test-utils bumped to 0.5.61
+
+## [0.7.54-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.53...open-router-v0.7.54-beta) (2025-11-15)
+
+
+### Bug Fixes
+
+* bump version ([93a1c10](https://github.com/AIGNE-io/aigne-framework/commit/93a1c10cf35f88eaafe91092481f5d087bd5b3a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.8-beta
+  * devDependencies
+    * @aigne/core bumped to 1.68.1-beta
+    * @aigne/test-utils bumped to 0.5.61-beta
+
+## [0.7.53](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.53-beta...open-router-v0.7.53) (2025-11-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.7
+  * devDependencies
+    * @aigne/core bumped to 1.68.0
+    * @aigne/test-utils bumped to 0.5.60
+
+## [0.7.53-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52...open-router-v0.7.53-beta) (2025-11-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.7-beta
+  * devDependencies
+    * @aigne/core bumped to 1.68.0-beta
+    * @aigne/test-utils bumped to 0.5.60-beta
+
+## [0.7.52](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52-beta.4...open-router-v0.7.52) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6
+  * devDependencies
+    * @aigne/core bumped to 1.67.0
+    * @aigne/test-utils bumped to 0.5.59
+
+## [0.7.52-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52-beta.3...open-router-v0.7.52-beta.4) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6-beta.4
+  * devDependencies
+    * @aigne/core bumped to 1.67.0-beta.4
+    * @aigne/test-utils bumped to 0.5.59-beta.4
+
+## [0.7.52-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52-beta.2...open-router-v0.7.52-beta.3) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6-beta.3
+  * devDependencies
+    * @aigne/core bumped to 1.67.0-beta.3
+    * @aigne/test-utils bumped to 0.5.59-beta.3
+
+## [0.7.52-beta.2](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52-beta.1...open-router-v0.7.52-beta.2) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6-beta.2
+  * devDependencies
+    * @aigne/core bumped to 1.67.0-beta.2
+    * @aigne/test-utils bumped to 0.5.59-beta.2
+
+## [0.7.52-beta.1](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.52-beta...open-router-v0.7.52-beta.1) (2025-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6-beta.1
+  * devDependencies
+    * @aigne/core bumped to 1.67.0-beta.1
+    * @aigne/test-utils bumped to 0.5.59-beta.1
+
+## [0.7.52-beta](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.51...open-router-v0.7.52-beta) (2025-11-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.6-beta
+  * devDependencies
+    * @aigne/core bumped to 1.67.0-beta
+    * @aigne/test-utils bumped to 0.5.59-beta
+
 ## [0.7.51](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.51-beta.6...open-router-v0.7.51) (2025-11-07)
 
 

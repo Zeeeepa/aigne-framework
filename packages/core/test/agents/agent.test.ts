@@ -17,7 +17,7 @@ import {
   type Message,
   textDelta,
 } from "@aigne/core";
-import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent";
+import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent.js";
 import {
   readableStreamToArray,
   stringToAgentResponseStream,
@@ -991,4 +991,129 @@ test("Agent should not emit agentFailed event if error is handled and is being r
   `);
 
   expect(onAgentFailed.mock.calls.length).toBe(0);
+});
+
+test("Agent should correct handle list/read/search/exec methods for AFS", async () => {
+  const agent = FunctionAgent.from({
+    name: "test-agent-list",
+    process: () => ({}),
+    skills: [
+      FunctionAgent.from({
+        name: "skill-agent-1",
+        process: (input) => input,
+      }),
+    ],
+  });
+
+  expect(await agent.list("/")).toMatchInlineSnapshot(`
+    {
+      "data": [
+        {
+          "id": "/test-agent-list/test-agent-list",
+          "metadata": {
+            "execute": {
+              "description": undefined,
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object",
+              },
+              "name": "test-agent-list",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object",
+              },
+            },
+          },
+          "path": "/",
+          "summary": undefined,
+        },
+        {
+          "id": "/test-agent-list/skill-agent-1",
+          "metadata": {
+            "execute": {
+              "description": undefined,
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object",
+              },
+              "name": "skill-agent-1",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object",
+              },
+            },
+          },
+          "path": "/skill-agent-1",
+          "summary": undefined,
+        },
+      ],
+    }
+  `);
+
+  expect(await agent.read("/skill-agent-1")).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "id": "/test-agent-list/skill-agent-1",
+        "metadata": {
+          "execute": {
+            "description": undefined,
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": true,
+              "properties": {},
+              "type": "object",
+            },
+            "name": "skill-agent-1",
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": true,
+              "properties": {},
+              "type": "object",
+            },
+          },
+        },
+        "path": "/skill-agent-1",
+        "summary": undefined,
+      },
+    }
+  `);
+
+  expect(
+    await agent.exec(
+      "/skill-agent-1",
+      { text: "test message" },
+      { context: new AIGNE().newContext() },
+    ),
+  ).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "text": "test message",
+      },
+    }
+  `);
+});
+
+test("Agent.inputKeys should return correct input keys", async () => {
+  const agent = FunctionAgent.from({
+    name: "test-agent-list",
+    inputSchema: z.object({
+      a: z.string(),
+      b: z.number(),
+    }),
+    outputSchema: z.object({
+      result: z.string(),
+    }),
+    process: () => ({}),
+  });
+
+  expect(agent.inputKeys).toEqual(["a", "b"]);
+  expect(agent.outputKeys).toEqual(["result"]);
 });

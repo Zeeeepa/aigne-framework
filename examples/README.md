@@ -15,7 +15,6 @@ This directory contains typical application examples of the AIGNE Framework, cov
 
 - [@aigne/example-chat-bot: Basic chatbot](./chat-bot/README.md)
 - [@aigne/example-mcp-server: AIGNE CLI serve MCP service](./mcp-server/README.md)
-- [@aigne/example-memory: Chatbot with memory](./memory/README.md)
 - [@aigne/example-mcp-blocklet: Integration with Blocklet platform](./mcp-blocklet/README.md)
 - [@aigne/example-mcp-github: Integration with GitHub](./mcp-github/README.md)
 - [@aigne/example-mcp-puppeteer: Web content extraction](./mcp-puppeteer/README.md)
@@ -28,6 +27,9 @@ This directory contains typical application examples of the AIGNE Framework, cov
 - [@aigne/example-workflow-orchestrator: Smart orchestration](./workflow-orchestrator/README.md)
 - [@aigne/example-workflow-reflection: Reflection](./workflow-reflection/README.md)
 - [@aigne/example-workflow-router: Router](./workflow-router/README.md)
+- [@aigne/example-afs-memory: Chatbot with memory](./afs-memory/README.md)
+- [@aigne/example-afs-local-fs: File system access with AI agents](./afs-local-fs/README.md)
+- [@aigne/example-afs-mcp-server: Mount MCP servers as AFS modules](./afs-mcp-server/README.md)
 
 ## Quick Start (No Installation Required)
 
@@ -61,6 +63,13 @@ export MODEL=anthropic:claude-3-7-sonnet-latest # Set model to Anthropic's lates
 export ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY # Set your Anthropic API key
 ```
 
+Using Google Gemini models
+
+```bash
+export MODEL=gemini:gemini-2.0-flash
+export GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Set your Google Gemini API key
+```
+
 Using Bedrock Nova models
 
 ```bash
@@ -68,6 +77,63 @@ export MODEL=bedrock:us.amazon.nova-premier-v1:0 # Set model to AWS Bedrock's No
 export AWS_ACCESS_KEY_ID="" # Set AWS access key ID
 export AWS_SECRET_ACCESS_KEY="" # Set AWS credentials
 export AWS_REGION="" # Set AWS region, e.g., us-west-2
+```
+
+Using Deepseek models
+
+```bash
+export MODEL=deepseek/deepseek-chat 
+export DEEPSEEK_API_KEY=YOUR_DEEPSEEK_API_KEY # Set your Deepseek API key
+```
+
+Using Doubao models
+
+```bash
+export MODEL=doubao-seed-1-6-250615 
+export DOUBAO_API_KEY=YOUR_DOUBAO_API_KEY # Set your Doubao API key
+```
+
+Using Ideogram models
+
+```bash
+export MODEL=ideogram-v3
+export IDEOGRAM_API_KEY=YOUR_IDEOGRAM_API_KEY # Set your Ideogram API key
+```
+
+Using Ollama models
+
+```bash
+export MODEL=llama3 
+export OLLAMA_DEFAULT_BASE_URL="http://localhost:11434/v1"; # Set Ollama API endpoint
+export OLLAMA_API_KEY=ollama # Set your Ollama API key
+```
+
+Using OpenRouter models
+
+```bash
+export MODEL=openai/gpt-4o 
+export OPEN_ROUTER_API_KEY=YOUR_OPEN_ROUTER_API_KEY # Set your OpenRouter API key
+```
+
+Using Poe models
+
+```bash
+export MODEL=claude-3-opus 
+export POE_API_KEY=YOUR_POE_API_KEY # Set your Poe API key
+```
+
+Using xAI models
+
+```bash
+export MODEL=grok-2-latest 
+export XAI_API_KEY=YOUR_XAI_API_KEY # Set your xAI API key
+```
+
+Using LMStudio Model
+
+```bash
+export MODEL=llama-3.2-3b-instruct
+export LM_STUDIO_API_KEY=lmstudio # Set your LMStudio API key
 ```
 
 ### Output Debug Logs

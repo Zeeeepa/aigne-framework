@@ -5,7 +5,7 @@ import type {
   ChatModel,
   ChatModelInputOptionsWithGetter,
   ImageModel,
-  ImageModelInputOptions,
+  ImageModelInputOptionsWithGetter,
   VideoModel,
 } from "@aigne/core";
 import { DeepSeekChatModel } from "@aigne/deepseek";
@@ -27,6 +27,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import { AIGNEHubImageModel } from "../aigne-hub-image-model.js";
 import { AIGNEHubChatModel } from "../aigne-hub-model.js";
 import { AIGNEHubVideoModel } from "../aigne-hub-video-model.js";
+import { AIGNE_HUB_PROVIDER } from "./constants.js";
 
 const getClientOptions = () => {
   const proxy = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"]
@@ -143,7 +144,7 @@ export interface LoadableImageModel {
     apiKey?: string;
     baseURL?: string;
     model?: string;
-    modelOptions?: ImageModelInputOptions;
+    modelOptions?: ImageModelInputOptionsWithGetter;
   }) => ImageModel;
 }
 
@@ -271,7 +272,14 @@ export function findVideoModel(provider: string): {
 
 export const parseModel = (model: string) => {
   // replace first ':' with '/' to compatible with `provider:model-name` format
-  model = model.replace(/^([\w-]+)(:)/, "$1/");
-  const { provider, name } = model.match(/(?<provider>[^/]*)(\/(?<name>.*))?/)?.groups ?? {};
-  return { provider: provider?.replace(/-/g, ""), model: name };
+  model = model.replace(/^([\w-]+):/, "$1/");
+  let { provider, name } = model.match(/(?<provider>[^/]*)(\/(?<name>.*))?/)?.groups ?? {};
+  provider = provider?.replace(/-/g, "");
+  const match = provider ? findModel(provider)?.match : undefined;
+
+  if (match) {
+    return { provider, model: name };
+  }
+
+  return { provider: AIGNE_HUB_PROVIDER, model };
 };

@@ -31,8 +31,6 @@ test("AIGNE.load should load agents correctly", async () => {
     }),
   );
 
-  expect(aigne.agents.length).toBe(5);
-
   const chat = aigne.agents[0];
   expect(chat).toEqual(
     expect.objectContaining({
@@ -109,29 +107,22 @@ test("loader should use override options", async () => {
   });
 
   expect(aigne.model).toBe(model);
-  expect([...aigne.agents]).toEqual([
-    expect.objectContaining({
-      name: "chat",
-    }),
-    expect.objectContaining({
-      name: "chat-with-prompt",
-    }),
-    expect.objectContaining({
-      name: "test-team-agent",
-    }),
-    expect.objectContaining({
-      name: "test-image-agent",
-    }),
-    expect.objectContaining({
-      name: "test-relative-prompt-paths",
-    }),
-    testAgent,
-  ]);
+  expect(aigne.agents.map((i) => i.name)).toMatchInlineSnapshot(`
+    [
+      "chat",
+      "chat-with-prompt",
+      "test-team-agent",
+      "test-image-agent",
+      "test-relative-prompt-paths",
+      "testJsonDefinitionAgent",
+      "test-agent",
+    ]
+  `);
   expect([...aigne.skills]).toEqual([expect.objectContaining({ name: "evaluateJs" }), testSkill]);
 });
 
 test("loader should error if agent file is not supported", async () => {
-  const aigne = loadAgent(join(import.meta.dirname, "./not-exist-agent-library/test.txt"));
+  const aigne = loadAgent(join(import.meta.dirname, "./not-exist-agent-library/test.txt"), {});
   expect(aigne).rejects.toThrow("Unsupported agent file type");
 });
 
@@ -214,7 +205,7 @@ url: http://localhost:3000/sse
 `),
   );
 
-  expect(await loadAgent("./remote-mcp.yaml")).toBe(testMcp);
+  expect(await loadAgent("./remote-mcp.yaml", {})).toBe(testMcp);
   expect(from).toHaveBeenLastCalledWith(
     expect.objectContaining({
       url: "http://localhost:3000/sse",
@@ -239,7 +230,7 @@ args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
 `),
   );
 
-  expect(await loadAgent("./local-mcp.yaml")).toBe(fsMcp);
+  expect(await loadAgent("./local-mcp.yaml", {})).toBe(fsMcp);
   expect(from).toHaveBeenLastCalledWith(
     expect.objectContaining({
       command: "npx",
@@ -257,7 +248,7 @@ type: mcp
 `),
   );
 
-  expect(loadAgent("./local-mcp.yaml")).rejects.toThrow("Missing url or command in mcp agent");
+  expect(loadAgent("./local-mcp.yaml", {})).rejects.toThrow("Missing url or command in mcp agent");
 });
 
 test("loadAgent should support nested relative prompt paths", async () => {
@@ -271,6 +262,7 @@ test("loadAgent should support nested relative prompt paths", async () => {
     {
       "messages": [
         {
+          "cacheControl": undefined,
           "content": 
     "You are a professional chatbot.
 
@@ -300,6 +292,7 @@ test("loadAgent should support nested relative prompt paths", async () => {
 test("loadAgent should load agent with multi roles instructions", async () => {
   const agent = await loadAgent(
     join(import.meta.dirname, "../../test-agents/test-agent-with-multi-roles-instructions.yaml"),
+    {},
   );
 
   assert(agent instanceof AIAgent);
@@ -312,6 +305,7 @@ test("loadAgent should load agent with multi roles instructions", async () => {
     {
       "messages": [
         {
+          "cacheControl": undefined,
           "content": 
     "You are a smart agent that helps with code editing and understanding.
 
@@ -324,17 +318,20 @@ test("loadAgent should load agent with multi roles instructions", async () => {
           "role": "system",
         },
         {
+          "cacheControl": undefined,
           "content": "This is a user instruction.",
           "name": undefined,
           "role": "user",
         },
         {
+          "cacheControl": undefined,
           "content": "This is an agent instruction.",
           "name": undefined,
           "role": "agent",
           "toolCalls": undefined,
         },
         {
+          "cacheControl": undefined,
           "content": "Latest user instruction about AIGNE is the best framework to build AI applications.",
           "name": undefined,
           "role": "user",

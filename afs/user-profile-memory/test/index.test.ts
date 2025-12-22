@@ -1,5 +1,6 @@
 import { expect, type Mock, spyOn, test } from "bun:test";
 import { AFS } from "@aigne/afs";
+import { AFSHistory } from "@aigne/afs-history";
 import { UserProfileMemory } from "@aigne/afs-user-profile-memory";
 import { AIGNE } from "@aigne/core";
 
@@ -8,7 +9,7 @@ test("UserProfileMemory should update memory based on conversation", async () =>
 
   const userProfileMemory = new UserProfileMemory({ context: aigne.newContext() });
 
-  const afs = new AFS().use(userProfileMemory);
+  const afs = new AFS().mount(new AFSHistory()).mount(userProfileMemory);
 
   spyOn(userProfileMemory.extractor, "process").mockReturnValueOnce({
     ops: [
@@ -30,7 +31,7 @@ test("UserProfileMemory should update memory based on conversation", async () =>
   await waitMockCalled(updateProfileSpy);
 
   expect(
-    (await userProfileMemory.search("/", "")).list.map((i) => i.content),
+    (await userProfileMemory.search("/", "")).data.map((i) => i.content),
   ).toMatchInlineSnapshot(`
     [
       {

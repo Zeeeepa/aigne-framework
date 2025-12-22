@@ -268,6 +268,7 @@ export class AIGNEContext implements Context {
     }
 
     this.id = this.span?.spanContext()?.spanId ?? v7();
+    this.internal.contextIds.add(this.id);
   }
 
   id: string;
@@ -502,44 +503,30 @@ export class AIGNEContext implements Context {
 
           span.setAttribute("metadata", JSON.stringify(this.internal.metadata ?? {}));
           span.setAttribute("custom.started_at", b.timestamp);
-          span.setAttribute("input", JSON.stringify(input));
           span.setAttribute("agentTag", agent.tag ?? "UnknownAgent");
 
           if (taskTitle) {
             span.setAttribute("taskTitle", taskTitle);
           }
 
-          try {
-            span.setAttribute("userContext", JSON.stringify(this.userContext));
-          } catch (_e) {
-            logger.error("parse userContext error", _e.message);
-            span.setAttribute("userContext", JSON.stringify({}));
-          }
-
-          try {
-            span.setAttribute("memories", JSON.stringify(this.memories));
-          } catch (_e) {
-            logger.error("parse memories error", _e.message);
-            span.setAttribute("memories", JSON.stringify([]));
-          }
-
           await this.observer?.flush(span);
+          await this.observer?.update(this.id, {
+            input,
+            memories: this.memories,
+            userContext: this.userContext,
+          });
 
           break;
         }
         case "agentSucceed": {
           const { output } = args[0] as ContextEventMap["agentSucceed"][0];
 
-          try {
-            span.setAttribute("output", JSON.stringify(output));
-          } catch (_e) {
-            logger.error("parse output error", _e.message);
-            span.setAttribute("output", JSON.stringify({}));
-          }
+          await this.observer?.update(this.id, { output });
 
           span.setStatus({ code: SpanStatusCode.OK });
           span.end();
 
+          this.internal.contextIds.delete(this.id);
           break;
         }
         case "agentFailed": {
@@ -547,6 +534,7 @@ export class AIGNEContext implements Context {
           span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
           span.end();
 
+          this.internal.contextIds.delete(this.id);
           break;
         }
       }
@@ -582,10 +570,12 @@ class AIGNEContextShared {
     > & {
       messageQueue?: MessageQueue;
       events?: Emitter<any>;
+      contextIds?: Set<string>;
     },
   ) {
     this.messageQueue = this.parent?.messageQueue ?? new MessageQueue();
     this.events = this.parent?.events ?? new Emitter<any>();
+    this.contextIds = this.parent?.contextIds ?? new Set<string>();
   }
 
   readonly messageQueue: MessageQueue;
@@ -621,6 +611,8 @@ class AIGNEContextShared {
   }
 
   usage: ContextUsage = newEmptyContextUsage();
+
+  contextIds: Set<string>;
 
   userContext: Context["userContext"] = {};
 

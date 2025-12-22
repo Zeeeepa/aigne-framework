@@ -1,6 +1,6 @@
 import { beforeEach, expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import { isAgentResponseDelta, textDelta } from "@aigne/core";
+import { type ChatModelInputOptions, isAgentResponseDelta, textDelta } from "@aigne/core";
 import { GeminiChatModel } from "@aigne/gemini";
 import { createMockEventStream } from "@aigne/test-utils/utils/event-stream.js";
 import {
@@ -326,10 +326,7 @@ test("GeminiChatModel should support image mode", async () => {
             "image",
           ],
           "temperature": undefined,
-          "thinkingConfig": {
-            "includeThoughts": true,
-            "thinkingBudget": undefined,
-          },
+          "thinkingConfig": undefined,
           "toolConfig": {
             "functionCallingConfig": undefined,
           },
@@ -356,6 +353,46 @@ test("GeminiChatModel should support image mode", async () => {
       },
     ]
   `);
+});
+
+test("GeminiChatModel should disable thinking for image-preview model", async () => {
+  const generateSpy = spyOn(
+    model.googleClient.models,
+    "generateContentStream",
+  ).mockResolvedValueOnce(
+    (async function* (): AsyncGenerator<GenerateContentResponse> {
+      // 提供一个最小的非空流，避免触发空响应重试逻辑
+      const common = {
+        text: undefined,
+        data: undefined,
+        functionCalls: undefined,
+        executableCode: undefined,
+        codeExecutionResult: undefined,
+      };
+      yield { ...common, candidates: [{ content: { parts: [{ text: "ok" }] } }] };
+    })(),
+  );
+
+  await model.invoke({
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Test image preview thinkingConfig" },
+          { type: "file", data: Buffer.from("hello").toString("base64") },
+        ],
+      },
+    ],
+    modelOptions: {
+      model: "gemini-2.5-flash-image-preview",
+      modalities: ["text", "image"],
+      reasoningEffort: "high",
+    },
+  });
+
+  expect(generateSpy.mock.lastCall).toBeDefined();
+  const params = generateSpy.mock.lastCall?.[0];
+  expect(params?.config?.thinkingConfig).toBeUndefined();
 });
 
 test("GeminiChatModel should support optional schema", async () => {
@@ -434,6 +471,7 @@ What is the weather in New York?
       "thinkingConfig": {
         "includeThoughts": true,
         "thinkingBudget": undefined,
+        "thinkingLevel": undefined,
       },
       "toolConfig": {
         "functionCallingConfig": undefined,
@@ -442,4 +480,64 @@ What is the weather in New York?
       "topP": undefined,
     }
   `);
+});
+
+test.each<ChatModelInputOptions>([
+  {
+    model: "gemini-3-pro-preview",
+  },
+  {
+    model: "gemini-3-pro-preview",
+    reasoningEffort: "high",
+  },
+  {
+    model: "gemini-3-pro-preview",
+    reasoningEffort: "medium",
+  },
+  {
+    model: "gemini-3-pro-preview",
+    reasoningEffort: "low",
+  },
+  {
+    model: "gemini-3-pro-preview",
+    reasoningEffort: "minimal",
+  },
+  {
+    model: "gemini-3-pro-preview",
+    reasoningEffort: 10000,
+  },
+  {
+    model: "gemini-2.5-pro",
+  },
+  {
+    model: "gemini-2.5-pro",
+    reasoningEffort: "high",
+  },
+  {
+    model: "gemini-2.5-pro",
+    reasoningEffort: "medium",
+  },
+  {
+    model: "gemini-2.5-pro",
+    reasoningEffort: "low",
+  },
+  {
+    model: "gemini-2.5-pro",
+    reasoningEffort: "minimal",
+  },
+  {
+    model: "gemini-1.5-pro",
+    reasoningEffort: "high",
+  },
+])("GeminiChatModel should handle model options correctly for %p", async (options) => {
+  const createSpy = spyOn(model.googleClient.models, "generateContentStream").mockReturnValueOnce(
+    createMockEventStream({ path: join(import.meta.dirname, "gemini-streaming-response-3.txt") }),
+  );
+
+  await model.invoke({
+    messages: [{ role: "user", content: `hello` }],
+    modelOptions: options,
+  });
+
+  expect(createSpy.mock.calls[0]?.[0].config).toMatchSnapshot();
 });

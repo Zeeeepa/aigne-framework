@@ -1,82 +1,106 @@
 import { Emitter } from "strict-event-emitter";
 import { joinURL } from "ufo";
-import { AFSHistory } from "./history/index.js";
-import { SharedAFSStorage, type SharedAFSStorageOptions } from "./storage/index.js";
-import type { AFSStorage } from "./storage/type.js";
-import type {
-  AFSEntry,
-  AFSListOptions,
-  AFSModule,
-  AFSRoot,
-  AFSRootEvents,
-  AFSSearchOptions,
-  AFSWriteEntryPayload,
+import { z } from "zod";
+import {
+  type AFSContext,
+  type AFSContextPreset,
+  type AFSDeleteOptions,
+  type AFSDeleteResult,
+  type AFSEntry,
+  type AFSExecOptions,
+  type AFSExecResult,
+  type AFSListResult,
+  type AFSModule,
+  type AFSReadOptions,
+  type AFSReadResult,
+  type AFSRenameOptions,
+  type AFSRenameResult,
+  type AFSRoot,
+  type AFSRootEvents,
+  type AFSRootListOptions,
+  type AFSRootListResult,
+  type AFSRootSearchOptions,
+  type AFSRootSearchResult,
+  type AFSSearchOptions,
+  type AFSSearchResult,
+  type AFSWriteEntryPayload,
+  type AFSWriteOptions,
+  type AFSWriteResult,
+  afsEntrySchema,
 } from "./type.js";
 
 const DEFAULT_MAX_DEPTH = 1;
 
+const MODULES_ROOT_DIR = "/modules";
+
 export interface AFSOptions {
-  storage?: SharedAFSStorage | SharedAFSStorageOptions;
   modules?: AFSModule[];
+  context?: AFSContext;
 }
 
 export class AFS extends Emitter<AFSRootEvents> implements AFSRoot {
-  moduleId: string = "AFSRoot";
+  name: string = "AFSRoot";
 
-  path = "/";
-
-  constructor(options?: AFSOptions) {
+  constructor(public options: AFSOptions = {}) {
     super();
 
-    this._storage =
-      options?.storage instanceof SharedAFSStorage
-        ? options.storage
-        : new SharedAFSStorage(options?.storage);
-
-    this.use(new AFSHistory());
-
     for (const module of options?.modules ?? []) {
-      this.use(module);
+      this.mount(module);
     }
-  }
-
-  private _storage: SharedAFSStorage;
-
-  storage(module: AFSModule): AFSStorage {
-    return this._storage.withModule(module);
   }
 
   private modules = new Map<string, AFSModule>();
 
-  use(module: AFSModule) {
-    this.modules.set(module.path, module);
+  mount(module: AFSModule): this {
+    let path = joinURL("/", module.name);
+
+    if (!/^\/[^/]+$/.test(path)) {
+      throw new Error(`Invalid mount path: ${path}. Must start with '/' and contain no other '/'`);
+    }
+
+    path = joinURL(MODULES_ROOT_DIR, path);
+
+    if (this.modules.has(path)) {
+      throw new Error(`Module already mounted at path: ${path}`);
+    }
+
+    this.modules.set(path, module);
     module.onMount?.(this);
     return this;
   }
 
-  async listModules(): Promise<{ moduleId: string; path: string; description?: string }[]> {
+  async listModules(): Promise<
+    { name: string; path: string; description?: string; module: AFSModule }[]
+  > {
     return Array.from(this.modules.entries()).map(([path, module]) => ({
-      moduleId: module.moduleId,
       path,
+      name: module.name,
       description: module.description,
+      module,
     }));
   }
 
-  async list(
-    path: string,
-    options?: AFSListOptions,
-  ): Promise<{ list: AFSEntry[]; message?: string }> {
-    const maxDepth = options?.maxDepth ?? DEFAULT_MAX_DEPTH;
-    if (!(maxDepth >= 0)) throw new Error(`Invalid maxDepth: ${maxDepth}`);
+  async list(path: string, options: AFSRootListOptions = {}): Promise<AFSRootListResult> {
+    let preset: AFSContextPreset | undefined;
+    if (options.preset) {
+      preset = this.options?.context?.list?.presets?.[options.preset];
+      if (!preset) throw new Error(`Preset not found: ${options.preset}`);
+    }
 
+    return await this.processWithPreset(path, undefined, preset, {
+      ...options,
+      defaultSelect: () => this._list(path, options),
+    });
+  }
+
+  private async _list(path: string, options: AFSRootListOptions = {}): Promise<AFSListResult> {
     const results: AFSEntry[] = [];
-    const messages: string[] = [];
 
     const matches = this.findModules(path, options);
 
     for (const matched of matches) {
       const moduleEntry = {
-        id: matched.module.moduleId,
+        id: matched.module.name,
         path: matched.remainedModulePath,
         summary: matched.module.description,
       };
@@ -89,96 +113,195 @@ export class AFS extends Emitter<AFSRootEvents> implements AFSRoot {
       if (!matched.module.list) continue;
 
       try {
-        const { list, message } = await matched.module.list(matched.subpath, {
+        const { data } = await matched.module.list(matched.subpath, {
           ...options,
           maxDepth: matched.maxDepth,
         });
 
-        if (list.length) {
+        if (data.length) {
           results.push(
-            ...list.map((entry) => ({
+            ...data.map((entry) => ({
               ...entry,
-              path: joinURL(matched.module.path, entry.path),
+              path: joinURL(matched.modulePath, entry.path),
             })),
           );
         } else {
           results.push(moduleEntry);
         }
-
-        if (message) messages.push(message);
       } catch (error) {
-        console.error(`Error listing from module at ${matched.module.path}`, error);
+        console.error(`Error listing from module at ${matched.modulePath}`, error);
       }
     }
 
-    return { list: results, message: messages.join("; ").trim() || undefined };
+    return { data: results };
   }
 
-  async read(path: string): Promise<{ result?: AFSEntry; message?: string }> {
+  async read(path: string, _options?: AFSReadOptions): Promise<AFSReadResult> {
     const modules = this.findModules(path, { exactMatch: true });
 
-    for (const { module, subpath } of modules) {
+    for (const { module, modulePath, subpath } of modules) {
       const res = await module.read?.(subpath);
 
-      if (res?.result) {
+      if (res?.data) {
         return {
           ...res,
-          result: {
-            ...res.result,
-            path: joinURL(module.path, res.result.path),
+          data: {
+            ...res.data,
+            path: joinURL(modulePath, res.data.path),
           },
         };
       }
     }
 
-    return { result: undefined, message: "File not found" };
+    return { data: undefined, message: "File not found" };
   }
 
   async write(
     path: string,
     content: AFSWriteEntryPayload,
-  ): Promise<{ result: AFSEntry; message?: string }> {
+    options?: AFSWriteOptions,
+  ): Promise<AFSWriteResult> {
     const module = this.findModules(path, { exactMatch: true })[0];
     if (!module?.module.write) throw new Error(`No module found for path: ${path}`);
 
-    const res = await module.module.write(module.subpath, content);
+    const res = await module.module.write(module.subpath, content, options);
 
     return {
       ...res,
-      result: {
-        ...res.result,
-        path: joinURL(module.module.path, res.result.path),
+      data: {
+        ...res.data,
+        path: joinURL(module.modulePath, res.data.path),
       },
     };
+  }
+
+  async delete(path: string, options?: AFSDeleteOptions): Promise<AFSDeleteResult> {
+    const module = this.findModules(path, { exactMatch: true })[0];
+    if (!module?.module.delete) throw new Error(`No module found for path: ${path}`);
+
+    return await module.module.delete(module.subpath, options);
+  }
+
+  async rename(
+    oldPath: string,
+    newPath: string,
+    options?: AFSRenameOptions,
+  ): Promise<AFSRenameResult> {
+    const oldModule = this.findModules(oldPath, { exactMatch: true })[0];
+    const newModule = this.findModules(newPath, { exactMatch: true })[0];
+
+    // Both paths must be in the same module
+    if (!oldModule || !newModule || oldModule.modulePath !== newModule.modulePath) {
+      throw new Error(
+        `Cannot rename across different modules. Both paths must be in the same module.`,
+      );
+    }
+
+    if (!oldModule.module.rename) {
+      throw new Error(`Module does not support rename operation: ${oldModule.modulePath}`);
+    }
+
+    return await oldModule.module.rename(oldModule.subpath, newModule.subpath, options);
   }
 
   async search(
     path: string,
     query: string,
+    options: AFSRootSearchOptions = {},
+  ): Promise<AFSRootSearchResult> {
+    let preset: AFSContextPreset | undefined;
+    if (options.preset) {
+      preset = this.options?.context?.search?.presets?.[options.preset];
+      if (!preset) throw new Error(`Preset not found: ${options.preset}`);
+    }
+
+    return await this.processWithPreset(path, query, preset, {
+      ...options,
+      defaultSelect: () => this._search(path, query, options),
+    });
+  }
+
+  private async processWithPreset(
+    path: string,
+    query: string | undefined,
+    preset: AFSContextPreset | undefined,
+    options: AFSContextPreset & { defaultSelect: () => Promise<AFSListResult> },
+  ): Promise<AFSRootSearchResult> {
+    const select = options.select || preset?.select;
+    const per = options.per || preset?.per;
+    const dedupe = options.dedupe || preset?.dedupe;
+    const format = options.format || preset?.format;
+
+    const entries = select
+      ? (await this._select(path, query, select, options)).data
+      : (await options.defaultSelect()).data;
+
+    const mapped = per
+      ? await Promise.all(
+          entries.map((data) => per.invoke({ data }, options).then((res) => res.data)),
+        )
+      : entries;
+
+    const deduped = dedupe
+      ? await dedupe.invoke({ data: mapped }, options).then((res) => res.data)
+      : mapped;
+
+    let formatted = deduped;
+
+    if (format === "simple-list" || format === "tree") {
+      const valid = z.array(afsEntrySchema).safeParse(deduped);
+      if (!valid.data) throw new Error("Tree format requires entries to be AFSEntry objects");
+      if (format === "tree") formatted = this.buildTreeView(valid.data);
+      else if (format === "simple-list") formatted = this.buildSimpleListView(valid.data);
+    } else if (typeof format === "object" && typeof format.invoke === "function") {
+      formatted = await format.invoke({ data: deduped }, options).then((res) => res.data);
+    }
+
+    return { data: formatted };
+  }
+
+  private async _select(
+    path: string,
+    query: string | undefined,
+    select: NonNullable<AFSContextPreset["select"]>,
+    options?: AFSRootSearchOptions,
+  ): Promise<AFSSearchResult> {
+    const { data } = await select.invoke({ path, query }, options);
+
+    const results: AFSEntry[] = (
+      await Promise.all(data.map((p: string) => this.read(p).then((res) => res.data)))
+    ).filter((i): i is NonNullable<typeof i> => !!i);
+
+    return { data: results };
+  }
+
+  private async _search(
+    path: string,
+    query: string,
     options?: AFSSearchOptions,
-  ): Promise<{ list: AFSEntry[]; message?: string }> {
+  ): Promise<AFSSearchResult> {
     const results: AFSEntry[] = [];
     const messages: string[] = [];
 
-    for (const { module, subpath } of this.findModules(path)) {
+    for (const { module, modulePath, subpath } of this.findModules(path)) {
       if (!module.search) continue;
 
       try {
-        const { list, message } = await module.search(subpath, query, options);
+        const { data, message } = await module.search(subpath, query, options);
 
         results.push(
-          ...list.map((entry) => ({
+          ...data.map((entry) => ({
             ...entry,
-            path: joinURL(module.path, entry.path),
+            path: joinURL(modulePath, entry.path),
           })),
         );
         if (message) messages.push(message);
       } catch (error) {
-        console.error(`Error searching in module at ${module.path}`, error);
+        console.error(`Error searching in module at ${modulePath}`, error);
       }
     }
 
-    return { list: results, message: messages.join("; ") };
+    return { data: results, message: messages.join("; ") };
   }
 
   private findModules(
@@ -186,6 +309,7 @@ export class AFS extends Emitter<AFSRootEvents> implements AFSRoot {
     options?: { maxDepth?: number; exactMatch?: boolean },
   ): {
     module: AFSModule;
+    modulePath: string;
     maxDepth: number;
     subpath: string;
     remainedModulePath: string;
@@ -218,9 +342,84 @@ export class AFS extends Emitter<AFSRootEvents> implements AFSRoot {
 
       if (newMaxDepth < 0) continue;
 
-      matched.push({ module, maxDepth: newMaxDepth, subpath, remainedModulePath });
+      matched.push({ module, modulePath, maxDepth: newMaxDepth, subpath, remainedModulePath });
     }
 
     return matched;
+  }
+
+  async exec(
+    path: string,
+    args: Record<string, any>,
+    options: AFSExecOptions,
+  ): Promise<AFSExecResult> {
+    const module = this.findModules(path)[0];
+    if (!module?.module.exec) throw new Error(`No module found for path: ${path}`);
+
+    return await module.module.exec(module.subpath, args, options);
+  }
+
+  private buildSimpleListView(entries: AFSEntry[]): string[] {
+    return entries.map((entry) => `${entry.path}${this.buildMetadataSuffix(entry)}`);
+  }
+
+  private buildTreeView(entries: AFSEntry[]): string {
+    const tree: Record<string, any> = {};
+    const entryMap = new Map<string, AFSEntry>();
+
+    for (const entry of entries) {
+      entryMap.set(entry.path, entry);
+      const parts = entry.path.split("/").filter(Boolean);
+      let current = tree;
+
+      for (const part of parts) {
+        if (!current[part]) {
+          current[part] = {};
+        }
+        current = current[part];
+      }
+    }
+
+    const renderTree = (node: Record<string, any>, prefix = "", currentPath = ""): string => {
+      let result = "";
+      const keys = Object.keys(node);
+      keys.forEach((key, index) => {
+        const isLast = index === keys.length - 1;
+        const fullPath = currentPath ? `${currentPath}/${key}` : `/${key}`;
+        const entry = entryMap.get(fullPath);
+
+        result += `${prefix}${isLast ? "└── " : "├── "}${key}${entry ? this.buildMetadataSuffix(entry) : ""}`;
+        result += `\n`;
+        result += renderTree(node[key], `${prefix}${isLast ? "    " : "│   "}`, fullPath);
+      });
+      return result;
+    };
+
+    return renderTree(tree);
+  }
+
+  private buildMetadataSuffix(entry: AFSEntry): string {
+    // Build metadata suffix
+    const metadataParts: string[] = [];
+
+    // Children count
+    const childrenCount = entry?.metadata?.childrenCount;
+    if (typeof childrenCount === "number") {
+      metadataParts.push(`${childrenCount} items`);
+    }
+
+    // Children truncated
+    if (entry?.metadata?.childrenTruncated) {
+      metadataParts.push("truncated");
+    }
+
+    // Executable
+    if (entry?.metadata?.execute) {
+      metadataParts.push("executable");
+    }
+
+    const metadataSuffix = metadataParts.length > 0 ? ` [${metadataParts.join(", ")}]` : "";
+
+    return metadataSuffix;
   }
 }
