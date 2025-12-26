@@ -3,6 +3,7 @@ import { type ZodType, z } from "zod";
 
 export interface AFSListOptions {
   filter?: {
+    agentId?: string;
     userId?: string;
     sessionId?: string;
   };
@@ -117,7 +118,16 @@ export interface AFSModule {
 }
 
 export type AFSRootEvents = {
-  agentSucceed: [{ input: object; output: object }];
+  agentSucceed: [
+    {
+      agentId?: string;
+      userId?: string;
+      sessionId?: string;
+      input: object;
+      output: object;
+      messages?: object[];
+    },
+  ];
   historyCreated: [{ entry: AFSEntry }];
 };
 
@@ -159,6 +169,7 @@ export interface AFSEntry<T = any> {
   createdAt?: Date;
   updatedAt?: Date;
   path: string;
+  agentId?: string | null;
   userId?: string | null;
   sessionId?: string | null;
   summary?: string | null;
