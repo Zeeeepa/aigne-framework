@@ -107,6 +107,10 @@ export class AgentSession {
 
     await this.maybeAutoCompact(options);
 
+    // Always wait for compaction to complete before starting a new message
+    // This ensures data consistency even in async compact mode
+    if (this.compactionPromise) await this.compactionPromise;
+
     this.runtimeState.currentEntry = { input, messages: [message] };
   }
 
@@ -404,6 +408,9 @@ export class AgentSession {
             after: latestCompact?.createdAt?.toISOString(),
           },
           orderBy: [["createdAt", "desc"]],
+          // Set a very large limit to load all history entries
+          // The default limit is 10 which would cause history truncation
+          limit: 10000,
         })
       ).data;
 
