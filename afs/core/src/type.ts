@@ -6,6 +6,8 @@ export interface AFSListOptions {
     agentId?: string;
     userId?: string;
     sessionId?: string;
+    before?: string;
+    after?: string;
   };
   maxDepth?: number;
   limit?: number;
@@ -43,6 +45,7 @@ export interface AFSSearchResult {
 }
 
 export interface AFSReadOptions {
+  filter?: AFSListOptions["filter"];
   context?: any;
 }
 

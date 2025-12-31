@@ -3,10 +3,11 @@ import { type initDatabase, type SQL, sql } from "@aigne/sqlite";
 import { v7 } from "@aigne/uuid";
 import { init } from "./migrations/001-init.js";
 import { addAgentId } from "./migrations/002-add-agent-id.js";
+import { addCompactTable } from "./migrations/003-add-compact-table.js";
 import type { AFSStorageMigrations } from "./type.js";
 
-export async function migrate(db: ReturnType<typeof initDatabase>, module: AFSModule) {
-  const migrations: AFSStorageMigrations[] = [init, addAgentId];
+export async function migrate(db: Awaited<ReturnType<typeof initDatabase>>, module: AFSModule) {
+  const migrations: AFSStorageMigrations[] = [init, addAgentId, addCompactTable];
 
   const migrationsTable = "__drizzle_migrations";
   const migrationTableCreate = sql`
@@ -17,10 +18,10 @@ export async function migrate(db: ReturnType<typeof initDatabase>, module: AFSMo
     )
   `;
 
-  await (await db).run(migrationTableCreate).execute();
+  await db.run(migrationTableCreate).execute();
 
-  const dbMigrations = await (await db)
-    .values<[number, string]>(
+  const dbMigrations = await db
+    .values<[number, string, string]>(
       sql`SELECT "id", "moduleId", "hash" FROM ${sql.identifier(migrationsTable)} WHERE "moduleId" = ${sql.param(module.name)} ORDER BY id DESC LIMIT 1`,
     )
     .execute();
@@ -30,7 +31,7 @@ export async function migrate(db: ReturnType<typeof initDatabase>, module: AFSMo
   const queriesToRun: SQL[] = [];
 
   for (const migration of migrations) {
-    if (!lastDbMigration || lastDbMigration[1] < migration.hash) {
+    if (!lastDbMigration || lastDbMigration[2] < migration.hash) {
       queriesToRun.push(
         ...migration.sql(module),
         sql`INSERT INTO ${sql.identifier(migrationsTable)} ("id", "moduleId", "hash") VALUES(${sql.param(v7())}, ${sql.param(module.name)}, ${sql.param(migration.hash)})`,
@@ -39,6 +40,6 @@ export async function migrate(db: ReturnType<typeof initDatabase>, module: AFSMo
   }
 
   for (const query of queriesToRun) {
-    await (await db).run(query).execute();
+    await db.run(query).execute();
   }
 }

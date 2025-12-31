@@ -2052,17 +2052,12 @@ exports[`AIGNEClient should support custom memory for client agent 2`] = `
             "text": "Hello, I'm Bob!",
             "type": "text",
           },
-        ],
-        "role": "user",
-      },
-      {
-        "content": [
           {
             "text": "Hello Bob, How can I help you?",
             "type": "text",
           },
         ],
-        "role": "agent",
+        "role": "system",
       },
       {
         "content": [
