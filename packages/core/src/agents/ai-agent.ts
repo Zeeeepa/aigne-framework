@@ -1,8 +1,18 @@
 import { type ZodObject, type ZodType, z } from "zod";
+import { getNestAgentSchema, type NestAgentSchema } from "../loader/agent-yaml.js";
+import type { AgentLoadOptions } from "../loader/index.js";
+import {
+  camelizeSchema,
+  getInstructionsSchema,
+  type Instructions,
+  instructionsToPromptBuilder,
+  optionalize,
+} from "../loader/schema.js";
+import type { CompactConfig } from "../prompt/agent-session.js";
 import { PromptBuilder } from "../prompt/prompt-builder.js";
 import { STRUCTURED_STREAM_INSTRUCTIONS } from "../prompt/prompts/structured-stream-instructions.js";
-import { AgentMessageTemplate, ToolMessageTemplate } from "../prompt/template.js";
 import * as fastq from "../utils/queue.js";
+import { mergeAgentResponseChunk } from "../utils/stream-utils.js";
 import { ExtractMetadataTransform } from "../utils/structured-stream-extractor.js";
 import { checkArguments, isEmpty } from "../utils/type-utils.js";
 import {
@@ -11,6 +21,7 @@ import {
   type AgentOptions,
   type AgentProcessAsyncGenerator,
   type AgentProcessResult,
+  type AgentResponseProgress,
   type AgentResponseStream,
   agentOptionsSchema,
   isAgentResponseDelta,
@@ -22,6 +33,7 @@ import type {
   ChatModelInputMessage,
   ChatModelOutput,
   ChatModelOutputToolCall,
+  UnionContent,
 } from "./chat-model.js";
 import type { GuideRailAgentOutput } from "./guide-rail-agent.js";
 import { type FileType, fileUnionContentsSchema } from "./model.js";
@@ -48,10 +60,6 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
    * more complex prompt templates
    */
   instructions?: string | PromptBuilder;
-
-  autoReorderSystemMessages?: boolean;
-
-  autoMergeSystemMessages?: boolean;
 
   /**
    * Pick a message from input to use as the user's message
@@ -166,6 +174,20 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
   memoryPromptTemplate?: string;
 
   useMemoriesFromContext?: boolean;
+
+  compact?: CompactConfig;
+}
+
+export interface AIAgentLoadSchema {
+  instructions?: Instructions;
+  inputKey?: string;
+  inputFileKey?: string;
+  outputKey?: string;
+  outputFileKey?: string;
+  toolChoice?: AIAgentToolChoice;
+  toolCallsConcurrency?: number;
+  keepTextInToolUses?: boolean;
+  compact?: Omit<CompactConfig, "compactor"> & { compactor?: NestAgentSchema };
 }
 
 /**
@@ -255,6 +277,61 @@ export const aiAgentOptionsSchema: ZodObject<{
 export class AIAgent<I extends Message = any, O extends Message = any> extends Agent<I, O> {
   override tag = "AIAgent";
 
+  static schema<T>({ filepath }: { filepath: string }): ZodType<T> {
+    const instructionsSchema = getInstructionsSchema({ filepath });
+    const nestAgentSchema = getNestAgentSchema({ filepath });
+
+    return camelizeSchema(
+      z.object({
+        instructions: optionalize(instructionsSchema),
+        inputKey: optionalize(z.string()),
+        outputKey: optionalize(z.string()),
+        inputFileKey: optionalize(z.string()),
+        outputFileKey: optionalize(z.string()),
+        toolChoice: optionalize(z.nativeEnum(AIAgentToolChoice)),
+        toolCallsConcurrency: optionalize(z.number().int().min(0)),
+        keepTextInToolUses: optionalize(z.boolean()),
+        catchToolsError: optionalize(z.boolean()),
+        structuredStreamMode: optionalize(z.boolean()),
+        compact: camelizeSchema(
+          optionalize(
+            z.object({
+              mode: optionalize(z.enum(["auto", "disabled"])),
+              maxTokens: z.number().int().min(0).optional(),
+              keepRecentRatio: optionalize(z.number().min(0).max(1)),
+              async: optionalize(z.boolean()),
+              compactor: optionalize(nestAgentSchema),
+            }),
+          ),
+        ),
+      }),
+    ) as any;
+  }
+
+  static override async load<I extends Message = any, O extends Message = any>(options: {
+    filepath: string;
+    parsed: object;
+    options?: AgentLoadOptions;
+  }): Promise<Agent<I, O>> {
+    const schema = AIAgent.schema<AIAgentLoadSchema>(options);
+    const valid = await schema.parseAsync(options.parsed);
+    return new AIAgent<I, O>({
+      ...options.parsed,
+      ...valid,
+      instructions: valid.instructions && instructionsToPromptBuilder(valid.instructions),
+      compact: {
+        ...valid.compact,
+        compactor: valid.compact?.compactor
+          ? await options.options?.loadNestAgent(
+              options.filepath,
+              valid.compact.compactor,
+              options.options,
+            )
+          : undefined,
+      },
+    });
+  }
+
   /**
    * Create an AIAgent with the specified options
    *
@@ -284,8 +361,6 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
       typeof options.instructions === "string"
         ? PromptBuilder.from(options.instructions)
         : (options.instructions ?? new PromptBuilder());
-    this.autoReorderSystemMessages = options.autoReorderSystemMessages ?? true;
-    this.autoMergeSystemMessages = options.autoMergeSystemMessages ?? true;
     this.inputKey = options.inputKey;
     this.inputFileKey = options.inputFileKey;
     this.outputKey = options.outputKey || DEFAULT_OUTPUT_KEY;
@@ -297,6 +372,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     this.memoryAgentsAsTools = options.memoryAgentsAsTools;
     this.memoryPromptTemplate = options.memoryPromptTemplate;
     this.useMemoriesFromContext = options.useMemoriesFromContext;
+    this.compact = options.compact;
 
     if (typeof options.catchToolsError === "boolean")
       this.catchToolsError = options.catchToolsError;
@@ -326,10 +402,6 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
    * {@includeCode ../../test/agents/ai-agent.test.ts#example-ai-agent-prompt-builder}
    */
   instructions: PromptBuilder;
-
-  autoReorderSystemMessages?: boolean;
-
-  autoMergeSystemMessages?: boolean;
 
   /**
    * Pick a message from input to use as the user's message
@@ -441,6 +513,8 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     parse: (raw: string) => object;
   };
 
+  compact?: CompactConfig;
+
   override get inputSchema(): ZodType<I> {
     let schema = super.inputSchema as unknown as ZodObject<{ [key: string]: ZodType<any> }>;
 
@@ -471,7 +545,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     const model = this.model || options.model || options.context.model;
     if (!model) throw new Error("model is required to run AIAgent");
 
-    const { toolAgents, ...modelInput } = await this.instructions.build({
+    const { toolAgents, session, userMessage, ...modelInput } = await this.instructions.build({
       ...options,
       agent: this,
       input,
@@ -483,10 +557,28 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     const toolsMap = new Map<string, Agent>(toolAgents?.map((i) => [i.name, i]));
 
     if (this.toolChoice === "router") {
-      return yield* this._processRouter(input, model, modelInput, options, toolsMap);
+      return yield* this._processRouter(
+        input,
+        model,
+        { messages: [...(await session.getMessages()), userMessage], ...modelInput },
+        options,
+        toolsMap,
+      );
     }
 
-    const toolCallMessages: ChatModelInputMessage[] = [];
+    const inputMessage = this.inputKey ? input[this.inputKey] : undefined;
+    if (inputMessage) {
+      yield <AgentResponseProgress>{
+        progress: {
+          event: "message",
+          message: { role: "user", content: [{ type: "text", text: inputMessage }] },
+        },
+      };
+    }
+
+    await session.startMessage(input, userMessage, options);
+
+    // const toolCallMessages: ChatModelInputMessage[] = [];
     const outputKey = this.outputKey;
 
     for (;;) {
@@ -494,7 +586,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
 
       let stream = await this.invokeChildAgent(
         model,
-        { ...modelInput, messages: modelInput.messages.concat(toolCallMessages) },
+        { messages: await session.getMessages(), ...modelInput },
         { ...options, streaming: true },
       );
 
@@ -510,13 +602,14 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
       let isTextIgnored = false;
 
       for await (const value of stream) {
+        mergeAgentResponseChunk(modelOutput, value);
+
         if (isAgentResponseDelta(value)) {
           if (!isTextIgnored && value.delta.text?.text) {
             yield { delta: { text: { [outputKey]: value.delta.text.text } } };
           }
 
           if (value.delta.json) {
-            Object.assign(modelOutput, value.delta.json);
             if (this.structuredStreamMode) {
               yield { delta: { json: value.delta.json.json as Partial<O> } };
               if (!isTextIgnored && modelOutput.json && this.ignoreTextOfStructuredStreamMode) {
@@ -527,13 +620,29 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
         }
       }
 
-      const { toolCalls, json, text, files } = modelOutput;
+      const { toolCalls, json, text, thoughts, files } = modelOutput;
+
+      if (text || thoughts) {
+        const content: UnionContent[] = [];
+        if (thoughts) {
+          content.push({ type: "text", text: thoughts, isThinking: true });
+        }
+        if (text) {
+          content.push({ type: "text", text });
+        }
+
+        if (content.length) {
+          const message: ChatModelInputMessage = { role: "agent", content };
+          yield <AgentResponseProgress>{ progress: { event: "message", message } };
+          await session.appendCurrentMessages(message);
+        }
+      }
 
       if (toolCalls?.length) {
         if (this.keepTextInToolUses !== true) {
           yield { delta: { json: { [outputKey]: "" } as Partial<O> } };
         } else {
-          yield { delta: { text: { [outputKey]: "\n" } } };
+          yield { delta: { text: { [outputKey]: "\n\n" } } };
         }
 
         const executedToolCalls: {
@@ -573,6 +682,10 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
           this.toolCallsConcurrency || 1,
         );
 
+        const message: ChatModelInputMessage = { role: "agent", toolCalls };
+        yield <AgentResponseProgress>{ progress: { event: "message", message } };
+        await session.appendCurrentMessages(message);
+
         // Execute tools
         for (const call of toolCalls) {
           const tool = toolsMap.get(call.function.name);
@@ -587,23 +700,21 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
 
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
+          for (const { call, output } of executedToolCalls) {
+            const message: ChatModelInputMessage = {
+              role: "tool",
+              toolCallId: call.id,
+              content: JSON.stringify(output),
+            };
+            yield <AgentResponseProgress>{ progress: { event: "message", message: message } };
+            await session.appendCurrentMessages(message);
+          }
+
           const transferOutput = executedToolCalls.find(
             (i): i is { call: ChatModelOutputToolCall; output: TransferAgentOutput } =>
               isTransferAgentOutput(i.output),
           )?.output;
           if (transferOutput) return transferOutput;
-
-          toolCallMessages.push(
-            await AgentMessageTemplate.from(
-              undefined,
-              executedToolCalls.map(({ call }) => call),
-            ).format(),
-            ...(await Promise.all(
-              executedToolCalls.map(({ call, output }) =>
-                ToolMessageTemplate.from(output, call.id).format(),
-              ),
-            )),
-          );
 
           continue;
         }
@@ -624,6 +735,9 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
       if (!isEmpty(result)) {
         yield { delta: { json: result } };
       }
+
+      await session.endMessage(result, options);
+
       return;
     }
   }

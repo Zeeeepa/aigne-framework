@@ -16,6 +16,7 @@ import {
   workerOutputSchema,
 } from "@aigne/agent-library/orchestrator/type.js";
 import { AIAgent, AIGNE, FunctionAgent, PromptBuilder } from "@aigne/core";
+import { loadNestAgent } from "@aigne/core/loader/index.js";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { OpenAIChatModel } from "../_mocks_/mock-models.js";
@@ -161,6 +162,9 @@ test("OrchestratorAgent.load should use custom planner/worker/completer", async 
         instructions: "Custom completer instructions",
       },
     },
+    options: {
+      loadNestAgent,
+    },
   });
 
   const afsModules = await agent.afs?.listModules();
@@ -184,15 +188,16 @@ test("OrchestratorAgent.load should use custom planner/worker/completer", async 
 
   const planner = agent["planner"];
   assert(planner instanceof AIAgent);
-  expect((await planner.instructions.build({})).messages).toMatchInlineSnapshot(`
-    [
-      {
-        "cacheControl": undefined,
-        "content": "Custom planner instructions",
-        "name": undefined,
-        "role": "system",
-      },
-    ]
+  expect((await planner.instructions.build({})).userMessage).toMatchInlineSnapshot(`
+    {
+      "content": [
+        {
+          "text": "Custom planner instructions",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    }
   `);
   expect(zodToJsonSchema(planner.inputSchema)).toEqual(
     zodToJsonSchema(plannerInputSchema.passthrough()),
@@ -209,22 +214,15 @@ test("OrchestratorAgent.load should use custom planner/worker/completer", async 
 
   const worker = agent["worker"];
   assert(worker instanceof AIAgent);
-  expect(await worker.instructions.build({})).toMatchInlineSnapshot(`
+  expect((await worker.instructions.build({})).userMessage).toMatchInlineSnapshot(`
     {
-      "messages": [
+      "content": [
         {
-          "cacheControl": undefined,
-          "content": "Custom worker instructions",
-          "name": undefined,
-          "role": "system",
+          "text": "Custom worker instructions",
+          "type": "text",
         },
       ],
-      "modelOptions": undefined,
-      "outputFileType": undefined,
-      "responseFormat": undefined,
-      "toolAgents": undefined,
-      "toolChoice": undefined,
-      "tools": undefined,
+      "role": "user",
     }
   `);
   expect(await worker.afs?.listModules()).toEqual(afsModules);
@@ -242,22 +240,15 @@ test("OrchestratorAgent.load should use custom planner/worker/completer", async 
 
   const completer = agent["completer"];
   assert(completer instanceof AIAgent);
-  expect(await completer.instructions.build({})).toMatchInlineSnapshot(`
+  expect((await completer.instructions.build({})).userMessage).toMatchInlineSnapshot(`
     {
-      "messages": [
+      "content": [
         {
-          "cacheControl": undefined,
-          "content": "Custom completer instructions",
-          "name": undefined,
-          "role": "system",
+          "text": "Custom completer instructions",
+          "type": "text",
         },
       ],
-      "modelOptions": undefined,
-      "outputFileType": undefined,
-      "responseFormat": undefined,
-      "toolAgents": undefined,
-      "toolChoice": undefined,
-      "tools": undefined,
+      "role": "user",
     }
   `);
   expect(zodToJsonSchema(completer.inputSchema)).toEqual(
@@ -344,6 +335,9 @@ test("OrchestratorAgent should pass declared input fields to the planner/worker/
           "Test completer\ncustomField: {{customField}}\nobjective: {{objective}}\nexecutionState: {{executionState}}",
       },
     },
+    options: {
+      loadNestAgent,
+    },
   });
 
   const modelProcess = spyOn(model, "process")
@@ -374,47 +368,67 @@ test("OrchestratorAgent should pass declared input fields to the planner/worker/
     [
       [
         {
-          "content": 
+          "content": [
+            {
+              "text": 
     "Test planner
     customField: HERE IS CUSTOM VALUE
     objective: Research ArcBlock and write a professional report
     executionState: {"tasks":[]}"
     ,
-          "role": "system",
+              "type": "text",
+            },
+          ],
+          "role": "user",
         },
       ],
       [
         {
-          "content": 
+          "content": [
+            {
+              "text": 
     "Test worker
     customField: HERE IS CUSTOM VALUE
     objective: Research ArcBlock and write a professional report
     executionState: {"tasks":[]}
     task: Use the "finder" skill to research ArcBlock blockchain platform"
     ,
-          "role": "system",
+              "type": "text",
+            },
+          ],
+          "role": "user",
         },
       ],
       [
         {
-          "content": 
+          "content": [
+            {
+              "text": 
     "Test planner
     customField: HERE IS CUSTOM VALUE
     objective: Research ArcBlock and write a professional report
     executionState: {"tasks":[{"status":"completed","result":"ArcBlock is a blockchain platform","task":"Use the \\"finder\\" skill to research ArcBlock blockchain platform","createdAt":1765461004718,"completedAt":1765461004718}]}"
     ,
-          "role": "system",
+              "type": "text",
+            },
+          ],
+          "role": "user",
         },
       ],
       [
         {
-          "content": 
+          "content": [
+            {
+              "text": 
     "Test completer
     customField: HERE IS CUSTOM VALUE
     objective: Research ArcBlock and write a professional report
     executionState: {"tasks":[{"status":"completed","result":"ArcBlock is a blockchain platform","task":"Use the \\"finder\\" skill to research ArcBlock blockchain platform","createdAt":1765461004718,"completedAt":1765461004718}]}"
     ,
-          "role": "system",
+              "type": "text",
+            },
+          ],
+          "role": "user",
         },
       ],
     ]

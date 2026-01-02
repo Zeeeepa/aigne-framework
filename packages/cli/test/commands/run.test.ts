@@ -85,7 +85,7 @@ test("run command should download package and run correctly", async () => {
 
   const url = new URL(`https://www.aigne.io/${randomUUID()}/test-agents.tgz`);
 
-  process.argv = ["run", url.toString()];
+  process.argv = ["run", url.toString(), "chat"];
   await command.parseAsync(process.argv);
 
   const path = join(homedir(), ".aigne", url.hostname, url.pathname);
@@ -117,7 +117,7 @@ test("run command should convert package from v1 and run correctly", async () =>
 
   const url = new URL(`https://www.aigne.io/${randomUUID()}/test-agents.tgz`);
 
-  process.argv = ["run", url.toString()];
+  process.argv = ["run", url.toString(), "chat"];
   await command.parseAsync(process.argv);
 
   const path = join(homedir(), ".aigne", url.hostname, url.pathname);
@@ -247,20 +247,24 @@ test("run command should register commands correctly", async () => {
                                agent definitions or models.                 [string]
 
     Options:
-          --chat        Run chat loop in terminal         [boolean] [default: false]
-      -i, --input       Input to the agent, use @<file> to read from a file  [array]
-          --input-file  Input files to the agent                             [array]
-          --format      Input format for the agent (available: text, json, yaml
-                        default: text)    [string] [choices: "text", "json", "yaml"]
-      -o, --output      Output file to save the result (default: stdout)    [string]
-          --output-key  Key in the result to save to the output file
+          --interactive  Run in interactive chat mode     [boolean] [default: false]
+          --session-id   Session ID for chat-based agents to maintain context across
+                         interactions                                       [string]
+      -i, --input        Input to the agent, use @<file> to read from a file [array]
+          --input-file   Input files to the agent                            [array]
+          --format       Input format for the agent (available: text, json, yaml
+                         default: text)   [string] [choices: "text", "json", "yaml"]
+      -o, --output       Output file to save the result (default: stdout)   [string]
+          --output-key   Key in the result to save to the output file
                                                        [string] [default: "message"]
-          --force       Truncate the output file if it exists, and create directory
-                        if the output path does not exists[boolean] [default: false]
-          --log-level   Log level for detailed debugging information. Values:
-                        silent, error, warn, info, debug[string] [default: "silent"]
-      -h, --help        Show help                                          [boolean]
-      -v, --version     Show version number                                [boolean]"
+          --force        Truncate the output file if it exists, and create directory
+                         if the output path does not exists
+                                                          [boolean] [default: false]
+          --log-level    Log level for detailed debugging information. Values:
+                         silent, error, warn, info, debug
+                                                        [string] [default: "silent"]
+      -h, --help         Show help                                         [boolean]
+      -v, --version      Show version number                               [boolean]"
     ,
     ]
   `);

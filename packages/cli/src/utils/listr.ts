@@ -1,6 +1,6 @@
 import { EOL } from "node:os";
 import { format } from "node:util";
-import type { AgentResponseStream, Message } from "@aigne/core";
+import { type AgentResponseStream, isAgentResponseProgress, type Message } from "@aigne/core";
 import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { mergeAgentResponseChunk } from "@aigne/core/utils/stream-utils.js";
 import type { PromiseOrValue } from "@aigne/core/utils/type-utils.js";
@@ -17,7 +17,10 @@ import {
   SimpleRenderer,
   Spinner,
 } from "@aigne/listr2";
+import { markedTerminal } from "@aigne/marked-terminal";
+import chalk from "chalk";
 import type { createLogUpdate } from "log-update";
+import { Marked } from "marked";
 import wrap from "wrap-ansi";
 
 export type AIGNEListrTaskWrapper = ListrTaskWrapper<
@@ -54,11 +57,12 @@ export class AIGNEListr extends Listr<
       getStdoutLogs: () => {
         return this.logs.splice(0);
       },
-      getBottomBarLogs: (options?: { running?: boolean; renderImage?: boolean }) => {
-        if (!options?.running) return [];
-        const r = this.myOptions.formatResult(this.result);
-        if (typeof r !== "string") throw new Error("Must return a string result for running task");
-        return [r];
+      getBottomBarLogs: (_options?: { running?: boolean; renderImage?: boolean }) => {
+        // if (!options?.running) return [];
+        // const r = this.myOptions.formatResult(this.result);
+        // if (typeof r !== "string") throw new Error("Must return a string result for running task");
+        // return [r];
+        return [];
       },
     };
 
@@ -100,6 +104,8 @@ export class AIGNEListr extends Listr<
     this.spinner = new Spinner();
   }
 
+  private needLogResult = true;
+
   override async run(stream: () => PromiseOrValue<AgentResponseStream<Message>>): Promise<Message> {
     const originalLog = logger.logMessage;
     const originalConsole = { ...console };
@@ -133,9 +139,11 @@ export class AIGNEListr extends Listr<
         return { ...this.result };
       });
 
-      console.log(
-        await this.myOptions.formatResult(this.result, { running: false, renderImage: true }),
-      );
+      if (this.needLogResult) {
+        console.log(
+          await this.myOptions.formatResult(this.result, { running: false, renderImage: true }),
+        );
+      }
 
       return result;
     } finally {
@@ -146,12 +154,67 @@ export class AIGNEListr extends Listr<
     }
   }
 
+  private marked = new Marked().use(
+    {
+      // marked-terminal does not support code block meta, so we need to strip it
+      walkTokens: (token) => {
+        if (token.type === "code") {
+          if (typeof token.lang === "string") {
+            token.lang = token.lang.trim().split(/\s+/)[0];
+          }
+        }
+      },
+    },
+    markedTerminal(
+      { forceHyperLink: false },
+      {
+        theme: {
+          string: chalk.green,
+        },
+      },
+    ),
+  );
+
   private async extractStream(stream: AgentResponseStream<Message>) {
     try {
       this.result = {};
 
       for await (const value of stream) {
         mergeAgentResponseChunk(this.result, value);
+
+        if (isAgentResponseProgress(value) && value.progress.event === "message") {
+          const { message } = value.progress;
+
+          const rendered: string[] = [];
+
+          if (message.role === "user" || message.role === "agent") {
+            if (message.role === "agent" && message.toolCalls) {
+              for (const call of message.toolCalls) {
+                rendered.push(
+                  `${chalk.bold.gray(`[${call.function.name}]`)} ${chalk.gray(`${JSON.stringify(call.function.arguments).slice(0, 200)}...`)}`,
+                );
+              }
+            } else if (typeof message.content === "string") {
+              rendered.push(this.marked.parse(message.content, { async: false }).trim());
+            } else if (Array.isArray(message.content)) {
+              for (const msg of message.content) {
+                if (msg.type === "text") {
+                  if (msg.isThinking) {
+                    rendered.push(chalk.dim(chalk.grey(chalk.italic(`[Thinking] ${msg.text}`))));
+                  } else {
+                    rendered.push(this.marked.parse(msg.text, { async: false }).trim());
+                  }
+                }
+              }
+            }
+          }
+
+          if (rendered.length) {
+            const prefix = message.role === "user" ? chalk.blue.bold(">") : chalk.green.bold("•");
+            console.log(`${prefix} ${rendered.join("\n")}\n`);
+            this.needLogResult = false;
+          }
+        }
       }
 
       return this.result;

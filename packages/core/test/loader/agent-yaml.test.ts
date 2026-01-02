@@ -41,8 +41,6 @@ test("loadAgentFromYaml should load AIAgent correctly", async () => {
     alias: agent.alias,
     description: agent.description,
     instructions: extractInstructions(agent.instructions),
-    auto_reorder_system_messages: agent.autoReorderSystemMessages,
-    auto_merge_system_messages: agent.autoMergeSystemMessages,
     input_key: agent.inputKey,
     output_key: agent.outputKey,
     input_file_key: agent.inputFileKey,
@@ -96,16 +94,28 @@ args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
 `),
     );
 
-  expect(await loadAgentFromYamlFile("./remote-mcp.yaml", {})).toEqual({
-    type: "mcp",
-    url: "http://localhost:3000/sse",
-  });
+  expect(await loadAgentFromYamlFile("./remote-mcp.yaml", {})).toMatchInlineSnapshot(`
+    {
+      "model": undefined,
+      "skills": undefined,
+      "type": "mcp",
+      "url": "http://localhost:3000/sse",
+    }
+  `);
 
-  expect(await loadAgentFromYamlFile("./local-mcp.yaml", {})).toEqual({
-    type: "mcp",
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "."],
-  });
+  expect(await loadAgentFromYamlFile("./local-mcp.yaml", {})).toMatchInlineSnapshot(`
+    {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        ".",
+      ],
+      "command": "npx",
+      "model": undefined,
+      "skills": undefined,
+      "type": "mcp",
+    }
+  `);
 });
 
 test("loadAgentFromYaml should load TeamAgent correctly", async () => {
@@ -318,8 +328,8 @@ test("loadAgentFromYaml should load AIAgent with AFS correctly", async () => {
   const agent = await loadAgent(join(import.meta.dirname, "../../test-agents/test-afs.yaml"), {
     afs: {
       availableModules: [
-        { module: "history", create: (options) => ({ name: "AFSHistory", options }) },
-        { module: "local-fs", create: (options) => ({ name: "AFSLocalFS", options }) },
+        { module: "history", load: (options) => ({ name: "AFSHistory", options }) },
+        { module: "local-fs", load: (options) => ({ name: "AFSLocalFS", options }) },
       ],
     },
   });

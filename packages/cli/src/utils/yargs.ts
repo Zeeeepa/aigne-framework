@@ -40,10 +40,14 @@ const MODEL_OPTIONS_GROUP_NAME = "Model Options";
 
 export const withRunAgentCommonOptions = (yargs: Argv) =>
   yargs
-    .option("chat", {
-      describe: "Run chat loop in terminal",
+    .option("interactive", {
+      describe: "Run in interactive chat mode",
       type: "boolean",
       default: false,
+    })
+    .option("session-id", {
+      describe: "Session ID for chat-based agents to maintain context across interactions",
+      type: "string",
     })
     .option("model", {
       group: MODEL_OPTIONS_GROUP_NAME,

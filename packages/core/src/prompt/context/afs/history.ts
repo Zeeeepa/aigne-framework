@@ -1,11 +1,15 @@
-import type { AFSEntry } from "@aigne/afs";
+import type { AFSEntry, AFSListOptions } from "@aigne/afs";
 import { AFSHistory } from "@aigne/afs-history";
 import type { Agent } from "../../../agents/agent.js";
 import { isNonNullable } from "../../../utils/type-utils.js";
 
-export async function getHistories(
-  agent: Agent,
-): Promise<{ role: "user" | "agent"; content: unknown }[]> {
+export async function getHistories({
+  filter,
+  agent,
+}: {
+  filter: AFSListOptions["filter"];
+  agent: Agent;
+}): Promise<{ role: "user" | "agent"; content: unknown }[]> {
   const afs = agent?.afs;
   if (!afs) return [];
 
@@ -14,7 +18,8 @@ export async function getHistories(
 
   const history: AFSEntry[] = (
     await afs.list(historyModule.path, {
-      limit: agent.historyConfig?.maxItems || 10,
+      filter,
+      limit: 10,
       orderBy: [["createdAt", "desc"]],
     })
   ).data;

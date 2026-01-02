@@ -5,6 +5,23 @@ exports[`AIGNEClient should return correct process options {
 } for express server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -41,6 +58,30 @@ exports[`AIGNEClient should return correct process options {
       },
       "text": {
         "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
       },
     },
   },
@@ -92,6 +133,23 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -136,6 +194,40 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -147,16 +239,6 @@ exports[`AIGNEClient should return correct process options {
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "message": "Hello world!",
-      },
-      "text": {
-        "message": "!",
-      },
     },
   },
 ]
@@ -175,6 +257,23 @@ exports[`AIGNEClient should return correct process options {
 } for express (with json middleware) server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -211,6 +310,30 @@ exports[`AIGNEClient should return correct process options {
       },
       "text": {
         "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
       },
     },
   },
@@ -262,6 +385,23 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -306,6 +446,40 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -317,16 +491,6 @@ exports[`AIGNEClient should return correct process options {
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "message": "Hello world!",
-      },
-      "text": {
-        "message": "!",
-      },
     },
   },
 ]
@@ -345,6 +509,23 @@ exports[`AIGNEClient should return correct process options {
 } for express (with compression middleware) server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -381,6 +562,30 @@ exports[`AIGNEClient should return correct process options {
       },
       "text": {
         "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
       },
     },
   },
@@ -432,6 +637,23 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -476,6 +698,40 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -487,16 +743,6 @@ exports[`AIGNEClient should return correct process options {
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "message": "Hello world!",
-      },
-      "text": {
-        "message": "!",
-      },
     },
   },
 ]
@@ -515,6 +761,23 @@ exports[`AIGNEClient should return correct process options {
 } for express (pass body directly) server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -551,6 +814,30 @@ exports[`AIGNEClient should return correct process options {
       },
       "text": {
         "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
       },
     },
   },
@@ -602,6 +889,23 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -646,6 +950,40 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -657,16 +995,6 @@ exports[`AIGNEClient should return correct process options {
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "message": "Hello world!",
-      },
-      "text": {
-        "message": "!",
-      },
     },
   },
 ]
@@ -685,6 +1013,23 @@ exports[`AIGNEClient should return correct process options {
 } for hono server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -721,6 +1066,30 @@ exports[`AIGNEClient should return correct process options {
       },
       "text": {
         "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
       },
     },
   },
@@ -772,6 +1141,23 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -816,6 +1202,40 @@ exports[`AIGNEClient should return correct process options {
     },
   },
   {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+      "text": {
+        "message": "!",
+      },
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world!",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world!",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -827,16 +1247,6 @@ exports[`AIGNEClient should return correct process options {
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "message": "Hello world!",
-      },
-      "text": {
-        "message": "!",
-      },
     },
   },
 ]
@@ -855,6 +1265,23 @@ exports[`AIGNEClient should return error with options {
 } for express server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -924,6 +1351,23 @@ exports[`AIGNEClient should return error with options {
   },
   {
     "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
       "agent": {
         "name": "OpenAIChatModel",
       },
@@ -974,6 +1418,23 @@ exports[`AIGNEClient should return error with options {
   streaming: true,
 } for express (with json middleware) server 1`] = `
 [
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
   {
     "delta": {
       "json": {
@@ -1037,6 +1498,23 @@ exports[`AIGNEClient should return error with options {
           },
         ],
         "modelOptions": {},
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
@@ -1095,6 +1573,23 @@ exports[`AIGNEClient should return error with options {
 } for express (with compression middleware) server 1`] = `
 [
   {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
     "delta": {
       "json": {
         "message": "Hello",
@@ -1164,6 +1659,23 @@ exports[`AIGNEClient should return error with options {
   },
   {
     "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
       "agent": {
         "name": "OpenAIChatModel",
       },
@@ -1214,6 +1726,23 @@ exports[`AIGNEClient should return error with options {
   streaming: true,
 } for express (pass body directly) server 1`] = `
 [
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
   {
     "delta": {
       "json": {
@@ -1284,6 +1813,23 @@ exports[`AIGNEClient should return error with options {
   },
   {
     "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
       "agent": {
         "name": "OpenAIChatModel",
       },
@@ -1334,6 +1880,23 @@ exports[`AIGNEClient should return error with options {
   streaming: true,
 } for hono server 1`] = `
 [
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
   {
     "delta": {
       "json": {
@@ -1397,6 +1960,23 @@ exports[`AIGNEClient should return error with options {
           },
         ],
         "modelOptions": {},
+      },
+      "parentContextId": "TEST_PARENT_CONTEXT_ID",
+      "timestamp": 123456,
+    },
+  },
+  {
+    "progress": {
+      "contextId": "TEST_CONTEXT_ID",
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
       },
       "parentContextId": "TEST_PARENT_CONTEXT_ID",
       "timestamp": 123456,
@@ -1472,17 +2052,12 @@ exports[`AIGNEClient should support custom memory for client agent 2`] = `
             "text": "Hello, I'm Bob!",
             "type": "text",
           },
-        ],
-        "role": "user",
-      },
-      {
-        "content": [
           {
             "text": "Hello Bob, How can I help you?",
             "type": "text",
           },
         ],
-        "role": "agent",
+        "role": "system",
       },
       {
         "content": [

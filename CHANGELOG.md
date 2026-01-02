@@ -1,5 +1,77 @@
 # Changelog
 
+## [1.91.0-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.11...aigne-framework-v1.91.0-beta.12) (2025-12-31)
+
+
+### Features
+
+* add session compact support for AIAgent ([#863](https://github.com/AIGNE-io/aigne-framework/issues/863)) ([9010918](https://github.com/AIGNE-io/aigne-framework/commit/9010918cd3f18b02b5c60ddc9ed5c34b568d0b28))
+
+
+### Bug Fixes
+
+* **core:** ensure data consistency in async compact mode and load all history entries ([25c7840](https://github.com/AIGNE-io/aigne-framework/commit/25c78406b48f8789a19d59b6d2c82ff859f0113b))
+
+## [1.91.0-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.10...aigne-framework-v1.91.0-beta.11) (2025-12-26)
+
+
+### Bug Fixes
+
+* **agent-library:** set default instructions for agent skill manager ([#861](https://github.com/AIGNE-io/aigne-framework/issues/861)) ([ca01a05](https://github.com/AIGNE-io/aigne-framework/commit/ca01a056ff73ebed7094e1e07964bc06cd3d26d0))
+
+## [1.91.0-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.9...aigne-framework-v1.91.0-beta.10) (2025-12-26)
+
+
+### Features
+
+* **agent-library:** add agent skill manager agent ([#859](https://github.com/AIGNE-io/aigne-framework/issues/859)) ([d409bf5](https://github.com/AIGNE-io/aigne-framework/commit/d409bf5f44146c96c0d68cd93bc30b01ec5ae329))
+* **core:** add session history support ([#858](https://github.com/AIGNE-io/aigne-framework/issues/858)) ([28a070e](https://github.com/AIGNE-io/aigne-framework/commit/28a070ed33b821d1fd344b899706d817ca992b9f))
+
+## [1.91.0-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.8...aigne-framework-v1.91.0-beta.9) (2025-12-25)
+
+
+### Bug Fixes
+
+* **core:** passthrough model options in chat model ([#856](https://github.com/AIGNE-io/aigne-framework/issues/856)) ([41387bd](https://github.com/AIGNE-io/aigne-framework/commit/41387bde0a615080ea5d665e998afb0b9c32c5fd))
+
+## [1.91.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.7...aigne-framework-v1.91.0-beta.8) (2025-12-25)
+
+
+### Bug Fixes
+
+* **models:** support cache the last message for anthropic chat model ([#853](https://github.com/AIGNE-io/aigne-framework/issues/853)) ([bd08e44](https://github.com/AIGNE-io/aigne-framework/commit/bd08e44b28c46ac9a85234f0100d6dd144703c9d))
+
+## [1.91.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.6...aigne-framework-v1.91.0-beta.7) (2025-12-25)
+
+
+### Bug Fixes
+
+* **agent-library:** add header field and use object-based answers in AskUserQuestion ([#851](https://github.com/AIGNE-io/aigne-framework/issues/851)) ([095db95](https://github.com/AIGNE-io/aigne-framework/commit/095db95e43b5d39b35c638d90d6f0b99565e0dc4))
+
+## [1.91.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.5...aigne-framework-v1.91.0-beta.6) (2025-12-25)
+
+
+### Features
+
+* **agent-library:** add askUserQuestion agent ([#848](https://github.com/AIGNE-io/aigne-framework/issues/848)) ([60fa69b](https://github.com/AIGNE-io/aigne-framework/commit/60fa69b40ec122295e57ad175075875ed4840345))
+
+
+### Bug Fixes
+
+* **core:** afs skills improvements ([#849](https://github.com/AIGNE-io/aigne-framework/issues/849)) ([557cc8b](https://github.com/AIGNE-io/aigne-framework/commit/557cc8b4b72f0e91ad654556f47bbe0ad0ececdb))
+
+## [1.91.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.4...aigne-framework-v1.91.0-beta.5) (2025-12-24)
+
+
+### Features
+
+* add Agent Skill support ([#787](https://github.com/AIGNE-io/aigne-framework/issues/787)) ([f04fbe7](https://github.com/AIGNE-io/aigne-framework/commit/f04fbe76ec24cf3c59c74adf92d87b0c3784a8f7))
+
+
+### Bug Fixes
+
+* **cli:** improve terminal outputs ([#847](https://github.com/AIGNE-io/aigne-framework/issues/847)) ([329e91b](https://github.com/AIGNE-io/aigne-framework/commit/329e91bc3323f72fc8a2d278ff5e6bba9adbd6e0))
+
 ## [1.91.0-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.3...aigne-framework-v1.91.0-beta.4) (2025-12-22)
 
 

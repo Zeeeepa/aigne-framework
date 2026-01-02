@@ -42,6 +42,20 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
     },
   },
   {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+    },
+  },
+  {
     "delta": {
       "text": {
         "message": "Hello",
@@ -151,6 +165,27 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
     },
   },
   {
+    "delta": {
+      "text": {
+        "message": "?",
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello, How can I assist you today?",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+    },
+  },
+  {
     "progress": {
       "agent": {
         "name": "chat",
@@ -163,8 +198,8 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
   },
   {
     "delta": {
-      "text": {
-        "message": "?",
+      "json": {
+        "message": "Hello, How can I assist you today?",
       },
     },
   },
@@ -213,6 +248,20 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
     },
   },
   {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+    },
+  },
+  {
     "delta": {
       "text": {
         "message": "Hello",
@@ -254,55 +303,51 @@ exports[`AIGNE.invoke should respond $metafield with usage metrics with {
 } 1`] = `
 [
   {
-    "delta": {
-      "json": {
-        "message": "",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "message": "Hello",
-      },
-    },
-  },
-  {
-    "delta": {
-      "text": {
-        "message": " world",
-      },
-    },
-  },
-  {
-    "delta": {
-      "json": {
-        "$meta": {
-          "usage": {
-            "agentCalls": 4,
-            "aigneHubCredits": 0,
-            "cacheCreationInputTokens": 0,
-            "cacheReadInputTokens": 0,
-            "inputTokens": 13,
-            "outputTokens": 24,
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
           },
-        },
-        "message": "Hello world",
+        ],
+        "role": "user",
       },
     },
   },
-]
-`;
-
-exports[`AIGNE.invoke should respond $meta field with usage metrics with {
-  streaming: true,
-  returnMetadata: true,
-} 1`] = `
-[
   {
     "delta": {
       "json": {
         "message": "",
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "role": "agent",
+        "toolCalls": [
+          {
+            "function": {
+              "arguments": {},
+              "name": "greet",
+            },
+            "id": "greet",
+            "type": "function",
+          },
+        ],
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": "{"message":"Hello world"}",
+        "role": "tool",
+        "toolCallId": "greet",
       },
     },
   },
@@ -317,6 +362,27 @@ exports[`AIGNE.invoke should respond $meta field with usage metrics with {
     "delta": {
       "text": {
         "message": " world",
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Hello world",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Hello world",
       },
     },
   },

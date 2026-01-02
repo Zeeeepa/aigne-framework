@@ -2,6 +2,7 @@ import assert from "node:assert";
 import type { Agent, AIGNE, Message } from "@aigne/core";
 import type { CLIAgent } from "@aigne/core/utils/agent-utils.js";
 import { logger } from "@aigne/core/utils/logger.js";
+import { v7 } from "@aigne/uuid";
 import type { CommandModule } from "yargs";
 import { runAgentWithAIGNE } from "../../utils/run-with-aigne.js";
 import {
@@ -139,7 +140,8 @@ export async function invokeAgent(options: {
     await runAgentWithAIGNE(aigne, agent, {
       ...options.input,
       input,
-      chat: options.input.chat,
+      interactive: options.input.interactive,
+      sessionId: options.input.sessionId || v7(),
     });
   } finally {
     await aigne.shutdown();

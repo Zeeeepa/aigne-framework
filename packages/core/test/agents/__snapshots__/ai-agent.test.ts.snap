@@ -3,6 +3,20 @@
 exports[`AIAgent.invoke with streaming true 1`] = `
 [
   {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "write a long blog about arcblock",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+    },
+  },
+  {
     "delta": {
       "text": {
         "message": "Here",
@@ -76,6 +90,27 @@ exports[`AIAgent.invoke with streaming true 1`] = `
     "delta": {
       "text": {
         "message": "shirt",
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Here is a beautiful T-shirt",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Here is a beautiful T-shirt",
       },
     },
   },
@@ -164,6 +199,27 @@ exports[`AIAgent with router toolChoice should return router result with streami
     "delta": {
       "text": {
         "message": "shirt",
+      },
+    },
+  },
+  {
+    "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "Here is a beautiful T-shirt",
+            "type": "text",
+          },
+        ],
+        "role": "agent",
+      },
+    },
+  },
+  {
+    "delta": {
+      "json": {
+        "message": "Here is a beautiful T-shirt",
       },
     },
   },

@@ -1,23 +1,46 @@
 import type { AFSEntry, AFSModule } from "@aigne/afs";
 import type { SQL } from "@aigne/sqlite";
 
-export interface AFSStorageCreatePayload extends Omit<AFSEntry, "id"> {}
+export interface AFSStorageCreatePayload extends AFSEntry {}
 
 export interface AFSStorageListOptions {
   filter?: {
+    agentId?: string;
     userId?: string;
     sessionId?: string;
+    before?: Date | string;
+    after?: Date | string;
   };
   limit?: number;
   orderBy?: [string, "asc" | "desc"][];
 }
+
+export interface AFSStorageReadOptions {
+  filter?: {
+    agentId?: string;
+    userId?: string;
+    sessionId?: string;
+  };
+}
+
+export type CompactType = "session" | "user" | "agent";
 
 export interface AFSStorage {
   create(entry: AFSStorageCreatePayload): Promise<AFSEntry>;
 
   list(options?: AFSStorageListOptions): Promise<{ data: AFSEntry[] }>;
 
-  read(path: string): Promise<AFSEntry | undefined>;
+  read(id: string, options?: AFSStorageReadOptions): Promise<AFSEntry | undefined>;
+
+  createCompact(type: CompactType, entry: AFSStorageCreatePayload): Promise<AFSEntry>;
+
+  listCompact(type: CompactType, options?: AFSStorageListOptions): Promise<{ data: AFSEntry[] }>;
+
+  readCompact(
+    type: CompactType,
+    id: string,
+    options?: AFSStorageReadOptions,
+  ): Promise<AFSEntry | undefined>;
 }
 
 export type AFSStorageMigrations = { hash: string; sql: (module: AFSModule) => SQL[] };

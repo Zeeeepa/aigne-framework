@@ -25,7 +25,7 @@ export function createRunCommand({
   aigneFilePath?: string;
 } = {}): CommandModule<
   unknown,
-  { version?: boolean; path?: string; entryAgent?: string; chat?: boolean }
+  { version?: boolean; path?: string; entryAgent?: string; interactive?: boolean }
 > {
   return {
     // $0 must place after 'run' to make positional args work correctly
@@ -49,8 +49,8 @@ export function createRunCommand({
           alias: "v",
           describe: "Show version number",
         })
-        .option("chat", {
-          describe: "Run chat loop in terminal",
+        .option("interactive", {
+          describe: "Run in interactive chat mode",
           type: "boolean",
           default: false,
         })
@@ -74,6 +74,7 @@ export function createRunCommand({
 
       const path = aigneFilePath || options.path || ".";
       if (
+        !isUrl(path) &&
         !(await findAIGNEFile(path).catch((error) => {
           if (options._[0] !== "run") {
             yargsInstance?.showHelp();
@@ -109,7 +110,7 @@ export function createRunCommand({
       // Allow user to run all of agents in the AIGNE instances
       const allAgents = flat(aigne.agents, aigne.skills, aigne.cli.chat, aigne.mcpServer.agents);
       for (const agent of allAgents) {
-        subYargs.command(agentCommandModule({ aigne, agent, chat: options.chat }));
+        subYargs.command(agentCommandModule({ aigne, agent, chat: options.interactive }));
       }
 
       for (const cliAgent of aigne.cli.agents ?? []) {

@@ -2,16 +2,13 @@ import { z } from "zod";
 import type { AgentInvokeOptions, AgentOptions, Message } from "../../../agents/agent.js";
 import { AFSSkillBase } from "./base.js";
 
-export interface Patch {
-  start_line: number;
-  end_line: number;
-  replace?: string;
-  delete: boolean;
-}
+const CONTEXT_LINES = 4; // Number of lines to show before and after the edit
 
 export interface AFSEditInput extends Message {
   path: string;
-  patches: Patch[];
+  oldString: string;
+  newString: string;
+  replaceAll?: boolean;
 }
 
 export interface AFSEditOutput extends Message {
@@ -19,7 +16,7 @@ export interface AFSEditOutput extends Message {
   tool: string;
   path: string;
   message: string;
-  data: string;
+  snippet: string;
 }
 
 export interface AFSEditAgentOptions extends AgentOptions<AFSEditInput, AFSEditOutput> {
@@ -30,29 +27,42 @@ export class AFSEditAgent extends AFSSkillBase<AFSEditInput, AFSEditOutput> {
   constructor(options: AFSEditAgentOptions) {
     super({
       name: "afs_edit",
-      description:
-        "Apply precise line-based patches to modify file content. Use when making targeted changes without rewriting the entire file.",
+      description: `Performs exact string replacements in files within the Agentic File System (AFS).
+
+Usage:
+- You must use afs_read at least once before editing to understand the file content
+- The path must be an absolute AFS path starting with "/" (e.g., "/docs/readme.md")
+- Preserve exact indentation (tabs/spaces) as it appears in the file
+- The edit will FAIL if oldString is not found in the file
+- The edit will FAIL if oldString appears multiple times (unless replaceAll is true)
+- Use replaceAll to replace/rename strings across the entire file`,
       ...options,
       inputSchema: z.object({
-        path: z.string().describe("Absolute file path to edit"),
-        patches: z
-          .array(
-            z.object({
-              start_line: z.number().int().describe("Start line number (0-based, inclusive)"),
-              end_line: z.number().int().describe("End line number (0-based, exclusive)"),
-              replace: z.string().optional().describe("New content to replace the line range"),
-              delete: z.boolean().describe("Delete mode: true to delete lines, false to replace"),
-            }),
-          )
-          .min(1)
-          .describe("List of patches to apply sequentially"),
+        path: z
+          .string()
+          .describe(
+            "Absolute AFS path to the file to edit (e.g., '/docs/readme.md'). Must start with '/'",
+          ),
+        oldString: z
+          .string()
+          .describe(
+            "The exact text to replace. Must match file content exactly including whitespace",
+          ),
+        newString: z
+          .string()
+          .describe("The text to replace it with (must be different from oldString)"),
+        replaceAll: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("Replace all occurrences of oldString (default: false)"),
       }),
       outputSchema: z.object({
         status: z.string(),
         tool: z.string(),
         path: z.string(),
         message: z.string(),
-        data: z.string(),
+        snippet: z.string(),
       }),
     });
   }
@@ -60,74 +70,97 @@ export class AFSEditAgent extends AFSSkillBase<AFSEditInput, AFSEditOutput> {
   async process(input: AFSEditInput, _options: AgentInvokeOptions): Promise<AFSEditOutput> {
     if (!this.afs) throw new Error("AFS is not configured for this agent.");
 
-    if (!input.patches?.length) {
-      throw new Error("No patches provided for afs_edit.");
+    const { path, oldString, newString, replaceAll = false } = input;
+
+    if (oldString === newString) {
+      throw new Error("oldString and newString must be different");
     }
 
-    const readResult = await this.afs.read(input.path);
+    const readResult = await this.afs.read(path);
     if (!readResult.data?.content || typeof readResult.data.content !== "string") {
-      throw new Error(`Cannot read file content from: ${input.path}`);
+      throw new Error(`Cannot read file content from: ${path}`);
     }
 
     const originalContent = readResult.data.content;
-    const updatedContent = this.applyCustomPatches(originalContent, input.patches);
 
-    await this.afs.write(input.path, {
+    // Check if oldString exists in the file
+    const occurrences = this.countOccurrences(originalContent, oldString);
+    if (occurrences === 0) {
+      throw new Error(`oldString not found in file: ${path}`);
+    }
+
+    if (occurrences > 1 && !replaceAll) {
+      throw new Error(
+        `oldString appears ${occurrences} times in file. Use replaceAll=true to replace all occurrences, or provide more context to make oldString unique.`,
+      );
+    }
+
+    // Find the position of the first occurrence for snippet extraction
+    const firstOccurrenceIndex = originalContent.indexOf(oldString);
+
+    // Perform the replacement
+    const updatedContent = replaceAll
+      ? originalContent.split(oldString).join(newString)
+      : originalContent.replace(oldString, newString);
+
+    await this.afs.write(path, {
       content: updatedContent,
     });
 
+    // Generate snippet around the edit location
+    const snippet = this.extractSnippet(updatedContent, firstOccurrenceIndex, newString.length);
+
+    const replacementCount = replaceAll ? occurrences : 1;
     return {
       status: "success",
       tool: "afs_edit",
-      path: input.path,
-      message: `Applied ${input.patches.length} patches to ${input.path}`,
-      data: updatedContent,
+      path,
+      message: `Replaced ${replacementCount} occurrence${replacementCount > 1 ? "s" : ""} in ${path}`,
+      snippet,
     };
   }
 
-  applyCustomPatches(text: string, patches: Patch[]): string {
-    // Sort by start_line to ensure sequential application
-    const sorted = [...patches].sort((a, b) => a.start_line - b.start_line);
-    const lines = text.split("\n");
+  private countOccurrences(text: string, search: string): number {
+    let count = 0;
+    let position = text.indexOf(search);
+    while (position !== -1) {
+      count++;
+      position = text.indexOf(search, position + search.length);
+    }
+    return count;
+  }
 
-    for (let i = 0; i < sorted.length; i++) {
-      const patch = sorted[i];
-      if (!patch) continue;
+  private extractSnippet(content: string, editStartIndex: number, newStringLength: number): string {
+    const lines = content.split("\n");
 
-      const start = patch.start_line;
-      const end = patch.end_line;
-      const deleteCount = end - start; // [start, end) range
-
-      let delta = 0;
-
-      if (patch.delete) {
-        // Delete mode: remove the specified lines [start, end)
-        lines.splice(start, deleteCount);
-        delta = -deleteCount;
-      } else {
-        // Replace mode: replace the specified lines with new content
-        const replaceLines = patch.replace ? patch.replace.split("\n") : [];
-        lines.splice(start, deleteCount, ...replaceLines);
-        delta = replaceLines.length - deleteCount;
+    // Find the line number where the edit starts
+    let charCount = 0;
+    let editStartLine = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const lineLength = (lines[i]?.length ?? 0) + 1; // +1 for newline
+      if (charCount + lineLength > editStartIndex) {
+        editStartLine = i;
+        break;
       }
-
-      // Update subsequent patches' line numbers
-      // For exclusive-end semantics [start, end), we adjust patches that start >= current patch's start_line
-      // after the current patch has been applied
-      if (delta !== 0) {
-        for (let j = i + 1; j < sorted.length; j++) {
-          const next = sorted[j];
-          if (!next) continue;
-
-          // Adjust patches that start at or after the current patch's end line
-          if (next.start_line >= patch.end_line) {
-            next.start_line += delta;
-            next.end_line += delta;
-          }
-        }
-      }
+      charCount += lineLength;
     }
 
-    return lines.join("\n");
+    // Calculate how many lines the new content spans
+    const newContentLines = content
+      .substring(editStartIndex, editStartIndex + newStringLength)
+      .split("\n").length;
+    const editEndLine = editStartLine + newContentLines - 1;
+
+    // Extract lines with context
+    const startLine = Math.max(0, editStartLine - CONTEXT_LINES);
+    const endLine = Math.min(lines.length - 1, editEndLine + CONTEXT_LINES);
+
+    // Format with line numbers (1-based)
+    const snippetLines = lines.slice(startLine, endLine + 1).map((line, idx) => {
+      const lineNum = startLine + idx + 1;
+      return `${String(lineNum).padStart(4)}| ${line}`;
+    });
+
+    return snippetLines.join("\n");
   }
 }

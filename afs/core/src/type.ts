@@ -3,8 +3,11 @@ import { type ZodType, z } from "zod";
 
 export interface AFSListOptions {
   filter?: {
+    agentId?: string;
     userId?: string;
     sessionId?: string;
+    before?: string;
+    after?: string;
   };
   maxDepth?: number;
   limit?: number;
@@ -16,6 +19,11 @@ export interface AFSListOptions {
    * @default false
    */
   disableGitignore?: boolean;
+  /**
+   * Glob pattern to filter entries by path.
+   * Examples: "*.ts", "**\/*.js", "src/**\/*.{ts,tsx}"
+   */
+  pattern?: string;
   context?: any;
 }
 
@@ -37,6 +45,7 @@ export interface AFSSearchResult {
 }
 
 export interface AFSReadOptions {
+  filter?: AFSListOptions["filter"];
   context?: any;
 }
 
@@ -112,7 +121,16 @@ export interface AFSModule {
 }
 
 export type AFSRootEvents = {
-  agentSucceed: [{ input: object; output: object }];
+  agentSucceed: [
+    {
+      agentId?: string;
+      userId?: string;
+      sessionId?: string;
+      input: object;
+      output: object;
+      messages?: object[];
+    },
+  ];
   historyCreated: [{ entry: AFSEntry }];
 };
 
@@ -154,6 +172,7 @@ export interface AFSEntry<T = any> {
   createdAt?: Date;
   updatedAt?: Date;
   path: string;
+  agentId?: string | null;
   userId?: string | null;
   sessionId?: string | null;
   summary?: string | null;

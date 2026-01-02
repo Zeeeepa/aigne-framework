@@ -1,5 +1,72 @@
 # Changelog
 
+## [0.14.16-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.8...anthropic-v0.14.16-beta.9) (2025-12-31)
+
+
+### Features
+
+* add session compact support for AIAgent ([#863](https://github.com/AIGNE-io/aigne-framework/issues/863)) ([9010918](https://github.com/AIGNE-io/aigne-framework/commit/9010918cd3f18b02b5c60ddc9ed5c34b568d0b28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.8
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.8
+
+## [0.14.16-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.7...anthropic-v0.14.16-beta.8) (2025-12-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.7
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.7
+
+## [0.14.16-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.6...anthropic-v0.14.16-beta.7) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.6
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.6
+
+## [0.14.16-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.5...anthropic-v0.14.16-beta.6) (2025-12-25)
+
+
+### Bug Fixes
+
+* **models:** support cache the last message for anthropic chat model ([#853](https://github.com/AIGNE-io/aigne-framework/issues/853)) ([bd08e44](https://github.com/AIGNE-io/aigne-framework/commit/bd08e44b28c46ac9a85234f0100d6dd144703c9d))
+
+## [0.14.16-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.4...anthropic-v0.14.16-beta.5) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.5
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.5
+
+## [0.14.16-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.3...anthropic-v0.14.16-beta.4) (2025-12-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.4
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.4
+
 ## [0.14.16-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.2...anthropic-v0.14.16-beta.3) (2025-12-19)
 
 

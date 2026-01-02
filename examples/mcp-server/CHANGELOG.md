@@ -1,5 +1,77 @@
 # Changelog
 
+## [0.3.91-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.11...example-mcp-server-v0.3.91-beta.12) (2025-12-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.11
+
+## [0.3.91-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.10...example-mcp-server-v0.3.91-beta.11) (2025-12-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.10
+
+## [0.3.91-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.9...example-mcp-server-v0.3.91-beta.10) (2025-12-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.9
+
+## [0.3.91-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.8...example-mcp-server-v0.3.91-beta.9) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.8
+
+## [0.3.91-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.7...example-mcp-server-v0.3.91-beta.8) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.7
+
+## [0.3.91-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.6...example-mcp-server-v0.3.91-beta.7) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.6
+
+## [0.3.91-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.5...example-mcp-server-v0.3.91-beta.6) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.5
+
+## [0.3.91-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.4...example-mcp-server-v0.3.91-beta.5) (2025-12-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/cli bumped to 1.59.0-beta.4
+
 ## [0.3.91-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/example-mcp-server-v0.3.91-beta.3...example-mcp-server-v0.3.91-beta.4) (2025-12-22)
 
 

@@ -152,11 +152,13 @@ export async function runAgentWithAIGNE(
   aigne: AIGNE,
   agent: Agent,
   {
+    sessionId,
     outputKey,
     outputFileKey,
     chatLoopOptions,
     ...options
   }: {
+    sessionId?: string;
     outputKey?: string;
     outputFileKey?: string;
     chatLoopOptions?: ChatLoopOptions;
@@ -179,9 +181,9 @@ export async function runAgentWithAIGNE(
     await writeFile(outputPath, "", "utf8");
   }
 
-  if (options.chat) {
+  if (options.interactive) {
     if (!isatty(process.stdout.fd)) {
-      throw new Error("--chat mode requires a TTY terminal");
+      throw new Error("--interactive mode requires a TTY terminal");
     }
 
     const userAgent = agent instanceof UserAgent ? agent : aigne.invoke(agent);
@@ -191,6 +193,7 @@ export async function runAgentWithAIGNE(
       outputKey,
       inputFileKey: agent instanceof AIAgent ? agent.inputFileKey : undefined,
       input: options.input,
+      sessionId,
     });
 
     return;

@@ -1,5 +1,65 @@
 # Changelog
 
+## [0.7.62-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.7...open-router-v0.7.62-beta.8) (2025-12-31)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.8
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.8
+    * @aigne/test-utils bumped to 0.5.69-beta.8
+
+## [0.7.62-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.6...open-router-v0.7.62-beta.7) (2025-12-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.7
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.7
+    * @aigne/test-utils bumped to 0.5.69-beta.7
+
+## [0.7.62-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.5...open-router-v0.7.62-beta.6) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.6
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.6
+    * @aigne/test-utils bumped to 0.5.69-beta.6
+
+## [0.7.62-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.4...open-router-v0.7.62-beta.5) (2025-12-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.5
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.5
+    * @aigne/test-utils bumped to 0.5.69-beta.5
+
+## [0.7.62-beta.4](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.3...open-router-v0.7.62-beta.4) (2025-12-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/openai bumped to 0.16.16-beta.4
+  * devDependencies
+    * @aigne/core bumped to 1.72.0-beta.4
+    * @aigne/test-utils bumped to 0.5.69-beta.4
+
 ## [0.7.62-beta.3](https://github.com/AIGNE-io/aigne-framework/compare/open-router-v0.7.62-beta.2...open-router-v0.7.62-beta.3) (2025-12-19)
 
 

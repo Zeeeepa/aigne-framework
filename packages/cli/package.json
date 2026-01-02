@@ -1,6 +1,6 @@
 {
   "name": "@aigne/cli",
-  "version": "1.59.0-beta.3",
+  "version": "1.59.0-beta.11",
   "description": "Your command center for agent development",
   "publishConfig": {
     "access": "public"
@@ -49,8 +49,8 @@
     "build": "tsc --build tsconfig.build.json",
     "clean": "rimraf dist test/coverage templates/coverage",
     "prepublishOnly": "run-s clean build",
-    "test": "run-s test:src test:templates",
-    "test:coverage": "run-s test:src:coverage test:templates:coverage",
+    "test": "npm run test:src && npm run test:templates",
+    "test:coverage": "npm run test:src:coverage && npm run test:templates:coverage",
     "test:src": "bun --cwd test test",
     "test:src:coverage": "bun --cwd test test --coverage --coverage-reporter=lcov --coverage-reporter=text",
     "test:templates": "cd templates && node --test",
@@ -71,6 +71,7 @@
     "@aigne/observability-api": "workspace:^",
     "@aigne/openai": "workspace:^",
     "@aigne/secrets": "workspace:^",
+    "@aigne/uuid": "^13.0.1",
     "@fast-csv/format": "^5.0.5",
     "@inquirer/core": "^10.2.2",
     "@inquirer/figures": "^1.0.13",
