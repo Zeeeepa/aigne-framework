@@ -2,6 +2,7 @@ import { basename } from "node:path";
 import { AFSHistory } from "@aigne/afs-history";
 import { LocalFS } from "@aigne/afs-local-fs";
 import AgentSkillManager from "@aigne/agent-library/agent-skill-manager";
+import AskUserQuestion from "@aigne/agent-library/ask-user-question";
 import BashAgent from "@aigne/agent-library/bash";
 import { AIGNE, FunctionAgent } from "@aigne/core";
 import type { CommandModule } from "yargs";
@@ -56,6 +57,21 @@ export function createRunSkillCommand(): CommandModule<
         taskRenderMode: "collapse",
         skills: [
           new BashAgent({
+            description: `\
+Execute bash scripts and return stdout and stderr output.
+
+When to use:
+- Running system commands (git, curl, etc.)
+- Executing build tools (npm, pip, make, etc.)
+- Running code scripts (python, node, etc.)
+
+Important:
+- Do NOT use bash for file operations. Use AFS tools instead (afs_list, afs_read, afs_write, afs_edit, afs_search).
+- Do NOT use 'cd'. The working directory is already set to workspace. Use relative paths directly.
+- Do NOT use 'npm i -g' or 'pip install --user'. Install dependencies locally in workspace:
+  - For Node.js: Use 'npm install <pkg>' (local) or 'npx <pkg>' (one-time run without install).
+  - For Python: Use 'pip install <pkg> -t .' or 'python -m venv .venv && source .venv/bin/activate && pip install <pkg>'.
+`,
             sandbox: false,
             permissions: {
               defaultMode: "ask",
@@ -71,17 +87,25 @@ export function createRunSkillCommand(): CommandModule<
               }),
             },
           }),
+          new AskUserQuestion(),
         ],
         afs: {
           modules: [
             new AFSHistory({}),
-
+            new LocalFS({
+              name: "workspace",
+              localPath: process.cwd(),
+              description: `\
+Current working directory. All temporary files should be written here using absolute AFS paths (e.g., /modules/workspace/temp.py).
+Note: Bash is already running in this directory, so do NOT use 'cd /modules/workspace' in scripts. Use relative paths directly (e.g., python temp.py).`,
+            }),
             ...options.skill.map(
               (path) =>
                 new LocalFS({
                   name: basename(path),
                   localPath: path,
-                  description: `Agent Skill from local path ${path}`,
+                  description:
+                    "Contains Agent Skills. Use 'Skill' tool to invoke skills from this module.",
                   agentSkills: true,
                 }),
             ),
