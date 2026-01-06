@@ -2,10 +2,10 @@ import type { AFSModule } from "@aigne/afs";
 import { datetime, json, sqliteTable, text } from "@aigne/sqlite";
 import { v7 } from "@aigne/uuid";
 
-export const compactTableName = (module: AFSModule): string => `Entries_${module.name}_compact`;
+export const memoryTableName = (module: AFSModule): string => `Entries_${module.name}_memory`;
 
-export const compactTable = (module: AFSModule) =>
-  sqliteTable(compactTableName(module), {
+export const memoryTable = (module: AFSModule) =>
+  sqliteTable(memoryTableName(module), {
     id: text("id")
       .notNull()
       .primaryKey()
@@ -21,8 +21,6 @@ export const compactTable = (module: AFSModule) =>
     userId: text("userId"),
     sessionId: text("sessionId"),
     agentId: text("agentId"),
-    metadata: json<{ scope?: string; latestEntryId?: string } & Record<string, unknown>>(
-      "metadata",
-    ),
+    metadata: json<{ scope?: string } & Record<string, unknown>>("metadata"),
     content: json<unknown>("content"),
   });
