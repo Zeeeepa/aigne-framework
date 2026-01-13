@@ -33,7 +33,7 @@ import type {
 import { z } from "zod";
 
 const CHAT_MODEL_CLAUDE_DEFAULT_MODEL = "claude-3-7-sonnet-latest";
-const OUTPUT_FUNCTION_NAME = "output";
+const OUTPUT_FUNCTION_NAME = "generate_json";
 
 /**
  * Configuration options for Claude Chat Model
@@ -483,7 +483,7 @@ function convertTools({
   if (responseFormat?.type === "json_schema") {
     convertedTools.push({
       name: OUTPUT_FUNCTION_NAME,
-      description: "Output the final response as structured JSON",
+      description: "Generate a json result by given context",
       input_schema: responseFormat.jsonSchema.schema as Anthropic.Messages.Tool.InputSchema,
     });
   }
