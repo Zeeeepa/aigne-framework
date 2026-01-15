@@ -180,7 +180,7 @@
     "afs/local-fs": {
       "prerelease-type": "beta"
     },
-    "@aigne/afs-sqlite": {
+    "afs/sqlite": {
       "prerelease-type": "beta"
     }
   },
