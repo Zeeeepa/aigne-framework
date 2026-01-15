@@ -17,6 +17,7 @@ import {
 import { rgPath } from "@vscode/ripgrep";
 import z, { ZodObject, type ZodOptional, type ZodRawShape, type ZodType } from "zod";
 import { Mutex } from "../utils/mutex.js";
+import { BASH_AGENT_DESCRIPTION } from "./prompt.js";
 
 const DEFAULT_TIMEOUT = 60e3; // 60 seconds
 
@@ -34,6 +35,12 @@ export interface BashAgentOptions extends AgentOptions<BashAgentInput, BashAgent
    * @default 60000 (60 seconds)
    */
   timeout?: number; // Optional timeout for script execution in milliseconds
+
+  /**
+   * Optional current working directory for script execution
+   * If not specified, inherits the parent process's working directory
+   */
+  cwd?: string;
 
   /**
    * Optional permissions configuration for command execution control
@@ -102,6 +109,7 @@ export class BashAgent extends Agent<BashAgentInput, BashAgentOutput> {
         ),
         inputKey: optionalize(z.string().describe("The input key for the bash script.")),
         timeout: optionalize(z.number().describe("Timeout for script execution in milliseconds.")),
+        cwd: optionalize(z.string().describe("Current working directory for script execution.")),
         permissions: optionalize(
           camelizeSchema(
             z.object({
@@ -143,13 +151,7 @@ export class BashAgent extends Agent<BashAgentInput, BashAgentOutput> {
   constructor(public options: BashAgentOptions) {
     super({
       name: "Bash",
-      description: `\
-Execute bash scripts and return stdout and stderr output.
-
-When to use:
-- Running system commands or bash scripts
-- Interacting with command-line tools
-`,
+      description: options.description || BASH_AGENT_DESCRIPTION,
       ...options,
       inputSchema: z.object({
         [options.inputKey || "script"]: z.string().describe("The bash script to execute."),
@@ -176,6 +178,13 @@ When to use:
     const script = input[this.inputKey || "script"];
     if (typeof script !== "string")
       throw new Error(`Invalid or missing script input: ${this.inputKey || "script"}`);
+
+    const afsRootDir = await options.caller?.afs?.initializePhysicalPath();
+
+    const env = {
+      ...process.env,
+      AFS_ROOT_DIR: afsRootDir,
+    };
 
     // Permission check
     const permission = await this.checkPermission(script);
@@ -207,7 +216,7 @@ When to use:
       })[globalThis.process.platform] || "unknown";
 
     if (this.options.sandbox === false) {
-      return this.spawn("bash", ["-c", script]);
+      return this.spawn("bash", ["-c", script], { env });
     } else {
       if (!SandboxManager.isSupportedPlatform(platform)) {
         throw new Error(`Sandboxed execution is not supported on this platform ${platform}`);
@@ -218,6 +227,7 @@ When to use:
         script,
         async (sandboxedCommand) => {
           return this.spawn(sandboxedCommand, undefined, {
+            env,
             shell: true,
           });
         },
@@ -239,12 +249,15 @@ When to use:
             ...options,
             stdio: "pipe",
             timeout,
+            cwd: this.options.cwd,
           });
 
           let stderr = "";
+          let stdout = "";
 
           child.stdout.on("data", (chunk) => {
             controller.enqueue({ delta: { text: { stdout: chunk.toString() } } });
+            stdout += chunk.toString();
           });
 
           child.stderr.on("data", (chunk) => {
@@ -261,7 +274,9 @@ When to use:
             if (signal) {
               const timeoutHint = signal === "SIGTERM" ? ` (likely timeout ${timeout})` : "";
               controller.error(
-                new Error(`Bash script killed by signal ${signal}${timeoutHint}: ${stderr}`),
+                new Error(
+                  `Bash script killed by signal ${signal}${timeoutHint}:\n stdout: ${stdout}\n stderr: ${stderr}`,
+                ),
               );
               return;
             }
@@ -272,11 +287,19 @@ When to use:
                 controller.enqueue({ delta: { json: { exitCode: code } } });
                 controller.close();
               } else {
-                controller.error(new Error(`Bash script exited with code ${code}: ${stderr}`));
+                controller.error(
+                  new Error(
+                    `Bash script exited with code ${code}:\n stdout: ${stdout}\n stderr: ${stderr}`,
+                  ),
+                );
               }
             } else {
               // Unexpected case: no code and no signal
-              controller.error(new Error(`Bash script closed unexpectedly: ${stderr}`));
+              controller.error(
+                new Error(
+                  `Bash script closed unexpectedly:\n stdout: ${stdout}\n stderr: ${stderr}`,
+                ),
+              );
             }
           });
         } catch (error) {

@@ -1,5 +1,4 @@
 import { expect, spyOn, test } from "bun:test";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { AnthropicChatModel } from "@aigne/anthropic";
 import { isAgentResponseDelta, textDelta } from "@aigne/core";
@@ -125,7 +124,7 @@ test("AnthropicChatModel.invoke", async () => {
     )
     .mockReturnValueOnce(
       createMockEventStream({
-        path: join(import.meta.dirname, "anthropic-streaming-response-2.txt"),
+        path: join(import.meta.dirname, "anthropic-streaming-response-output-tool.txt"),
       }),
     );
 
@@ -170,20 +169,46 @@ test("AnthropicChatModel.invoke should pass system and messages to claude correc
     ],
   });
 
-  expect(stream.mock.calls).toEqual([
+  expect(stream.mock.calls).toMatchInlineSnapshot(`
     [
-      expect.objectContaining({
-        system: [
-          {
-            type: "text",
-            text: "You are a chatbot",
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [{ role: "user", content: "hello" }],
-      }),
-    ],
-  ]);
+      [
+        {
+          "max_tokens": 64000,
+          "messages": [
+            {
+              "content": [
+                {
+                  "cache_control": {
+                    "ttl": undefined,
+                    "type": "ephemeral",
+                  },
+                  "text": "hello",
+                  "type": "text",
+                },
+              ],
+              "role": "user",
+            },
+          ],
+          "model": "claude-3-7-sonnet-latest",
+          "stream": true,
+          "system": [
+            {
+              "cache_control": {
+                "ttl": undefined,
+                "type": "ephemeral",
+              },
+              "text": "You are a chatbot",
+              "type": "text",
+            },
+          ],
+          "temperature": undefined,
+          "tool_choice": undefined,
+          "tools": undefined,
+          "top_p": undefined,
+        },
+      ],
+    ]
+  `);
 });
 
 test("AnthropicChatModel.invoke should use system message as user message if messages is empty", async () => {
@@ -257,15 +282,15 @@ test("AnthropicChatModel.invoke without streaming", async () => {
   expect(result).toMatchSnapshot();
 });
 
-test("AnthropicChatModel should use tool to get json output directly if no tools input", async () => {
+test("AnthropicChatModel should use output tool for json_schema without tools input", async () => {
   const model = new AnthropicChatModel({
     apiKey: "YOUR_API_KEY",
   });
 
-  spyOn(model.client.messages, "create").mockReturnValueOnce(
-    JSON.parse(
-      await readFile(join(import.meta.dirname, "anthropic-structured-response-3.json"), "utf8"),
-    ),
+  spyOn(model.client.messages, "stream").mockReturnValueOnce(
+    createMockEventStream({
+      path: join(import.meta.dirname, "anthropic-streaming-response-output-tool.txt"),
+    }),
   );
 
   const result = await model.invoke({
@@ -311,14 +336,14 @@ What is the weather in New York?
   );
 });
 
-test("AnthropicChatModel should try parse text as json if there are both tools and json response format", async () => {
+test("AnthropicChatModel should use output tool for structured output when tools are present", async () => {
   const model = new AnthropicChatModel({
     apiKey: "YOUR_API_KEY",
   });
 
   spyOn(model.client.messages, "stream").mockReturnValueOnce(
     createMockEventStream({
-      path: join(import.meta.dirname, "anthropic-streaming-response-2.txt"),
+      path: join(import.meta.dirname, "anthropic-streaming-response-output-tool.txt"),
     }),
   );
 

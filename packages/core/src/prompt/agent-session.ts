@@ -2,8 +2,10 @@ import type { AFS, AFSEntry } from "@aigne/afs";
 import { AFSHistory } from "@aigne/afs-history";
 import { v7 } from "@aigne/uuid";
 import { joinURL } from "ufo";
+import { stringify } from "yaml";
 import type { AgentInvokeOptions } from "../agents/agent.js";
 import type { ChatModelInputMessage } from "../agents/chat-model.js";
+import { logger } from "../utils/logger.js";
 import { estimateTokens } from "../utils/token-estimator.js";
 import { isNonNullable } from "../utils/type-utils.js";
 import {
@@ -13,10 +15,21 @@ import {
   DEFAULT_COMPACT_MODE,
   DEFAULT_KEEP_RECENT_RATIO,
   DEFAULT_MAX_TOKENS,
+  DEFAULT_MEMORY_QUERY_LIMIT,
+  DEFAULT_MEMORY_RATIO,
+  DEFAULT_SESSION_MEMORY_ASYNC,
+  DEFAULT_SESSION_MEMORY_MODE,
+  DEFAULT_SESSION_MODE,
+  DEFAULT_USER_MEMORY_ASYNC,
+  DEFAULT_USER_MEMORY_MODE,
   type EntryContent,
+  type MemoryFact,
+  type SessionMemoryConfig,
+  type SessionMode,
+  type UserMemoryConfig,
 } from "./compact/types.js";
 
-export type { CompactConfig, CompactContent, EntryContent };
+export * from "./compact/types.js";
 
 export interface AgentSessionOptions {
   sessionId: string;
@@ -25,16 +38,43 @@ export interface AgentSessionOptions {
   afs?: AFS;
 
   /**
+   * Session mode
+   * - "auto": Enable history recording, compaction, and memory extraction
+   * - "disabled": Disable all session features (history, compaction, memory)
+   *
+   * **Should be "disabled" for internal utility agents** (extractors, compactors, etc.)
+   * to avoid recursive memory extraction and unnecessary overhead.
+   *
+   * @default DEFAULT_SESSION_MODE ("auto")
+   */
+  mode?: SessionMode;
+
+  /**
    * Compaction configuration
    */
   compact?: CompactConfig;
+
+  /**
+   * Session memory configuration
+   */
+  sessionMemory?: SessionMemoryConfig;
+
+  /**
+   * User memory configuration
+   */
+  userMemory?: UserMemoryConfig;
 }
 
 interface RuntimeState {
   systemMessages?: ChatModelInputMessage[];
-  compactSummary?: string;
+  sessionMemory?: AFSEntry<MemoryFact>[];
+  userMemory?: AFSEntry<MemoryFact>[];
+  historyCompact?: CompactContent;
   historyEntries: AFSEntry<EntryContent>[];
   currentEntry: EntryContent | null;
+  currentEntryCompact?: CompactContent & {
+    compressedCount: number;
+  };
 }
 
 export class AgentSession {
@@ -44,22 +84,38 @@ export class AgentSession {
 
   private afs?: AFS;
   private historyModulePath?: string;
+  private mode: SessionMode;
   private compactConfig: CompactConfig;
+  private sessionMemoryConfig: SessionMemoryConfig;
+  private userMemoryConfig: UserMemoryConfig;
   private runtimeState: RuntimeState;
   private initialized?: Promise<void>;
   private compactionPromise?: Promise<void>;
+  private sessionMemoryUpdatePromise?: Promise<void>;
+  private userMemoryUpdatePromise?: Promise<void>;
 
   constructor(options: AgentSessionOptions) {
     this.sessionId = options.sessionId;
     this.userId = options.userId;
     this.agentId = options.agentId;
     this.afs = options.afs;
+    this.mode = options.mode ?? DEFAULT_SESSION_MODE;
     this.compactConfig = options.compact ?? {};
+    this.sessionMemoryConfig = options.sessionMemory ?? {};
+    this.userMemoryConfig = options.userMemory ?? {};
 
     this.runtimeState = {
       historyEntries: [],
       currentEntry: null,
     };
+  }
+
+  /**
+   * Check if memory extraction is enabled
+   * Memory extraction requires mode to be "auto" AND AFS history module to be available
+   */
+  private get isMemoryEnabled(): boolean {
+    return this.mode === "auto" && !!this.afs && !!this.historyModulePath;
   }
 
   async setSystemMessages(...messages: ChatModelInputMessage[]): Promise<void> {
@@ -71,31 +127,173 @@ export class AgentSession {
   async getMessages(): Promise<ChatModelInputMessage[]> {
     await this.ensureInitialized();
 
-    const { systemMessages, compactSummary, historyEntries, currentEntry } = this.runtimeState;
+    const {
+      systemMessages,
+      userMemory,
+      sessionMemory,
+      historyCompact,
+      historyEntries,
+      currentEntry,
+      currentEntryCompact,
+    } = this.runtimeState;
+
+    let currentMessages: ChatModelInputMessage[] = [];
+    if (currentEntry?.messages?.length) {
+      if (currentEntryCompact) {
+        const { compressedCount, summary } = currentEntryCompact;
+
+        const summaryMessage = {
+          role: "user" as const,
+          content: `[Earlier messages in this conversation (${compressedCount} messages compressed)]\n${summary}`,
+        };
+        const remainingMessages = currentEntry.messages.slice(compressedCount);
+
+        currentMessages = [summaryMessage, ...remainingMessages];
+      } else {
+        currentMessages = currentEntry.messages;
+      }
+    }
+
+    // Flatten history entries messages once
+    const historyMessages = historyEntries.flatMap((entry) => entry.content?.messages ?? []);
+
+    // Check if there's an Agent Skill in current uncompressed messages
+    const hasSkillInCurrentMessages = [...historyMessages, ...currentMessages].some(
+      (msg) =>
+        msg.role === "user" &&
+        Array.isArray(msg.content) &&
+        msg.content.some((block) => block.type === "text" && block.isAgentSkill === true),
+    );
+
+    // Prefer currentEntryCompact's lastAgentSkill over historyCompact's (newer takes priority)
+    const lastAgentSkillToInject =
+      currentEntryCompact?.lastAgentSkill ?? historyCompact?.lastAgentSkill;
 
     const messages = [
       ...(systemMessages ?? []),
-      ...(compactSummary
+      ...(userMemory && userMemory.length > 0 ? [this.formatUserMemory(userMemory)] : []),
+      ...(sessionMemory && sessionMemory.length > 0
+        ? [this.formatSessionMemory(sessionMemory)]
+        : []),
+      ...(historyCompact?.summary
         ? [
             {
               role: "system" as const,
-              content: `Previous conversation summary:\n${compactSummary}`,
+              content: `Previous conversation summary:\n${historyCompact.summary}`,
             },
           ]
         : []),
-      ...historyEntries.flatMap((entry) => entry.content?.messages ?? []),
-      ...(currentEntry?.messages ?? []),
+      // Only inject lastAgentSkill if there's no skill in current messages
+      ...(lastAgentSkillToInject && !hasSkillInCurrentMessages
+        ? [
+            {
+              role: "user" as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: lastAgentSkillToInject.content,
+                },
+              ],
+            },
+          ]
+        : []),
+      ...historyMessages,
+      ...currentMessages,
     ];
 
-    // Filter out thinking messages from content
-    return messages.map((msg) => {
-      if (!msg.content || typeof msg.content === "string") {
-        return msg;
+    // Filter out thinking messages and truncate large messages
+    return messages
+      .map((msg) => {
+        if (!msg.content || typeof msg.content === "string") {
+          return msg;
+        }
+        // Filter out thinking from UnionContent[]
+        const filteredContent = msg.content.filter((c) => !(c.type === "text" && c.isThinking));
+        if (filteredContent.length === 0) return null;
+        return { ...msg, content: filteredContent };
+      })
+      .filter(isNonNullable)
+      .map((msg) => this.truncateLargeMessage(msg));
+  }
+
+  /**
+   * Format user memory facts into a system message
+   * Applies token budget limit to ensure memory injection fits within constraints
+   */
+  private formatUserMemory(memoryEntries: AFSEntry<MemoryFact>[]): ChatModelInputMessage {
+    const memoryRatio = this.userMemoryConfig.memoryRatio ?? DEFAULT_MEMORY_RATIO;
+    const maxTokens = Math.floor(
+      (this.compactConfig.maxTokens ?? DEFAULT_MAX_TOKENS) * memoryRatio,
+    );
+    const header = "[User Memory Facts]";
+    let currentTokens = estimateTokens(header);
+
+    const facts: string[] = [];
+
+    for (const entry of memoryEntries) {
+      const fact = entry.content?.fact;
+      if (!fact) continue;
+
+      const factTokens = estimateTokens(fact);
+
+      // Check if adding this fact would exceed token budget
+      if (currentTokens + factTokens > maxTokens) {
+        break; // Stop adding facts
       }
-      // Filter out thinking from UnionContent[]
-      const filteredContent = msg.content.filter((c) => !(c.type === "text" && c.isThinking));
-      return { ...msg, content: filteredContent.length > 0 ? filteredContent : undefined };
-    });
+
+      facts.push(fact);
+      currentTokens += factTokens;
+    }
+
+    return {
+      role: "system",
+      content: this.formatMemoryTemplate({ header, data: facts }),
+    };
+  }
+
+  /**
+   * Format session memory facts into a system message
+   * Applies token budget limit to ensure memory injection fits within constraints
+   */
+  private formatSessionMemory(memoryEntries: AFSEntry<MemoryFact>[]): ChatModelInputMessage {
+    const memoryRatio = this.sessionMemoryConfig.memoryRatio ?? DEFAULT_MEMORY_RATIO;
+    const maxTokens = Math.floor(
+      (this.compactConfig.maxTokens ?? DEFAULT_MAX_TOKENS) * memoryRatio,
+    );
+    const header = "[Session Memory Facts]";
+    let currentTokens = estimateTokens(header);
+
+    const facts: string[] = [];
+
+    for (const entry of memoryEntries) {
+      const fact = entry.content?.fact;
+      if (!fact) continue;
+
+      const factTokens = estimateTokens(fact);
+
+      // Check if adding this fact would exceed token budget
+      if (currentTokens + factTokens > maxTokens) {
+        break; // Stop adding facts
+      }
+
+      facts.push(fact);
+      currentTokens += factTokens;
+    }
+
+    return {
+      role: "system",
+      content: this.formatMemoryTemplate({ header, data: facts }),
+    };
+  }
+
+  private formatMemoryTemplate({ header, data }: { header: string; data: unknown }): string {
+    return `\
+${header}
+
+${"```yaml"}
+${stringify(data)}
+${"```"}
+`;
   }
 
   async startMessage(
@@ -105,16 +303,24 @@ export class AgentSession {
   ): Promise<void> {
     await this.ensureInitialized();
 
-    await this.maybeAutoCompact(options);
+    // Only run compact if mode is not disabled
+    if (this.mode !== "disabled") {
+      await this.maybeAutoCompact(options);
 
-    // Always wait for compaction to complete before starting a new message
-    // This ensures data consistency even in async compact mode
-    if (this.compactionPromise) await this.compactionPromise;
+      // Always wait for compaction to complete before starting a new message
+      // This ensures data consistency even in async compact mode
+      if (this.compactionPromise) await this.compactionPromise;
+    }
 
+    this.runtimeState.currentEntryCompact = undefined;
     this.runtimeState.currentEntry = { input, messages: [message] };
   }
 
-  async endMessage(output: unknown, options: AgentInvokeOptions): Promise<void> {
+  async endMessage(
+    output: unknown,
+    message: ChatModelInputMessage | undefined,
+    options: AgentInvokeOptions,
+  ): Promise<void> {
     await this.ensureInitialized();
 
     if (
@@ -124,13 +330,15 @@ export class AgentSession {
       throw new Error("No current entry to end. Call startMessage() first.");
     }
 
+    if (message) this.runtimeState.currentEntry.messages.push(message);
     this.runtimeState.currentEntry.output = output;
 
     let newEntry: AFSEntry<EntryContent>;
 
-    if (this.afs && this.historyModulePath) {
+    // Only persist to AFS if mode is not disabled
+    if (this.mode !== "disabled" && this.afs && this.historyModulePath) {
       newEntry = (
-        await this.afs.write(joinURL(this.historyModulePath, "new"), {
+        await this.afs.write(joinURL(this.historyModulePath, "by-session", this.sessionId, "new"), {
           userId: this.userId,
           sessionId: this.sessionId,
           agentId: this.agentId,
@@ -138,6 +346,7 @@ export class AgentSession {
         })
       ).data;
     } else {
+      // Create in-memory entry for runtime state
       const id = v7();
 
       newEntry = {
@@ -152,9 +361,17 @@ export class AgentSession {
 
     this.runtimeState.historyEntries.push(newEntry);
     this.runtimeState.currentEntry = null;
+    this.runtimeState.currentEntryCompact = undefined;
 
-    // Check if auto-compact should be triggered
-    await this.maybeAutoCompact(options);
+    // Only run compact and memory extraction if mode is not disabled
+    if (this.mode !== "disabled") {
+      await Promise.all([
+        // Check if auto-compact should be triggered
+        this.maybeAutoCompact(options),
+        // Check if auto-update session memory should be triggered
+        this.maybeAutoUpdateSessionMemory(options),
+      ]);
+    }
   }
 
   /**
@@ -173,14 +390,16 @@ export class AgentSession {
       this.compactionPromise = undefined;
     });
 
-    return this.compactionPromise;
+    const isAsync = this.compactConfig.async ?? DEFAULT_COMPACT_ASYNC;
+
+    if (!isAsync) await this.compactionPromise;
   }
 
   /**
    * Internal method that performs the actual compaction
    */
   private async doCompact(options: AgentInvokeOptions): Promise<void> {
-    const { compactor, keepRecentRatio } = this.compactConfig ?? {};
+    const { compactor } = this.compactConfig ?? {};
     if (!compactor) {
       throw new Error("Cannot compact without a compactor agent configured.");
     }
@@ -188,28 +407,20 @@ export class AgentSession {
     const historyEntries = this.runtimeState.historyEntries;
     if (historyEntries.length === 0) return;
 
-    // Calculate token budget for keeping recent messages
-    const ratio = keepRecentRatio ?? DEFAULT_KEEP_RECENT_RATIO;
-    const maxTokens = this.compactConfig?.maxTokens ?? DEFAULT_MAX_TOKENS;
-    let keepTokenBudget = Math.floor(maxTokens * ratio);
+    const maxTokens = this.maxTokens;
 
-    // Calculate tokens for system messages
-    const systemTokens = (this.runtimeState.systemMessages ?? []).reduce((sum, msg) => {
-      const content =
-        typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content ?? "");
-      return sum + estimateTokens(content);
-    }, 0);
-
-    // Calculate tokens for current entry messages
-    const currentTokens = (this.runtimeState.currentEntry?.messages ?? []).reduce((sum, msg) => {
-      const content =
-        typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content ?? "");
-      return sum + estimateTokens(content);
-    }, 0);
-
-    // Subtract system and current tokens from budget
-    // This ensures total tokens (system + current + kept history) stays within ratio budget
-    keepTokenBudget = Math.max(0, keepTokenBudget - systemTokens - currentTokens);
+    // Target to keep only 50% of keepRecentTokens to leave buffer room
+    // This avoids triggering compression again shortly after compaction
+    // Similar to compactCurrentEntry, we compress more aggressively to leave headroom
+    //
+    // Note: We don't subtract systemTokens or currentEntry tokens because:
+    // 1. keepRecentTokens is already a relative ratio (e.g., 50% of maxTokens)
+    // 2. systemTokens overhead is typically small (~1-2k, ~1-2% of maxTokens)
+    // 3. currentEntry is still being constructed (not yet added to history)
+    // 4. In tool use scenarios, currentEntry can be very large (many tool calls)
+    // 5. Subtracting them would complicate logic without significant benefit
+    // 6. Total token limit is enforced by maybeAutoCompact trigger condition
+    const keepRecentTokens = this.keepRecentTokens * 0.5;
 
     // Find split point by iterating backwards from most recent entry
     // The split point divides history into: [compact] | [keep]
@@ -223,7 +434,7 @@ export class AgentSession {
       const entryTokens = this.estimateMessagesTokens(entry.content?.messages ?? []);
 
       // Check if adding this entry would exceed token budget
-      if (accumulatedTokens + entryTokens > keepTokenBudget) {
+      if (accumulatedTokens + entryTokens > keepRecentTokens) {
         // Would exceed budget, split here (this entry and earlier ones will be compacted)
         splitIndex = i + 1;
         break;
@@ -250,14 +461,33 @@ export class AgentSession {
     const batches = this.splitIntoBatches(entriesToCompact, maxTokens);
 
     // Process batches incrementally, each summary becomes input for the next
-    let currentSummary = this.runtimeState.compactSummary;
+    let currentSummary = this.runtimeState.historyCompact?.summary;
     for (const batch of batches) {
+      const messages = batch
+        .flatMap((e) => e.content?.messages ?? [])
+        .filter(isNonNullable)
+        .map((msg) => this.truncateLargeMessage(msg));
+
       const result = await options.context.invoke(compactor, {
         previousSummary: [currentSummary].filter(isNonNullable),
-        messages: batch.flatMap((e) => e.content?.messages ?? []).filter(isNonNullable),
+        messages,
       });
       currentSummary = result.summary;
     }
+
+    // Extract last Agent Skill from entries to compact
+    let lastAgentSkill = this.findLastAgentSkill(entriesToCompact);
+
+    // If no skill found in entries to compact, inherit from previous compact
+    if (!lastAgentSkill && this.runtimeState.historyCompact?.lastAgentSkill) {
+      lastAgentSkill = this.runtimeState.historyCompact.lastAgentSkill;
+    }
+
+    // Create compact content
+    const historyCompact: CompactContent = {
+      summary: currentSummary ?? "",
+      lastAgentSkill,
+    };
 
     // Write compact entry to AFS
     if (this.afs && this.historyModulePath) {
@@ -266,7 +496,7 @@ export class AgentSession {
         {
           userId: this.userId,
           agentId: this.agentId,
-          content: { summary: currentSummary },
+          content: historyCompact,
           metadata: {
             latestEntryId: latestCompactedEntry.id,
           },
@@ -275,44 +505,172 @@ export class AgentSession {
     }
 
     // Update runtime state: keep the summary and recent entries
-    this.runtimeState.compactSummary = currentSummary;
+    this.runtimeState.historyCompact = historyCompact;
     this.runtimeState.historyEntries = entriesToKeep;
+  }
+
+  private async compactCurrentEntry(options: AgentInvokeOptions): Promise<void> {
+    const { compactor } = this.compactConfig ?? {};
+    if (!compactor) return;
+
+    const currentEntry = this.runtimeState.currentEntry;
+    if (!currentEntry?.messages?.length) return;
+
+    const alreadyCompressedCount = this.runtimeState.currentEntryCompact?.compressedCount ?? 0;
+    const uncompressedMessages = currentEntry.messages.slice(alreadyCompressedCount);
+
+    if (uncompressedMessages.length === 0) return;
+
+    // Target to keep only 50% of keepTokenBudget to leave buffer room
+    // This avoids frequent small-batch compressions in tool use scenarios
+    const keepTokenBudget = this.keepRecentTokens * 0.5;
+
+    let splitIndex = uncompressedMessages.length;
+    let accumulatedTokens = 0;
+
+    for (let i = uncompressedMessages.length - 1; i >= 0; i--) {
+      const msg = uncompressedMessages[i];
+      if (!msg) continue;
+
+      const msgTokens = this.estimateMessagesTokens([msg]);
+
+      if (accumulatedTokens + msgTokens > keepTokenBudget) {
+        splitIndex = i + 1;
+        break;
+      }
+
+      accumulatedTokens += msgTokens;
+      splitIndex = i;
+    }
+
+    const keptMessages = uncompressedMessages.slice(splitIndex);
+    const requiredToolCallIds = new Set<string>();
+
+    for (const msg of keptMessages) {
+      if (msg.role === "tool" && msg.toolCallId) {
+        requiredToolCallIds.add(msg.toolCallId);
+      }
+    }
+
+    if (requiredToolCallIds.size > 0) {
+      for (let i = splitIndex - 1; i >= 0; i--) {
+        const msg = uncompressedMessages[i];
+        if (!msg?.toolCalls) continue;
+
+        for (const toolCall of msg.toolCalls) {
+          if (requiredToolCallIds.has(toolCall.id)) {
+            splitIndex = i;
+            break;
+          }
+        }
+      }
+    }
+
+    const messagesToCompact = uncompressedMessages
+      .slice(0, splitIndex)
+      .map((msg) => this.truncateLargeMessage(msg));
+
+    if (messagesToCompact.length === 0) return;
+
+    const result = await options.context.invoke(compactor, {
+      previousSummary: this.runtimeState.currentEntryCompact?.summary
+        ? [this.runtimeState.currentEntryCompact.summary]
+        : undefined,
+      messages: messagesToCompact,
+    });
+
+    // Find last Agent Skill from messages being compacted
+    const lastAgentSkill =
+      this.findLastAgentSkillFromMessages(messagesToCompact) ??
+      this.runtimeState.currentEntryCompact?.lastAgentSkill;
+
+    this.runtimeState.currentEntryCompact = {
+      summary: result.summary,
+      lastAgentSkill,
+      compressedCount: alreadyCompressedCount + messagesToCompact.length,
+    };
+  }
+
+  private async maybeCompactCurrentEntry(options: AgentInvokeOptions): Promise<void> {
+    const currentEntry = this.runtimeState.currentEntry;
+    if (!currentEntry?.messages?.length) return;
+
+    const compressedCount = this.runtimeState.currentEntryCompact?.compressedCount ?? 0;
+    const uncompressedMessages = currentEntry.messages.slice(compressedCount);
+
+    const threshold = this.keepRecentTokens;
+    const currentTokens = this.estimateMessagesTokens(uncompressedMessages);
+
+    if (currentTokens > threshold) {
+      await this.compactCurrentEntry(options);
+    }
   }
 
   private async maybeAutoCompact(options: AgentInvokeOptions): Promise<void> {
     if (this.compactionPromise) await this.compactionPromise;
 
-    if (!this.compactConfig) return;
-
-    // Check if compaction is disabled
     const mode = this.compactConfig.mode ?? DEFAULT_COMPACT_MODE;
     if (mode === "disabled") return;
 
     const { compactor } = this.compactConfig;
-    const maxTokens = this.compactConfig.maxTokens ?? DEFAULT_MAX_TOKENS;
-
     if (!compactor) return;
 
-    const currentTokens = this.estimateMessagesTokens(await this.getMessages());
+    const maxTokens = this.maxTokens;
+
+    const messages = await this.getMessages();
+    const currentTokens = this.estimateMessagesTokens(messages);
 
     if (currentTokens >= maxTokens) {
-      this.compact(options);
-
-      const isAsync = this.compactConfig.async ?? DEFAULT_COMPACT_ASYNC;
-
-      if (!isAsync) await this.compactionPromise;
+      await this.compact(options);
     }
   }
 
   /**
-   * Estimate token count for an array of messages
+   * Estimate token count for messages
+   * Applies singleMessageLimit to each text block individually
+   * Non-text tokens (images, tool calls) are always counted in full
    */
-  private estimateMessagesTokens(messages: ChatModelInputMessage[]): number {
-    return messages.reduce((sum, msg) => {
-      const content =
-        typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content ?? "");
-      return sum + estimateTokens(content);
-    }, 0);
+  private estimateMessagesTokens(
+    messages: ChatModelInputMessage[],
+    singleMessageLimit: number = this.singleMessageLimit,
+  ): number {
+    let totalTokens = 0;
+
+    for (const msg of messages) {
+      // 1. Estimate content tokens
+      if (typeof msg.content === "string") {
+        const textTokens = estimateTokens(msg.content);
+        const effectiveTokens = textTokens > singleMessageLimit ? singleMessageLimit : textTokens;
+        totalTokens += effectiveTokens;
+      } else if (Array.isArray(msg.content)) {
+        for (const block of msg.content) {
+          if (block.type === "text" && typeof block.text === "string") {
+            // Text tokens (can be truncated) - apply limit to each block individually
+            const textTokens = estimateTokens(block.text);
+            const effectiveTokens =
+              textTokens > singleMessageLimit ? singleMessageLimit : textTokens;
+            totalTokens += effectiveTokens;
+          } else {
+            // Non-text blocks - always counted in full
+            totalTokens += 1000;
+          }
+        }
+      }
+
+      // 2. Estimate tool calls tokens (cannot be truncated)
+      if (msg.toolCalls && msg.toolCalls.length > 0) {
+        for (const toolCall of msg.toolCalls) {
+          // Function name + arguments + overhead
+          totalTokens += estimateTokens(toolCall.function.name);
+          totalTokens += estimateTokens(
+            stringify(toolCall.function.arguments).replace(/\s+/g, " "),
+          );
+          totalTokens += 10; // Structure overhead
+        }
+      }
+    }
+
+    return totalTokens;
   }
 
   /**
@@ -349,14 +707,80 @@ export class AgentSession {
     return batches;
   }
 
-  async appendCurrentMessages(...messages: ChatModelInputMessage[]): Promise<void> {
+  async appendCurrentMessages(
+    messages: ChatModelInputMessage | ChatModelInputMessage[],
+    options: AgentInvokeOptions,
+  ): Promise<void> {
     await this.ensureInitialized();
 
     if (!this.runtimeState.currentEntry || !this.runtimeState.currentEntry.messages?.length) {
       throw new Error("No current entry to append messages. Call startMessage() first.");
     }
 
-    this.runtimeState.currentEntry.messages.push(...messages);
+    this.runtimeState.currentEntry.messages.push(...[messages].flat());
+
+    await this.maybeCompactCurrentEntry(options);
+  }
+
+  /**
+   * Truncate text content to fit within target token limit
+   * @param text The text to truncate
+   * @param currentTokens Current token count of the text
+   * @param targetTokens Target token count after truncation
+   * @returns Truncated text
+   */
+  private truncateText(text: string, currentTokens: number, targetTokens: number): string {
+    if (currentTokens <= targetTokens) return text;
+
+    const keepRatio = (targetTokens / currentTokens) * 0.9;
+    const keepLength = Math.floor(text.length * keepRatio);
+    const headLength = Math.floor(keepLength * 0.7);
+    const tailLength = Math.floor(keepLength * 0.3);
+
+    return (
+      text.slice(0, headLength) +
+      `\n\n[... truncated ${currentTokens - targetTokens} tokens ...]\n\n` +
+      text.slice(-tailLength)
+    );
+  }
+
+  private truncateLargeMessage(msg: ChatModelInputMessage): ChatModelInputMessage {
+    const singleMessageLimit = this.singleMessageLimit;
+
+    // Handle string content
+    if (typeof msg.content === "string") {
+      const tokens = estimateTokens(msg.content);
+      if (tokens <= singleMessageLimit) return msg;
+
+      const truncated = this.truncateText(msg.content, tokens, singleMessageLimit);
+      return { ...msg, content: truncated };
+    }
+
+    // Handle array content (UnionContent[])
+    if (Array.isArray(msg.content)) {
+      // Truncate each text block individually if it exceeds the limit
+      const truncatedContent = msg.content.map((block) => {
+        // Keep non-text blocks unchanged
+        if (block.type !== "text" || typeof block.text !== "string") {
+          return block;
+        }
+
+        // Check if this text block needs truncation
+        const blockTokens = estimateTokens(block.text);
+        if (blockTokens <= singleMessageLimit) {
+          return block;
+        }
+
+        // Truncate this text block independently
+        const truncatedText = this.truncateText(block.text, blockTokens, singleMessageLimit);
+        return { ...block, text: truncatedText };
+      });
+
+      return { ...msg, content: truncatedContent };
+    }
+
+    // Unknown content type, return as-is
+    return msg;
   }
 
   private async ensureInitialized(): Promise<void> {
@@ -368,6 +792,8 @@ export class AgentSession {
     if (this.initialized) return;
 
     await this.initializeDefaultCompactor();
+    await this.initializeDefaultSessionMemoryExtractor();
+    await this.initializeDefaultUserMemoryExtractor();
 
     const historyModule = (await this.afs?.listModules())?.find(
       (m) => m.module instanceof AFSHistory,
@@ -376,53 +802,527 @@ export class AgentSession {
     this.historyModulePath = historyModule?.path;
 
     if (this.afs && this.historyModulePath) {
-      // Load latest compact entry if exists
-      const compactPath = joinURL(
-        this.historyModulePath,
-        "by-session",
-        this.sessionId,
-        "@metadata/compact",
-      );
+      // Load user memory, session memory, and session history in parallel
+      const [userMemory, sessionMemory, sessionHistory] = await Promise.all([
+        this.loadUserMemory(),
+        this.loadSessionMemory(),
+        this.loadSessionHistory(),
+      ]);
 
-      const compactResult = await this.afs.list(compactPath, {
-        filter: { userId: this.userId, agentId: this.agentId },
+      // Update runtime state with loaded data
+      this.runtimeState.userMemory = userMemory;
+      this.runtimeState.sessionMemory = sessionMemory;
+      this.runtimeState.historyCompact = sessionHistory.historyCompact;
+      this.runtimeState.historyEntries = sessionHistory.historyEntries;
+    }
+  }
+
+  /**
+   * Load session memory facts
+   * @returns Array of memory fact entries for the current session
+   */
+  private async loadSessionMemory(): Promise<AFSEntry<MemoryFact>[]> {
+    if (!this.afs || !this.historyModulePath) return [];
+
+    // Check if session memory is disabled
+    const mode = this.sessionMemoryConfig.mode ?? DEFAULT_SESSION_MEMORY_MODE;
+    if (mode === "disabled") return [];
+
+    const sessionMemoryPath = joinURL(
+      this.historyModulePath,
+      "by-session",
+      this.sessionId,
+      "@metadata/memory",
+    );
+
+    const queryLimit = this.sessionMemoryConfig.queryLimit ?? DEFAULT_MEMORY_QUERY_LIMIT;
+
+    const memoryResult = await this.afs.list(sessionMemoryPath, {
+      filter: { userId: this.userId, agentId: this.agentId },
+      orderBy: [["updatedAt", "desc"]],
+      limit: queryLimit,
+    });
+
+    // Filter out entries without content
+    const facts = memoryResult.data
+      .reverse()
+      .filter((entry: AFSEntry) => isNonNullable(entry.content)) as AFSEntry<MemoryFact>[];
+
+    return facts;
+  }
+
+  /**
+   * Load user memory facts
+   * @returns Array of memory fact entries for the current user
+   */
+  private async loadUserMemory(): Promise<AFSEntry<MemoryFact>[]> {
+    if (!this.afs || !this.historyModulePath || !this.userId) return [];
+
+    // Check if user memory is disabled
+    const mode = this.userMemoryConfig.mode ?? DEFAULT_USER_MEMORY_MODE;
+    if (mode === "disabled") return [];
+
+    const userMemoryPath = joinURL(
+      this.historyModulePath,
+      "by-user",
+      this.userId,
+      "@metadata/memory",
+    );
+
+    const queryLimit = this.userMemoryConfig.queryLimit ?? DEFAULT_MEMORY_QUERY_LIMIT;
+
+    const memoryResult = await this.afs.list(userMemoryPath, {
+      filter: { userId: this.userId, agentId: this.agentId },
+      orderBy: [["updatedAt", "desc"]],
+      limit: queryLimit,
+    });
+
+    // Filter out entries without content
+    const facts = memoryResult.data
+      .reverse()
+      .filter((entry: AFSEntry) => isNonNullable(entry.content)) as AFSEntry<MemoryFact>[];
+
+    return facts;
+  }
+
+  /**
+   * Load session history including compact content and history entries
+   * @returns Object containing history compact and history entries
+   */
+  private async loadSessionHistory(): Promise<{
+    historyCompact?: CompactContent;
+    historyEntries: AFSEntry<EntryContent>[];
+  }> {
+    if (!this.afs || !this.historyModulePath) {
+      return { historyEntries: [] };
+    }
+
+    // Load latest compact entry if exists
+    const compactPath = joinURL(
+      this.historyModulePath,
+      "by-session",
+      this.sessionId,
+      "@metadata/compact",
+    );
+
+    const compactResult = await this.afs.list(compactPath, {
+      filter: { userId: this.userId, agentId: this.agentId },
+      orderBy: [["createdAt", "desc"]],
+      limit: 1,
+    });
+
+    const latestCompact = compactResult.data[0] as
+      | (AFSEntry & { content?: CompactContent; metadata?: { latestEntryId?: string } })
+      | undefined;
+
+    const historyCompact = latestCompact?.content;
+
+    // Load history entries (after compact point if exists)
+    const afsEntries: AFSEntry[] = (
+      await this.afs.list(joinURL(this.historyModulePath, "by-session", this.sessionId), {
+        filter: {
+          userId: this.userId,
+          agentId: this.agentId,
+          // Only load entries after the latest compact
+          after: latestCompact?.createdAt?.toISOString(),
+        },
         orderBy: [["createdAt", "desc"]],
-        limit: 1,
+        // Set a very large limit to load all history entries
+        // The default limit is 10 which would cause history truncation
+        limit: 10000,
+      })
+    ).data;
+
+    const historyEntries = afsEntries.reverse().filter((entry) => isNonNullable(entry.content));
+
+    return {
+      historyCompact,
+      historyEntries,
+    };
+  }
+
+  /**
+   * Manually trigger session memory update
+   */
+  async updateSessionMemory(options: AgentInvokeOptions): Promise<void> {
+    await this.ensureInitialized();
+
+    this.sessionMemoryUpdatePromise ??= this.doUpdateSessionMemory(options)
+      .then(() => {
+        // After session memory update succeeds, potentially trigger user memory consolidation
+        this.maybeAutoUpdateUserMemory(options).catch((err) => {
+          logger.error("User memory update failed:", err);
+        });
+      })
+      .finally(() => {
+        this.sessionMemoryUpdatePromise = undefined;
       });
 
-      const latestCompact = compactResult.data[0] as
-        | (AFSEntry & { content?: CompactContent; metadata?: { latestEntryId?: string } })
-        | undefined;
+    return this.sessionMemoryUpdatePromise;
+  }
 
-      if (latestCompact?.content?.summary) {
-        this.runtimeState.compactSummary = latestCompact.content.summary;
+  private async maybeAutoUpdateSessionMemory(options: AgentInvokeOptions): Promise<void> {
+    // Check if memory extraction is enabled (requires AFS history module)
+    if (!this.isMemoryEnabled) return;
+
+    // Check if mode is disabled
+    const mode = this.sessionMemoryConfig.mode ?? DEFAULT_SESSION_MEMORY_MODE;
+    if (mode === "disabled") return;
+
+    // Trigger session memory update
+    this.updateSessionMemory(options).catch((err) => {
+      logger.error("Session memory update failed:", err);
+    });
+
+    const isAsync = this.sessionMemoryConfig.async ?? DEFAULT_SESSION_MEMORY_ASYNC;
+
+    if (!isAsync) await this.sessionMemoryUpdatePromise;
+  }
+
+  private async maybeAutoUpdateUserMemory(options: AgentInvokeOptions): Promise<void> {
+    // Check if memory extraction is enabled (requires AFS history module)
+    if (!this.isMemoryEnabled || !this.userId) return;
+
+    // Check if mode is disabled
+    const mode = this.userMemoryConfig.mode ?? DEFAULT_USER_MEMORY_MODE;
+    if (mode === "disabled") return;
+
+    // Trigger user memory consolidation
+    this.updateUserMemory(options).catch((err) => {
+      logger.error("User memory update failed:", err);
+    });
+
+    const isAsync = this.userMemoryConfig.async ?? DEFAULT_USER_MEMORY_ASYNC;
+
+    if (!isAsync) await this.userMemoryUpdatePromise;
+  }
+
+  /**
+   * Internal method that performs the actual session memory update
+   */
+  private async doUpdateSessionMemory(options: AgentInvokeOptions): Promise<void> {
+    const { extractor } = this.sessionMemoryConfig ?? {};
+    if (!extractor) {
+      throw new Error("Cannot update session memory without an extractor agent configured.");
+    }
+
+    // Get latestEntryId from the most recent memory entry's metadata
+    // This tells us which history entries have already been processed
+    const latestEntryId = this.runtimeState.sessionMemory?.at(-1)?.metadata?.latestEntryId as
+      | string
+      | undefined;
+
+    // Filter unextracted entries based on latestEntryId
+    // Similar to compact mechanism, we find the position of the last extracted entry
+    // and only process entries after that point
+    const lastExtractedIndex = latestEntryId
+      ? this.runtimeState.historyEntries.findIndex((e) => e.id === latestEntryId)
+      : -1;
+
+    const unextractedEntries =
+      lastExtractedIndex >= 0
+        ? this.runtimeState.historyEntries.slice(lastExtractedIndex + 1)
+        : this.runtimeState.historyEntries;
+
+    if (unextractedEntries.length === 0) return;
+
+    // Get recent conversation messages for extraction
+    const recentMessages = unextractedEntries
+      .flatMap((entry) => entry.content?.messages ?? [])
+      .filter(isNonNullable);
+
+    if (recentMessages.length === 0) return;
+
+    // Get existing session memory facts for context
+    const existingFacts =
+      this.runtimeState.sessionMemory?.map((entry) => entry.content).filter(isNonNullable) ?? [];
+
+    // Get user memory facts to avoid duplication
+    const existingUserFacts =
+      this.runtimeState.userMemory?.map((entry) => entry.content).filter(isNonNullable) ?? [];
+
+    // Extract new facts from conversation
+    const result = await options.context.invoke(extractor, {
+      existingUserFacts,
+      existingFacts,
+      messages: recentMessages,
+    });
+
+    // If no changes, nothing to do
+    if (!result.newFacts.length && !result.removeFacts?.length) {
+      return;
+    }
+
+    // Get the last entry to record its ID for metadata
+    const latestExtractedEntry = unextractedEntries.at(-1);
+
+    if (this.afs && this.historyModulePath) {
+      // Handle fact removal
+      if (result.removeFacts?.length && this.runtimeState.sessionMemory) {
+        const entriesToRemove: AFSEntry<MemoryFact>[] = [];
+
+        for (const label of result.removeFacts) {
+          const entry = this.runtimeState.sessionMemory.find((e) => e.content?.label === label);
+          if (entry) entriesToRemove.push(entry);
+        }
+
+        // Remove from AFS storage and runtime state
+        for (const entryToRemove of entriesToRemove) {
+          // Delete from AFS storage
+          const memoryEntryPath = joinURL(
+            this.historyModulePath,
+            "by-session",
+            this.sessionId,
+            "@metadata/memory",
+            entryToRemove.id,
+          );
+          await this.afs.delete(memoryEntryPath);
+
+          // Remove from runtime state
+          const index = this.runtimeState.sessionMemory.indexOf(entryToRemove);
+          if (index !== -1) {
+            this.runtimeState.sessionMemory.splice(index, 1);
+          }
+        }
       }
 
-      // Load history entries (after compact point if exists)
-      const afsEntries: AFSEntry[] = (
-        await this.afs.list(joinURL(this.historyModulePath, "by-session", this.sessionId), {
-          filter: {
+      // Handle new facts
+      if (result.newFacts.length) {
+        const sessionMemoryPath = joinURL(
+          this.historyModulePath,
+          "by-session",
+          this.sessionId,
+          "@metadata/memory/new",
+        );
+
+        for (const fact of result.newFacts) {
+          const newEntry = await this.afs.write(sessionMemoryPath, {
+            userId: this.userId,
+            sessionId: this.sessionId,
+            agentId: this.agentId,
+            content: fact,
+            metadata: {
+              latestEntryId: latestExtractedEntry?.id,
+            },
+          });
+
+          // Add to runtime state
+          this.runtimeState.sessionMemory ??= [];
+          this.runtimeState.sessionMemory.push(newEntry.data);
+        }
+      }
+    }
+  }
+
+  /**
+   * Manually trigger user memory update
+   */
+  async updateUserMemory(options: AgentInvokeOptions): Promise<void> {
+    await this.ensureInitialized();
+
+    // Start new user memory update task
+    this.userMemoryUpdatePromise ??= this.doUpdateUserMemory(options).finally(() => {
+      this.userMemoryUpdatePromise = undefined;
+    });
+
+    return this.userMemoryUpdatePromise;
+  }
+
+  /**
+   * Internal method that performs the actual user memory extraction
+   */
+  private async doUpdateUserMemory(options: AgentInvokeOptions): Promise<void> {
+    const { extractor } = this.userMemoryConfig ?? {};
+    if (!extractor) {
+      throw new Error("Cannot update user memory without an extractor agent configured.");
+    }
+
+    // Get session memory facts as the source for consolidation
+    const sessionFacts =
+      this.runtimeState.sessionMemory?.map((entry) => entry.content).filter(isNonNullable) ?? [];
+
+    if (sessionFacts.length === 0) return;
+
+    // Get existing user memory facts for context and deduplication
+    const existingUserFacts =
+      this.runtimeState.userMemory?.map((entry) => entry.content).filter(isNonNullable) ?? [];
+
+    // Extract user memory facts from session memory
+    const result = await options.context.invoke(extractor, {
+      sessionFacts,
+      existingUserFacts,
+    });
+
+    // If no changes, nothing to do
+    if (!result.newFacts.length && !result.removeFacts?.length) {
+      return;
+    }
+
+    if (this.afs && this.historyModulePath && this.userId) {
+      // Handle fact removal
+      if (result.removeFacts?.length && this.runtimeState.userMemory) {
+        const entriesToRemove: AFSEntry<MemoryFact>[] = [];
+
+        for (const label of result.removeFacts) {
+          const entry = this.runtimeState.userMemory.find((e) => e.content?.label === label);
+          if (entry) entriesToRemove.push(entry);
+        }
+
+        // Remove from AFS storage and runtime state
+        for (const entryToRemove of entriesToRemove) {
+          const memoryEntryPath = joinURL(
+            this.historyModulePath,
+            "by-user",
+            this.userId,
+            "@metadata/memory",
+            entryToRemove.id,
+          );
+          await this.afs.delete(memoryEntryPath);
+
+          const index = this.runtimeState.userMemory.indexOf(entryToRemove);
+          if (index !== -1) {
+            this.runtimeState.userMemory.splice(index, 1);
+          }
+        }
+      }
+
+      // Handle new/updated facts
+      // For user memory, labels are unique - replace existing facts with same label
+      if (result.newFacts.length) {
+        const userMemoryPath = joinURL(
+          this.historyModulePath,
+          "by-user",
+          this.userId,
+          "@metadata/memory/new",
+        );
+
+        for (const fact of result.newFacts) {
+          // Check if fact with same label already exists
+          const existingEntry = this.runtimeState.userMemory?.find(
+            (e) => e.content?.label === fact.label,
+          );
+
+          if (existingEntry) {
+            // Delete old entry
+            const oldEntryPath = joinURL(
+              this.historyModulePath,
+              "by-user",
+              this.userId,
+              "@metadata/memory",
+              existingEntry.id,
+            );
+            await this.afs.delete(oldEntryPath);
+
+            // Remove from runtime state
+            if (this.runtimeState.userMemory) {
+              const index = this.runtimeState.userMemory.indexOf(existingEntry);
+              if (index !== -1) {
+                this.runtimeState.userMemory.splice(index, 1);
+              }
+            }
+          }
+
+          // Create new entry
+          const newEntry = await this.afs.write(userMemoryPath, {
             userId: this.userId,
             agentId: this.agentId,
-            // Only load entries after the latest compact
-            after: latestCompact?.createdAt?.toISOString(),
-          },
-          orderBy: [["createdAt", "desc"]],
-          // Set a very large limit to load all history entries
-          // The default limit is 10 which would cause history truncation
-          limit: 10000,
-        })
-      ).data;
+            content: fact,
+          });
 
-      this.runtimeState.historyEntries = afsEntries
-        .reverse()
-        .filter((entry) => isNonNullable(entry.content));
+          // Add to runtime state
+          this.runtimeState.userMemory ??= [];
+          this.runtimeState.userMemory.push(newEntry.data);
+        }
+      }
     }
+  }
+
+  /**
+   * Find Agent Skill content from a single message
+   * @param msg - Message to search in
+   * @returns The skill content text if found, undefined otherwise
+   */
+  private findSkillContentInMessage(msg: ChatModelInputMessage): string | undefined {
+    if (msg.role === "user" && Array.isArray(msg.content)) {
+      const skillBlock = msg.content.find(
+        (block) => block.type === "text" && block.isAgentSkill === true,
+      );
+
+      if (skillBlock && skillBlock.type === "text") {
+        return skillBlock.text;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Find the last Agent Skill from a list of messages
+   * @param messages - Messages to search through
+   * @returns The last Agent Skill found, or undefined if none found
+   */
+  private findLastAgentSkillFromMessages(
+    messages: ChatModelInputMessage[],
+  ): CompactContent["lastAgentSkill"] | undefined {
+    // Search backwards through messages to find the last Agent Skill
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (!msg) continue;
+
+      const skillContent = this.findSkillContentInMessage(msg);
+      if (skillContent) {
+        return {
+          content: skillContent,
+        };
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Find the last Agent Skill from a list of history entries
+   * @param entries - History entries to search through
+   * @returns The last Agent Skill found, or undefined if none found
+   */
+  private findLastAgentSkill(
+    entries: AFSEntry<EntryContent>[],
+  ): CompactContent["lastAgentSkill"] | undefined {
+    // Flatten all messages from entries
+    const allMessages = entries.flatMap((entry) => entry.content?.messages ?? []);
+    return this.findLastAgentSkillFromMessages(allMessages);
   }
 
   private async initializeDefaultCompactor() {
     this.compactConfig.compactor ??= await import("./compact/compactor.js").then(
       (m) => new m.AISessionCompactor(),
     );
+  }
+
+  private async initializeDefaultSessionMemoryExtractor() {
+    this.sessionMemoryConfig.extractor ??= await import(
+      "./compact/session-memory-extractor.js"
+    ).then((m) => new m.AISessionMemoryExtractor());
+  }
+
+  private async initializeDefaultUserMemoryExtractor() {
+    this.userMemoryConfig.extractor ??= await import("./compact/user-memory-extractor.js").then(
+      (m) => new m.AIUserMemoryExtractor(),
+    );
+  }
+
+  private get maxTokens(): number {
+    return this.compactConfig?.maxTokens ?? DEFAULT_MAX_TOKENS;
+  }
+
+  private get keepRecentRatio(): number {
+    return this.compactConfig?.keepRecentRatio ?? DEFAULT_KEEP_RECENT_RATIO;
+  }
+
+  private get keepRecentTokens(): number {
+    return Math.floor(this.maxTokens * this.keepRecentRatio);
+  }
+
+  private get singleMessageLimit(): number {
+    return this.keepRecentTokens * 0.5;
   }
 }

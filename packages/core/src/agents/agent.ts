@@ -15,6 +15,7 @@ import type * as prompts from "@inquirer/prompts";
 import equal from "fast-deep-equal";
 import nunjucks from "nunjucks";
 import { joinURL } from "ufo";
+import { stringify } from "yaml";
 import { type ZodObject, type ZodType, z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { AgentEvent, Context, UserContext } from "../aigne/context.js";
@@ -295,6 +296,11 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
    * This property only exists in the CLI context by command `aigne run`
    */
   prompts?: typeof prompts;
+
+  /**
+   * The caller agent that invoked this agent
+   */
+  caller?: Agent;
 }
 
 /**
@@ -933,6 +939,7 @@ export abstract class Agent<I extends Message = any, O extends Message = any> im
       ...options,
       model: this.model || options.model,
       imageModel: this.imageModel || options.imageModel,
+      caller: this,
     });
   }) as Context["invoke"];
 
@@ -1151,6 +1158,10 @@ export abstract class Agent<I extends Message = any, O extends Message = any> im
         },
       );
     }
+  }
+
+  formatOutput(output: O): PromiseOrValue<string> {
+    return stringify(output);
   }
 
   /**

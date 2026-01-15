@@ -1,5 +1,172 @@
 # Changelog
 
+## [1.91.0-beta.30](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.29...aigne-framework-v1.91.0-beta.30) (2026-01-15)
+
+
+### Bug Fixes
+
+* **core:** pin jaison dependency to exact version 2.0.2 ([#916](https://github.com/AIGNE-io/aigne-framework/issues/916)) ([e4ad28b](https://github.com/AIGNE-io/aigne-framework/commit/e4ad28b7fcac977d9d2087e0dceacd320818f0f5))
+
+## [1.91.0-beta.29](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.28...aigne-framework-v1.91.0-beta.29) (2026-01-15)
+
+
+### Features
+
+* **afs:** add generic AFS adapter for sqlite databases ([#908](https://github.com/AIGNE-io/aigne-framework/issues/908)) ([b9b5a8f](https://github.com/AIGNE-io/aigne-framework/commit/b9b5a8fc2680e8e3ae7f28dd720b0089520981b9))
+
+
+### Bug Fixes
+
+* fix data corruption when using AIGNE multiple ([#914](https://github.com/AIGNE-io/aigne-framework/issues/914)) ([c713736](https://github.com/AIGNE-io/aigne-framework/commit/c713736b17502ffac6b1fdf67e453aba2f37aab3))
+* update @aigne/afs-sqlite release config ([464a6c6](https://github.com/AIGNE-io/aigne-framework/commit/464a6c62a0594797f260f9908a3e95f97fe73d42))
+* update @aigne/afs-sqlite release config ([ef0f254](https://github.com/AIGNE-io/aigne-framework/commit/ef0f2547920e0e95545c57c7dd55ff059b5a2e7a))
+
+## [1.91.0-beta.28](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.27...aigne-framework-v1.91.0-beta.28) (2026-01-15)
+
+
+### Bug Fixes
+
+* **ci:** replace crypto library and simplify credential handling ([#912](https://github.com/AIGNE-io/aigne-framework/issues/912)) ([f3c3e65](https://github.com/AIGNE-io/aigne-framework/commit/f3c3e651c4776a02675e601ffa56c01c144b892d))
+
+## [1.91.0-beta.27](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.26...aigne-framework-v1.91.0-beta.27) (2026-01-15)
+
+
+### Bug Fixes
+
+* **core:** remove Node.js dependencies from skill loader ([#910](https://github.com/AIGNE-io/aigne-framework/issues/910)) ([e12ae89](https://github.com/AIGNE-io/aigne-framework/commit/e12ae89dad8e3118fd5b9432a619846667f34ab7))
+
+## [1.91.0-beta.26](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.25...aigne-framework-v1.91.0-beta.26) (2026-01-14)
+
+
+### Features
+
+* **afs:** add module access control and schema validation support ([#904](https://github.com/AIGNE-io/aigne-framework/issues/904)) ([d0b279a](https://github.com/AIGNE-io/aigne-framework/commit/d0b279aac07ebe2bcc1fd4148498fc3f6bbcd561))
+
+
+### Bug Fixes
+
+* **cli:** default enter interactive mode ([#906](https://github.com/AIGNE-io/aigne-framework/issues/906)) ([0791040](https://github.com/AIGNE-io/aigne-framework/commit/0791040557dd135c8feb4ceb8eab66d0578382b2))
+* improve test coverage tracking and reporting ([#903](https://github.com/AIGNE-io/aigne-framework/issues/903)) ([031144e](https://github.com/AIGNE-io/aigne-framework/commit/031144e74f29e882cffe52ffda8f7a18c76ace7f))
+
+## [1.91.0-beta.25](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.24...aigne-framework-v1.91.0-beta.25) (2026-01-13)
+
+
+### Bug Fixes
+
+* **anthropic:** handle null content blocks in streaming responses ([9fefd6f](https://github.com/AIGNE-io/aigne-framework/commit/9fefd6fcca58bb8a59616560f86a04a0015f6aca))
+
+## [1.91.0-beta.24](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.23...aigne-framework-v1.91.0-beta.24) (2026-01-13)
+
+
+### Bug Fixes
+
+* **agent-library:** add cwd option for bash agent ([#901](https://github.com/AIGNE-io/aigne-framework/issues/901)) ([d8a036b](https://github.com/AIGNE-io/aigne-framework/commit/d8a036b84ee97f80de747c141dae15a0d96bf4f5))
+* **anthropic:** simplify structured output with output tool pattern ([#899](https://github.com/AIGNE-io/aigne-framework/issues/899)) ([a6033c8](https://github.com/AIGNE-io/aigne-framework/commit/a6033c8a9ccf5e8ff6bcb14bc68c43a990ce2fa2))
+* **anthropic:** update structured output tool name to generate_json ([897e94d](https://github.com/AIGNE-io/aigne-framework/commit/897e94d82a1bbfa46ae13038a58a65cba6a3b259))
+* bump deps to latest and fix build error ([#897](https://github.com/AIGNE-io/aigne-framework/issues/897)) ([4059e79](https://github.com/AIGNE-io/aigne-framework/commit/4059e790ae63b9e4ebd66487665014b0cd7ce6ec))
+* **core:** make async memory updates non-blocking ([#900](https://github.com/AIGNE-io/aigne-framework/issues/900)) ([314f2c3](https://github.com/AIGNE-io/aigne-framework/commit/314f2c35d8baa88b600cc4de3f5983fef03a804c))
+
+## [1.91.0-beta.23](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.22...aigne-framework-v1.91.0-beta.23) (2026-01-12)
+
+
+### Bug Fixes
+
+* **core:** optimize session compaction to reduce compression frequency ([#894](https://github.com/AIGNE-io/aigne-framework/issues/894)) ([bed53dc](https://github.com/AIGNE-io/aigne-framework/commit/bed53dc0311c69acd2c257fe93416d10ac1120e1))
+
+## [1.91.0-beta.22](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.21...aigne-framework-v1.91.0-beta.22) (2026-01-12)
+
+
+### Bug Fixes
+
+* **afs:** show gitignored files with marker instead of filtering ([c2bdea1](https://github.com/AIGNE-io/aigne-framework/commit/c2bdea155f47c9420f2fe810cdfed79ef70ef899))
+* **core:** afs_read skill return pure text result first ([d42e67c](https://github.com/AIGNE-io/aigne-framework/commit/d42e67c33bb211202e9ba579afec2cf4abacbdb5))
+
+## [1.91.0-beta.21](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.20...aigne-framework-v1.91.0-beta.21) (2026-01-10)
+
+
+### Bug Fixes
+
+* **core:** simplify token-estimator logic for remaining characters ([45d43cc](https://github.com/AIGNE-io/aigne-framework/commit/45d43ccd3afd636cfb459eea2e6551e8f9c53765))
+
+## [1.91.0-beta.20](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.19...aigne-framework-v1.91.0-beta.20) (2026-01-09)
+
+
+### Bug Fixes
+
+* **cli:** cache approved commands in run-skill to avoid redundant prompts ([d07fe6d](https://github.com/AIGNE-io/aigne-framework/commit/d07fe6d049cd063e750e5b3fe231c74dae26bc9d))
+* **core:** correct session schema for AIAgent ([30b1deb](https://github.com/AIGNE-io/aigne-framework/commit/30b1deb54ac20287580e0a85ef150b95010f8201))
+* **core:** default enable auto breakpoints for chat model ([d4a6b83](https://github.com/AIGNE-io/aigne-framework/commit/d4a6b8323d6c83be45669885b32febb545bdf797))
+
+## [1.91.0-beta.19](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.18...aigne-framework-v1.91.0-beta.19) (2026-01-08)
+
+
+### Bug Fixes
+
+* **cli:** ask user retry when model request respond error ([#884](https://github.com/AIGNE-io/aigne-framework/issues/884)) ([60aabbb](https://github.com/AIGNE-io/aigne-framework/commit/60aabbb34be6104f25f0383c2279f7f089268631))
+* **models:** correct aigne-hub model list schema ([#886](https://github.com/AIGNE-io/aigne-framework/issues/886)) ([b626c7a](https://github.com/AIGNE-io/aigne-framework/commit/b626c7ae99aa948dd310df93dd55139b06157d77))
+
+## [1.91.0-beta.18](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.17...aigne-framework-v1.91.0-beta.18) (2026-01-08)
+
+
+### Features
+
+* **afs,bash:** add physical path mapping for AFS modules in bash execution ([#881](https://github.com/AIGNE-io/aigne-framework/issues/881)) ([50dbda2](https://github.com/AIGNE-io/aigne-framework/commit/50dbda224bd666d951494d2449779830d8db57fc))
+
+
+### Bug Fixes
+
+* bump version ([696560f](https://github.com/AIGNE-io/aigne-framework/commit/696560fa2673eddcb4d00ac0523fbbbde7273cb3))
+* **core:** disable session manger for compactor and memory extractor ([#882](https://github.com/AIGNE-io/aigne-framework/issues/882)) ([0ef8702](https://github.com/AIGNE-io/aigne-framework/commit/0ef8702b785b78859131ed45b4e71ab4064f3635))
+
+## [1.91.0-beta.17](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.16...aigne-framework-v1.91.0-beta.17) (2026-01-07)
+
+
+### Bug Fixes
+
+* **afs:** support gitignore inheritance and submodule isolation in local-fs ([#879](https://github.com/AIGNE-io/aigne-framework/issues/879)) ([46b794d](https://github.com/AIGNE-io/aigne-framework/commit/46b794d79892017538b300f17d9cc9165e1e6499))
+
+## [1.91.0-beta.16](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.15...aigne-framework-v1.91.0-beta.16) (2026-01-07)
+
+
+### Bug Fixes
+
+* **afs:** support `~` in the local path for local-fs & add agent-skill example ([#877](https://github.com/AIGNE-io/aigne-framework/issues/877)) ([c86293f](https://github.com/AIGNE-io/aigne-framework/commit/c86293f3d70447974395d02e238305a42b256b66))
+
+## [1.91.0-beta.15](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.14...aigne-framework-v1.91.0-beta.15) (2026-01-06)
+
+
+### Bug Fixes
+
+* **afs:** throw errors instead of logging in AFS module operations ([#874](https://github.com/AIGNE-io/aigne-framework/issues/874)) ([f0cc1c4](https://github.com/AIGNE-io/aigne-framework/commit/f0cc1c4056f8b95b631d595892bb12eb75da4b9f))
+* **core:** preserve Agent Skill in session compact and support complex tool result content ([#876](https://github.com/AIGNE-io/aigne-framework/issues/876)) ([edb86ae](https://github.com/AIGNE-io/aigne-framework/commit/edb86ae2b9cfe56a8f08b276f843606e310566cf))
+
+## [1.91.0-beta.14](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.13...aigne-framework-v1.91.0-beta.14) (2026-01-06)
+
+
+### Features
+
+* **core:** add cross session user memory support ([#873](https://github.com/AIGNE-io/aigne-framework/issues/873)) ([f377aa1](https://github.com/AIGNE-io/aigne-framework/commit/f377aa17f2cf8004fd3225ade4a37fd90af1292f))
+
+
+### Bug Fixes
+
+* **agent-library:** include stdout in the error message ([#872](https://github.com/AIGNE-io/aigne-framework/issues/872)) ([4627428](https://github.com/AIGNE-io/aigne-framework/commit/4627428ade3de38a94491670216372ab2e2f2396))
+* **cli:** add askUserQuestion for run-skill command ([9c621e7](https://github.com/AIGNE-io/aigne-framework/commit/9c621e7c55501d129e71966da79514717a4579ab))
+* **core:** compact current turn messages ([#871](https://github.com/AIGNE-io/aigne-framework/issues/871)) ([08c19d7](https://github.com/AIGNE-io/aigne-framework/commit/08c19d7651fb0ff0a0f7faa347746cf62b34f1f5))
+
+## [1.91.0-beta.13](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.12...aigne-framework-v1.91.0-beta.13) (2026-01-02)
+
+
+### Features
+
+* **cli:** add run-skill command ([#868](https://github.com/AIGNE-io/aigne-framework/issues/868)) ([f62ffe2](https://github.com/AIGNE-io/aigne-framework/commit/f62ffe21acc49ec1a68349fbb35a13d0fadd239a))
+
+
+### Bug Fixes
+
+* **cli:** add chat aliases for interactive option ([#867](https://github.com/AIGNE-io/aigne-framework/issues/867)) ([91f27fd](https://github.com/AIGNE-io/aigne-framework/commit/91f27fd874b8c4b2ded2d7cd46e2821f70943c69))
+* **cli:** rename cmd option --chat to --interactive ([#865](https://github.com/AIGNE-io/aigne-framework/issues/865)) ([480eca4](https://github.com/AIGNE-io/aigne-framework/commit/480eca49a7381a330024f1f0026bbc5f89b57bbb))
+
 ## [1.91.0-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.91.0-beta.11...aigne-framework-v1.91.0-beta.12) (2025-12-31)
 
 

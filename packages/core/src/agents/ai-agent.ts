@@ -8,9 +8,14 @@ import {
   instructionsToPromptBuilder,
   optionalize,
 } from "../loader/schema.js";
-import type { CompactConfig } from "../prompt/agent-session.js";
+import type {
+  CompactConfig,
+  SessionMemoryConfig,
+  UserMemoryConfig,
+} from "../prompt/agent-session.js";
 import { PromptBuilder } from "../prompt/prompt-builder.js";
 import { STRUCTURED_STREAM_INSTRUCTIONS } from "../prompt/prompts/structured-stream-instructions.js";
+import { AgentSkill } from "../prompt/skills/afs/agent-skill/agent-skill.js";
 import * as fastq from "../utils/queue.js";
 import { mergeAgentResponseChunk } from "../utils/stream-utils.js";
 import { ExtractMetadataTransform } from "../utils/structured-stream-extractor.js";
@@ -175,7 +180,36 @@ export interface AIAgentOptions<I extends Message = Message, O extends Message =
 
   useMemoriesFromContext?: boolean;
 
-  compact?: CompactConfig;
+  /**
+   * Agent session configuration
+   *
+   * Controls history recording, memory extraction, and conversation compaction.
+   * By default, mode is "auto" (enabled). Set `{ mode: "disabled" }` to disable
+   * for internal utility agents (extractors, compactors, etc.).
+   *
+   * @example
+   * ```typescript
+   * // Default behavior - session features enabled
+   * new AIAgent({
+   *   session: {
+   *     compact: { mode: "auto" },
+   *     sessionMemory: { mode: "auto" },
+   *     userMemory: { mode: "auto" }
+   *   }
+   * })
+   *
+   * // Disable for internal utility agents
+   * new AIAgent({
+   *   session: { mode: "disabled" }
+   * })
+   * ```
+   */
+  session?: Partial<
+    Omit<
+      import("../prompt/agent-session.js").AgentSessionOptions,
+      "sessionId" | "userId" | "agentId" | "afs"
+    >
+  >;
 }
 
 export interface AIAgentLoadSchema {
@@ -187,7 +221,12 @@ export interface AIAgentLoadSchema {
   toolChoice?: AIAgentToolChoice;
   toolCallsConcurrency?: number;
   keepTextInToolUses?: boolean;
-  compact?: Omit<CompactConfig, "compactor"> & { compactor?: NestAgentSchema };
+  session?: {
+    mode?: "auto" | "disabled";
+    compact?: Omit<CompactConfig, "compactor"> & { compactor?: NestAgentSchema };
+    sessionMemory?: Omit<SessionMemoryConfig, "extractor"> & { extractor?: NestAgentSchema };
+    userMemory?: Omit<UserMemoryConfig, "extractor"> & { extractor?: NestAgentSchema };
+  };
 }
 
 /**
@@ -281,7 +320,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     const instructionsSchema = getInstructionsSchema({ filepath });
     const nestAgentSchema = getNestAgentSchema({ filepath });
 
-    return camelizeSchema(
+    const schema: ZodType<AIAgentLoadSchema> = camelizeSchema(
       z.object({
         instructions: optionalize(instructionsSchema),
         inputKey: optionalize(z.string()),
@@ -293,19 +332,50 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
         keepTextInToolUses: optionalize(z.boolean()),
         catchToolsError: optionalize(z.boolean()),
         structuredStreamMode: optionalize(z.boolean()),
-        compact: camelizeSchema(
-          optionalize(
+        session: optionalize(
+          camelizeSchema(
             z.object({
               mode: optionalize(z.enum(["auto", "disabled"])),
-              maxTokens: z.number().int().min(0).optional(),
-              keepRecentRatio: optionalize(z.number().min(0).max(1)),
-              async: optionalize(z.boolean()),
-              compactor: optionalize(nestAgentSchema),
+              sessionMemory: optionalize(
+                camelizeSchema(
+                  z.object({
+                    mode: optionalize(z.enum(["auto", "disabled"])),
+                    memoryRatio: optionalize(z.number().min(0).max(1)),
+                    queryLimit: optionalize(z.number().int().min(0)),
+                    async: optionalize(z.boolean()),
+                    extractor: optionalize(nestAgentSchema),
+                  }),
+                ),
+              ),
+              userMemory: optionalize(
+                camelizeSchema(
+                  z.object({
+                    mode: optionalize(z.enum(["auto", "disabled"])),
+                    memoryRatio: optionalize(z.number().min(0).max(1)),
+                    queryLimit: optionalize(z.number().int().min(0)),
+                    async: optionalize(z.boolean()),
+                    extractor: optionalize(nestAgentSchema),
+                  }),
+                ),
+              ),
+              compact: optionalize(
+                camelizeSchema(
+                  z.object({
+                    mode: optionalize(z.enum(["auto", "disabled"])),
+                    maxTokens: z.number().int().min(0).optional(),
+                    keepRecentRatio: optionalize(z.number().min(0).max(1)),
+                    async: optionalize(z.boolean()),
+                    compactor: optionalize(nestAgentSchema),
+                  }),
+                ),
+              ),
             }),
           ),
         ),
       }),
-    ) as any;
+    );
+
+    return schema as ZodType<T>;
   }
 
   static override async load<I extends Message = any, O extends Message = any>(options: {
@@ -315,20 +385,62 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
   }): Promise<Agent<I, O>> {
     const schema = AIAgent.schema<AIAgentLoadSchema>(options);
     const valid = await schema.parseAsync(options.parsed);
+
+    // Load nested agents from session config if present
+    const sessionCompactor = valid.session?.compact?.compactor
+      ? await options.options?.loadNestAgent(
+          options.filepath,
+          valid.session.compact.compactor,
+          options.options,
+        )
+      : undefined;
+
+    const sessionMemoryExtractor = valid.session?.sessionMemory?.extractor
+      ? await options.options?.loadNestAgent(
+          options.filepath,
+          valid.session.sessionMemory.extractor,
+          options.options,
+        )
+      : undefined;
+
+    const userMemoryExtractor = valid.session?.userMemory?.extractor
+      ? await options.options?.loadNestAgent(
+          options.filepath,
+          valid.session.userMemory.extractor,
+          options.options,
+        )
+      : undefined;
+
+    // Build session configuration with loaded agents
+    const sessionConfig = valid.session
+      ? {
+          ...valid.session,
+          compact: valid.session.compact
+            ? {
+                ...valid.session.compact,
+                compactor: sessionCompactor,
+              }
+            : undefined,
+          sessionMemory: valid.session.sessionMemory
+            ? {
+                ...valid.session.sessionMemory,
+                extractor: sessionMemoryExtractor,
+              }
+            : undefined,
+          userMemory: valid.session.userMemory
+            ? {
+                ...valid.session.userMemory,
+                extractor: userMemoryExtractor,
+              }
+            : undefined,
+        }
+      : undefined;
+
     return new AIAgent<I, O>({
       ...options.parsed,
       ...valid,
       instructions: valid.instructions && instructionsToPromptBuilder(valid.instructions),
-      compact: {
-        ...valid.compact,
-        compactor: valid.compact?.compactor
-          ? await options.options?.loadNestAgent(
-              options.filepath,
-              valid.compact.compactor,
-              options.options,
-            )
-          : undefined,
-      },
+      session: sessionConfig,
     });
   }
 
@@ -372,7 +484,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     this.memoryAgentsAsTools = options.memoryAgentsAsTools;
     this.memoryPromptTemplate = options.memoryPromptTemplate;
     this.useMemoriesFromContext = options.useMemoriesFromContext;
-    this.compact = options.compact;
+    this.session = options.session;
 
     if (typeof options.catchToolsError === "boolean")
       this.catchToolsError = options.catchToolsError;
@@ -513,7 +625,15 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
     parse: (raw: string) => object;
   };
 
-  compact?: CompactConfig;
+  /**
+   * Agent session configuration
+   */
+  session?: Partial<
+    Omit<
+      import("../prompt/agent-session.js").AgentSessionOptions,
+      "sessionId" | "userId" | "agentId" | "afs"
+    >
+  >;
 
   override get inputSchema(): ZodType<I> {
     let schema = super.inputSchema as unknown as ZodObject<{ [key: string]: ZodType<any> }>;
@@ -634,19 +754,32 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
         if (content.length) {
           const message: ChatModelInputMessage = { role: "agent", content };
           yield <AgentResponseProgress>{ progress: { event: "message", message } };
-          await session.appendCurrentMessages(message);
+          await session.appendCurrentMessages(message, options);
         }
       }
 
-      if (toolCalls?.length) {
+      const toolCallsWithTools = toolCalls?.map((call) => {
+        const tool = toolsMap.get(call.function.name);
+        if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
+        return {
+          ...call,
+          tool,
+        };
+      });
+
+      if (toolCallsWithTools?.length) {
         if (this.keepTextInToolUses !== true) {
           yield { delta: { json: { [outputKey]: "" } as Partial<O> } };
         } else {
           yield { delta: { text: { [outputKey]: "\n\n" } } };
         }
 
+        const toolCallMessage: ChatModelInputMessage = { role: "agent", toolCalls };
+        yield <AgentResponseProgress>{ progress: { event: "message", message: toolCallMessage } };
+
         const executedToolCalls: {
           call: ChatModelOutputToolCall;
+          tool: Agent;
           output: Message;
         }[] = [];
 
@@ -673,7 +806,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
                 };
               });
 
-              executedToolCalls.push({ call, output });
+              executedToolCalls.push({ call, tool, output });
             } catch (e) {
               error = e;
               queue.killAndDrain();
@@ -682,39 +815,39 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
           this.toolCallsConcurrency || 1,
         );
 
-        const message: ChatModelInputMessage = { role: "agent", toolCalls };
-        yield <AgentResponseProgress>{ progress: { event: "message", message } };
-        await session.appendCurrentMessages(message);
-
         // Execute tools
-        for (const call of toolCalls) {
-          const tool = toolsMap.get(call.function.name);
-          if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
-
-          queue.push({ tool, call });
+        for (const call of toolCallsWithTools) {
+          queue.push({ tool: call.tool, call });
         }
 
         await queue.drained();
 
         if (error) throw error;
 
+        const toolResultMessages: ChatModelInputMessage[] = [];
+
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
-          for (const { call, output } of executedToolCalls) {
+          for (const { call, tool, output } of executedToolCalls) {
+            const isAgentSkill = !output.isError && tool instanceof AgentSkill ? true : undefined;
+            const text = await tool.formatOutput(output);
+
             const message: ChatModelInputMessage = {
               role: "tool",
               toolCallId: call.id,
-              content: JSON.stringify(output),
+              content: [{ type: "text", text, isAgentSkill }],
             };
             yield <AgentResponseProgress>{ progress: { event: "message", message: message } };
-            await session.appendCurrentMessages(message);
+            toolResultMessages.push(message);
           }
 
           const transferOutput = executedToolCalls.find(
-            (i): i is { call: ChatModelOutputToolCall; output: TransferAgentOutput } =>
+            (i): i is { call: ChatModelOutputToolCall; tool: Agent; output: TransferAgentOutput } =>
               isTransferAgentOutput(i.output),
           )?.output;
           if (transferOutput) return transferOutput;
+
+          await session.appendCurrentMessages([toolCallMessage, ...toolResultMessages], options);
 
           continue;
         }
@@ -736,7 +869,7 @@ export class AIAgent<I extends Message = any, O extends Message = any> extends A
         yield { delta: { json: result } };
       }
 
-      await session.endMessage(result, options);
+      await session.endMessage(result, undefined, options);
 
       return;
     }

@@ -1,12 +1,15 @@
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { mkdir, readdir, readFile, rename, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import type {
+  AFSAccessMode,
   AFSDeleteOptions,
   AFSDeleteResult,
   AFSEntry,
   AFSListOptions,
   AFSListResult,
   AFSModule,
+  AFSModuleClass,
+  AFSModuleLoadParams,
   AFSReadOptions,
   AFSReadResult,
   AFSRenameOptions,
@@ -16,7 +19,7 @@ import type {
   AFSWriteOptions,
   AFSWriteResult,
 } from "@aigne/afs";
-import { optionalize } from "@aigne/core/loader/schema.js";
+import { camelizeSchema, optionalize } from "@aigne/core/loader/schema.js";
 import { checkArguments } from "@aigne/core/utils/type-utils.js";
 import ignore from "ignore";
 import { minimatch } from "minimatch";
@@ -30,49 +33,93 @@ export interface LocalFSOptions {
   localPath: string;
   description?: string;
   ignore?: string[];
+  /**
+   * Access mode for this module.
+   * - "readonly": Only read operations are allowed
+   * - "readwrite": All operations are allowed (default, unless agentSkills is enabled)
+   * @default "readwrite" (or "readonly" when agentSkills is true)
+   */
+  accessMode?: AFSAccessMode;
+  /**
+   * Enable automatic agent skill scanning for this module.
+   * When enabled, defaults accessMode to "readonly" if not explicitly set.
+   * @default false
+   */
+  agentSkills?: boolean;
 }
 
-const localFSOptionsSchema = z.object({
-  name: optionalize(z.string()),
-  localPath: z.string().describe("The path to the local directory to mount"),
-  description: optionalize(z.string().describe("A description of the mounted directory")),
-  ignore: optionalize(z.array(z.string())),
-});
+const localFSOptionsSchema = camelizeSchema(
+  z.object({
+    name: optionalize(z.string()),
+    localPath: z.string().describe("The path to the local directory to mount"),
+    description: optionalize(z.string().describe("A description of the mounted directory")),
+    ignore: optionalize(z.array(z.string())),
+    accessMode: optionalize(
+      z.enum(["readonly", "readwrite"]).describe("Access mode for this module"),
+    ),
+    agentSkills: optionalize(
+      z.boolean().describe("Enable automatic agent skill scanning for this module"),
+    ),
+  }),
+);
 
 export class LocalFS implements AFSModule {
   static schema() {
     return localFSOptionsSchema;
   }
 
-  static async load({ filepath, parsed }: { filepath: string; parsed?: object }) {
-    const valid = await LocalFS.schema().passthrough().parseAsync(parsed);
+  static async load({ filepath, parsed }: AFSModuleLoadParams) {
+    const valid = await LocalFS.schema().parseAsync(parsed);
 
-    let localPath: string;
-
-    if (valid.localPath === ".") {
-      localPath = process.cwd();
-    } else {
-      // biome-ignore lint/suspicious/noTemplateCurlyInString: explicitly replace ${CWD}
-      localPath = valid.localPath.replaceAll("${CWD}", process.cwd());
-      if (!isAbsolute(localPath)) localPath = join(dirname(filepath), localPath);
-    }
-
-    return new LocalFS({ ...valid, localPath });
+    return new LocalFS({ ...valid, cwd: dirname(filepath) });
   }
 
-  constructor(public options: LocalFSOptions) {
+  constructor(public options: LocalFSOptions & { cwd?: string }) {
     checkArguments("LocalFS", localFSOptionsSchema, {
       ...options,
       localPath: options.localPath || (options as any).path, // compatible with 'path' option
     });
 
-    this.name = options.name || "local-fs";
+    let localPath: string;
+
+    if (options.localPath === ".") {
+      localPath = process.cwd();
+    } else {
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: explicitly replace ${CWD}
+      localPath = options.localPath.replaceAll("${CWD}", process.cwd());
+      if (localPath.startsWith("~/")) {
+        localPath = join(process.env.HOME || "", localPath.slice(2));
+      }
+      if (!isAbsolute(localPath)) localPath = join(options.cwd || process.cwd(), localPath);
+    }
+
+    this.name = options.name || basename(localPath) || "local-fs";
     this.description = options.description;
+    this.agentSkills = options.agentSkills;
+    // Default to "readwrite", but "readonly" if agentSkills is enabled
+    this.accessMode = options.accessMode ?? (options.agentSkills ? "readonly" : "readwrite");
+    this.options.localPath = localPath;
   }
 
   name: string;
 
   description?: string;
+
+  accessMode: AFSAccessMode;
+
+  agentSkills?: boolean;
+
+  private get localPathExists() {
+    return stat(this.options.localPath)
+      .then(() => true)
+      .catch(() => false);
+  }
+
+  async symlinkToPhysical(path: string): Promise<void> {
+    if (await this.localPathExists) {
+      await symlink(this.options.localPath, path);
+    }
+  }
 
   async list(path: string, options?: AFSListOptions): Promise<AFSListResult> {
     path = join("/", path); // Ensure leading slash
@@ -84,6 +131,7 @@ export class LocalFS implements AFSModule {
     const disableGitignore = options?.disableGitignore ?? false;
     const pattern = options?.pattern;
     const basePath = join(this.options.localPath, path);
+    const mountRoot = this.options.localPath;
 
     // Validate maxChildren
     if (typeof maxChildren === "number" && maxChildren <= 0) {
@@ -97,50 +145,50 @@ export class LocalFS implements AFSModule {
       fullPath: string;
       relativePath: string;
       depth: number;
+      gitignored?: boolean;
     }
 
     const queue: QueueItem[] = [];
 
     // Add root path to queue as starting point
-    queue.push({ fullPath: basePath, relativePath: path || "/", depth: 0 });
+    queue.push({ fullPath: basePath, relativePath: path || "/", depth: 0, gitignored: false });
 
     // Process queue in breadth-first order
     while (true) {
       const item = queue.shift();
       if (!item) break; // Queue is empty
 
-      const { fullPath, relativePath, depth } = item;
+      const { fullPath, relativePath, depth, gitignored } = item;
 
       // Stat and readdir once per item
       const stats = await stat(fullPath);
       const isDirectory = stats.isDirectory();
-      let childItems: string[] | undefined;
+      let childItemsWithStatus: { name: string; gitignored: boolean }[] | undefined;
 
-      if (isDirectory) {
+      // Don't read children of gitignored directories (they won't be recursed into)
+      if (isDirectory && !gitignored) {
         const items = (await readdir(fullPath)).sort();
 
         // Load .gitignore rules for this directory if not disabled
         let ig: ReturnType<typeof ignore> | null = null;
-        let gitRootForPath: string | null = null;
+        let ignoreBase: string = mountRoot;
         if (!disableGitignore) {
-          const result = await this.loadIgnoreRules(fullPath);
+          const result = await this.loadIgnoreRules(fullPath, mountRoot);
           ig = result?.ig || null;
-          gitRootForPath = result?.gitRoot || null;
+          ignoreBase = result?.ignoreBase || mountRoot;
         }
 
-        // Filter items based on gitignore rules
-        childItems = !ig
-          ? items
-          : items.filter((item) => {
-              const itemFullPath = join(fullPath, item);
-              // Calculate path relative to git root (or basePath if no git root)
-              const rootForIgnore = gitRootForPath || basePath;
-              const itemRelativePath = relative(rootForIgnore, itemFullPath);
-              // Check both the file and directory (with trailing slash) patterns
-              const isIgnored = ig.ignores(itemRelativePath);
-              const isDirIgnored = ig.ignores(`${itemRelativePath}/`);
-              return !isIgnored && !isDirIgnored;
-            });
+        // Mark items with their gitignored status (instead of filtering them out)
+        childItemsWithStatus = items.map((childName) => {
+          if (!ig) return { name: childName, gitignored: false };
+
+          const itemFullPath = join(fullPath, childName);
+          // Calculate path relative to ignoreBase (git root or mountRoot) for gitignore matching
+          const itemRelativePath = relative(ignoreBase, itemFullPath);
+          // Check both the file and directory (with trailing slash) patterns
+          const isIgnored = ig.ignores(itemRelativePath) || ig.ignores(`${itemRelativePath}/`);
+          return { name: childName, gitignored: isIgnored };
+        });
       }
 
       const entry: AFSEntry = {
@@ -149,10 +197,10 @@ export class LocalFS implements AFSModule {
         createdAt: stats.birthtime,
         updatedAt: stats.mtime,
         metadata: {
-          childrenCount: childItems?.length,
+          childrenCount: childItemsWithStatus?.length,
           type: isDirectory ? "directory" : "file",
           size: stats.size,
-          mode: stats.mode,
+          gitignored: gitignored || undefined,
         },
       };
 
@@ -172,22 +220,27 @@ export class LocalFS implements AFSModule {
       }
 
       // If it's a directory and depth allows, add children to queue
-      if (isDirectory && depth < maxDepth && childItems) {
+      if (isDirectory && depth < maxDepth && childItemsWithStatus) {
         // Apply maxChildren limit
         const itemsToProcess =
-          childItems.length > maxChildren ? childItems.slice(0, maxChildren) : childItems;
-        const isTruncated = itemsToProcess.length < childItems.length;
+          childItemsWithStatus.length > maxChildren
+            ? childItemsWithStatus.slice(0, maxChildren)
+            : childItemsWithStatus;
+        const isTruncated = itemsToProcess.length < childItemsWithStatus.length;
 
         // Mark directory as truncated if children were limited by maxChildren
         if (isTruncated && entry.metadata) {
           entry.metadata.childrenTruncated = true;
         }
 
-        for (const item of itemsToProcess) {
+        for (const child of itemsToProcess) {
+          // Add child to queue; gitignored directories won't be recursed into
+          // (they're added to show them, but their children won't be processed)
           queue.push({
-            fullPath: join(fullPath, item),
-            relativePath: join(relativePath, item),
+            fullPath: join(fullPath, child.name),
+            relativePath: join(relativePath, child.name),
             depth: depth + 1,
+            gitignored: child.gitignored,
           });
         }
       }
@@ -219,7 +272,6 @@ export class LocalFS implements AFSModule {
         metadata: {
           type: stats.isDirectory() ? "directory" : "file",
           size: stats.size,
-          mode: stats.mode,
         },
       };
 
@@ -269,7 +321,6 @@ export class LocalFS implements AFSModule {
         ...entry.metadata,
         type: stats.isDirectory() ? "directory" : "file",
         size: stats.size,
-        mode: stats.mode,
       },
       userId: entry.userId,
       sessionId: entry.sessionId,
@@ -362,7 +413,6 @@ export class LocalFS implements AFSModule {
           metadata: {
             type: "file",
             size: stats.size,
-            mode: stats.mode,
           },
         };
 
@@ -382,79 +432,114 @@ export class LocalFS implements AFSModule {
   }
 
   /**
-   * Load gitignore rules from the given directory up to git root.
+   * Load gitignore rules from mountRoot down to checkPath.
+   * Accumulates rules from parent to child for proper inheritance.
+   * Stops at .git boundaries (submodules are independent repos).
    * @param checkPath - The directory whose files we're checking
-   * @returns An object with ignore instance and git root, or null if no rules found
+   * @param mountRoot - The mounted local filesystem root (stop point for walking up)
+   * @returns An object with ignore instance and the base path for matching
    */
   private async loadIgnoreRules(
     checkPath: string,
-  ): Promise<{ ig: ReturnType<typeof ignore>; gitRoot: string | null } | null> {
+    mountRoot: string,
+  ): Promise<{ ig: ReturnType<typeof ignore>; ignoreBase: string } | null> {
     const ig = ignore();
 
-    // Find git root by searching upwards
-    let gitRoot: string | null = null;
-    let currentPath = resolve(checkPath);
-
-    while (true) {
-      try {
-        const gitDirPath = join(currentPath, ".git");
-        const gitStats = await stat(gitDirPath);
-        if (gitStats.isDirectory()) {
-          gitRoot = currentPath;
-          break;
-        }
-      } catch {
-        // .git doesn't exist at this level
-      }
-
-      // Move up one directory
-      const parentPath = dirname(currentPath);
-      // Check if we've reached the filesystem root
-      if (parentPath === currentPath) {
-        break;
-      }
-      currentPath = parentPath;
-    }
-
-    // Determine the root to search up to
-    // If git root found, search up to git root
-    // Otherwise, search up to filesystem root
-    const searchRoot = gitRoot;
-
-    // Collect all directories from checkPath up to searchRoot (or filesystem root)
+    // Collect directories from mountRoot down to checkPath
     const dirsToCheck: string[] = [];
-    currentPath = resolve(checkPath);
+    let currentPath = checkPath;
+    let gitBoundary: string | null = null;
 
+    // Walk up from checkPath to mountRoot, checking for .git boundaries
     while (true) {
-      dirsToCheck.unshift(currentPath); // Add to beginning for correct order
+      dirsToCheck.unshift(currentPath);
 
-      // If we have a search root and reached it, stop
-      if (searchRoot && currentPath === searchRoot) {
+      // Check if this directory has a .git (it's a git repo boundary)
+      if (gitBoundary === null) {
+        try {
+          const gitPath = join(currentPath, ".git");
+          await stat(gitPath);
+          // Found .git, this is a git boundary
+          gitBoundary = currentPath;
+        } catch {
+          // No .git at this level
+        }
+      }
+
+      // Stop when we reach mountRoot
+      if (currentPath === mountRoot) {
         break;
       }
 
       const parentPath = dirname(currentPath);
-      // Stop if we've reached filesystem root
-      if (parentPath === currentPath) {
+      // Safety check: stop if we go outside mountRoot or hit filesystem root
+      if (!currentPath.startsWith(mountRoot) || parentPath === currentPath) {
         break;
       }
       currentPath = parentPath;
     }
 
-    // Load .gitignore files from root to checkPath (parent to child order)
-    for (const dirPath of dirsToCheck) {
+    // If we found a git boundary, only load rules from that boundary down
+    // Otherwise load from mountRoot down
+    const effectiveStart = gitBoundary || mountRoot;
+    const filteredDirs = dirsToCheck.filter((dir) => dir >= effectiveStart);
+
+    // Load .gitignore files from effectiveStart down to checkPath (parent to child order)
+    // This respects git boundaries - submodules don't inherit parent repo's rules
+    for (const dirPath of filteredDirs) {
       try {
         const gitignorePath = join(dirPath, ".gitignore");
         const gitignoreContent = await readFile(gitignorePath, "utf8");
-        ig.add(gitignoreContent);
+
+        // Calculate the effective base for this .gitignore file
+        // If there's a git boundary, paths are relative to that boundary when within it
+        // Otherwise, paths are relative to mountRoot
+        const effectiveBase = gitBoundary && dirPath >= gitBoundary ? gitBoundary : mountRoot;
+
+        // If this is a subdirectory of the effective base, we need to prefix the rules
+        // so they match correctly relative to effectiveBase
+        if (dirPath !== effectiveBase) {
+          const prefix = relative(effectiveBase, dirPath);
+          // Split rules into lines and add prefix to each non-empty, non-comment line
+          const lines = gitignoreContent.split("\n");
+          const prefixedLines = lines.map((line) => {
+            const trimmed = line.trim();
+            // Skip empty lines and comments
+            if (!trimmed || trimmed.startsWith("#")) {
+              return line;
+            }
+            // Skip negation patterns for now (would need special handling)
+            if (trimmed.startsWith("!")) {
+              return line;
+            }
+            // Add prefix to the pattern
+            // If pattern starts with /, it's relative to git root
+            if (trimmed.startsWith("/")) {
+              return `/${prefix}${trimmed}`;
+            }
+            // If pattern contains /, it's a path pattern, prefix it directly
+            if (trimmed.includes("/")) {
+              return `${prefix}/${trimmed}`;
+            }
+            // If it's a simple wildcard pattern like *.log or foo
+            // Use **/ to match at any depth within the prefixed directory
+            return `${prefix}/**/${trimmed}`;
+          });
+          ig.add(prefixedLines.join("\n"));
+        } else {
+          // This is effectiveBase's own .gitignore, use as-is
+          ig.add(gitignoreContent);
+        }
       } catch {
-        // .gitignore doesn't exist at this level, continue
+        // .gitignore doesn't exist at this level
       }
     }
 
     ig.add(".git");
     ig.add(this.options.ignore || []);
 
-    return { ig, gitRoot };
+    return { ig, ignoreBase: effectiveStart };
   }
 }
+
+const _typeCheck: AFSModuleClass<LocalFS, LocalFSOptions> = LocalFS;

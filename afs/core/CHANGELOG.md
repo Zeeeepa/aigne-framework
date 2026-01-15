@@ -1,5 +1,57 @@
 # Changelog
 
+## [1.4.0-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/afs-v1.4.0-beta.8...afs-v1.4.0-beta.9) (2026-01-14)
+
+
+### Features
+
+* **afs:** add module access control and schema validation support ([#904](https://github.com/AIGNE-io/aigne-framework/issues/904)) ([d0b279a](https://github.com/AIGNE-io/aigne-framework/commit/d0b279aac07ebe2bcc1fd4148498fc3f6bbcd561))
+
+
+### Bug Fixes
+
+* improve test coverage tracking and reporting ([#903](https://github.com/AIGNE-io/aigne-framework/issues/903)) ([031144e](https://github.com/AIGNE-io/aigne-framework/commit/031144e74f29e882cffe52ffda8f7a18c76ace7f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.7-beta.2
+
+## [1.4.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/afs-v1.4.0-beta.7...afs-v1.4.0-beta.8) (2026-01-12)
+
+
+### Bug Fixes
+
+* **afs:** show gitignored files with marker instead of filtering ([c2bdea1](https://github.com/AIGNE-io/aigne-framework/commit/c2bdea155f47c9420f2fe810cdfed79ef70ef899))
+
+## [1.4.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/afs-v1.4.0-beta.6...afs-v1.4.0-beta.7) (2026-01-08)
+
+
+### Features
+
+* **afs,bash:** add physical path mapping for AFS modules in bash execution ([#881](https://github.com/AIGNE-io/aigne-framework/issues/881)) ([50dbda2](https://github.com/AIGNE-io/aigne-framework/commit/50dbda224bd666d951494d2449779830d8db57fc))
+
+
+### Bug Fixes
+
+* bump version ([696560f](https://github.com/AIGNE-io/aigne-framework/commit/696560fa2673eddcb4d00ac0523fbbbde7273cb3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/platform-helpers bumped to 0.6.7-beta.1
+
+## [1.4.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/afs-v1.4.0-beta.5...afs-v1.4.0-beta.6) (2026-01-06)
+
+
+### Bug Fixes
+
+* **afs:** throw errors instead of logging in AFS module operations ([#874](https://github.com/AIGNE-io/aigne-framework/issues/874)) ([f0cc1c4](https://github.com/AIGNE-io/aigne-framework/commit/f0cc1c4056f8b95b631d595892bb12eb75da4b9f))
+
 ## [1.4.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/afs-v1.4.0-beta.4...afs-v1.4.0-beta.5) (2025-12-31)
 
 

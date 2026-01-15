@@ -107,7 +107,7 @@ test("BashAgent should support disable sandbox", async () => {
     }),
   );
 
-  expect(spawnSpy.mock.lastCall).toMatchInlineSnapshot(`
+  expect(spawnSpy.mock.lastCall?.slice(0, 2)).toMatchInlineSnapshot(`
       [
         "bash",
         [
@@ -149,7 +149,10 @@ echo "This is an error message" >&2
 exit 1`;
 
   expect(bashAgent.invoke({ script: errorScript })).rejects.toThrowErrorMatchingInlineSnapshot(`
-    "Bash script exited with code 1: This is an error message
+    "Bash script exited with code 1:
+     stdout: Hello, World!
+
+     stderr: This is an error message
     "
   `);
 });
@@ -187,12 +190,13 @@ exit 0`;
   `);
 
   expect(spawnSpy.mock.lastCall).toMatchInlineSnapshot(
-    [expect.stringContaining("sandbox-exec -p"), undefined, {}],
+    [expect.stringContaining("sandbox-exec -p"), undefined, { env: expect.objectContaining({}) }],
     `
     [
       StringContaining "sandbox-exec -p",
       undefined,
       {
+        "env": ObjectContaining {},
         "shell": true,
       },
     ]
@@ -261,12 +265,13 @@ test("BashAgent should resolve curl with authorized domains", async () => {
   );
 
   expect(spawnSpy.mock.lastCall).toMatchInlineSnapshot(
-    [expect.stringContaining("sandbox-exec -p"), undefined, {}],
+    [expect.stringContaining("sandbox-exec -p"), undefined, { env: expect.objectContaining({}) }],
     `
     [
       StringContaining "sandbox-exec -p",
       undefined,
       {
+        "env": ObjectContaining {},
         "shell": true,
       },
     ]
@@ -338,12 +343,13 @@ test("BashAgent should reject curl with unauthorized domains", async () => {
   `);
 
   expect(spawnSpy.mock.lastCall).toMatchInlineSnapshot(
-    [expect.stringContaining("sandbox-exec -p"), undefined, {}],
+    [expect.stringContaining("sandbox-exec -p"), undefined, { env: expect.objectContaining({}) }],
     `
       [
         StringContaining "sandbox-exec -p",
         undefined,
         {
+          "env": ObjectContaining {},
           "shell": true,
         },
       ]
@@ -392,7 +398,10 @@ sleep 1
 exit 0`;
 
   expect(bashAgent.invoke({ script })).rejects.toThrowErrorMatchingInlineSnapshot(`
-    "Bash script killed by signal SIGTERM (likely timeout 100): This is an error message
+    "Bash script killed by signal SIGTERM (likely timeout 100):
+     stdout: Hello, World!
+
+     stderr: This is an error message
     "
   `);
 });
@@ -1135,4 +1144,20 @@ test("checkPermission: should deny commands with redirection if base command den
   });
 
   expect(await bashAgent.checkPermission("cat /etc/passwd > output.txt")).toBe("deny");
+});
+
+test("BashAgent should support cwd configuration", async () => {
+  const bashAgent = (await BashAgent.load({
+    filepath: "/path/to/agent.yaml",
+    parsed: {
+      sandbox: false,
+      timeout: 30e3,
+      cwd: "/custom/path",
+    },
+  })) as BashAgent;
+
+  expect(bashAgent.options).toMatchObject({
+    timeout: 30000,
+    cwd: "/custom/path",
+  });
 });

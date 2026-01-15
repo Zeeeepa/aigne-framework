@@ -1,5 +1,183 @@
 # Changelog
 
+## [1.72.0-beta.23](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.22...core-v1.72.0-beta.23) (2026-01-15)
+
+
+### Bug Fixes
+
+* **core:** pin jaison dependency to exact version 2.0.2 ([#916](https://github.com/AIGNE-io/aigne-framework/issues/916)) ([e4ad28b](https://github.com/AIGNE-io/aigne-framework/commit/e4ad28b7fcac977d9d2087e0dceacd320818f0f5))
+
+## [1.72.0-beta.22](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.21...core-v1.72.0-beta.22) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.14-beta.6
+
+## [1.72.0-beta.21](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.20...core-v1.72.0-beta.21) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.14-beta.5
+
+## [1.72.0-beta.20](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.19...core-v1.72.0-beta.20) (2026-01-15)
+
+
+### Bug Fixes
+
+* **core:** remove Node.js dependencies from skill loader ([#910](https://github.com/AIGNE-io/aigne-framework/issues/910)) ([e12ae89](https://github.com/AIGNE-io/aigne-framework/commit/e12ae89dad8e3118fd5b9432a619846667f34ab7))
+
+## [1.72.0-beta.19](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.18...core-v1.72.0-beta.19) (2026-01-14)
+
+
+### Features
+
+* **afs:** add module access control and schema validation support ([#904](https://github.com/AIGNE-io/aigne-framework/issues/904)) ([d0b279a](https://github.com/AIGNE-io/aigne-framework/commit/d0b279aac07ebe2bcc1fd4148498fc3f6bbcd561))
+
+
+### Bug Fixes
+
+* improve test coverage tracking and reporting ([#903](https://github.com/AIGNE-io/aigne-framework/issues/903)) ([031144e](https://github.com/AIGNE-io/aigne-framework/commit/031144e74f29e882cffe52ffda8f7a18c76ace7f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.9
+    * @aigne/afs-history bumped to 1.2.0-beta.10
+    * @aigne/observability-api bumped to 0.11.14-beta.4
+    * @aigne/platform-helpers bumped to 0.6.7-beta.2
+
+## [1.72.0-beta.18](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.17...core-v1.72.0-beta.18) (2026-01-13)
+
+
+### Bug Fixes
+
+* bump deps to latest and fix build error ([#897](https://github.com/AIGNE-io/aigne-framework/issues/897)) ([4059e79](https://github.com/AIGNE-io/aigne-framework/commit/4059e790ae63b9e4ebd66487665014b0cd7ce6ec))
+* **core:** make async memory updates non-blocking ([#900](https://github.com/AIGNE-io/aigne-framework/issues/900)) ([314f2c3](https://github.com/AIGNE-io/aigne-framework/commit/314f2c35d8baa88b600cc4de3f5983fef03a804c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/observability-api bumped to 0.11.14-beta.3
+
+## [1.72.0-beta.17](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.16...core-v1.72.0-beta.17) (2026-01-12)
+
+
+### Bug Fixes
+
+* **core:** optimize session compaction to reduce compression frequency ([#894](https://github.com/AIGNE-io/aigne-framework/issues/894)) ([bed53dc](https://github.com/AIGNE-io/aigne-framework/commit/bed53dc0311c69acd2c257fe93416d10ac1120e1))
+
+## [1.72.0-beta.16](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.15...core-v1.72.0-beta.16) (2026-01-12)
+
+
+### Bug Fixes
+
+* **afs:** show gitignored files with marker instead of filtering ([c2bdea1](https://github.com/AIGNE-io/aigne-framework/commit/c2bdea155f47c9420f2fe810cdfed79ef70ef899))
+* **core:** afs_read skill return pure text result first ([d42e67c](https://github.com/AIGNE-io/aigne-framework/commit/d42e67c33bb211202e9ba579afec2cf4abacbdb5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.8
+    * @aigne/afs-history bumped to 1.2.0-beta.9
+
+## [1.72.0-beta.15](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.14...core-v1.72.0-beta.15) (2026-01-10)
+
+
+### Bug Fixes
+
+* **core:** simplify token-estimator logic for remaining characters ([45d43cc](https://github.com/AIGNE-io/aigne-framework/commit/45d43ccd3afd636cfb459eea2e6551e8f9c53765))
+
+## [1.72.0-beta.14](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.13...core-v1.72.0-beta.14) (2026-01-09)
+
+
+### Bug Fixes
+
+* **core:** correct session schema for AIAgent ([30b1deb](https://github.com/AIGNE-io/aigne-framework/commit/30b1deb54ac20287580e0a85ef150b95010f8201))
+* **core:** default enable auto breakpoints for chat model ([d4a6b83](https://github.com/AIGNE-io/aigne-framework/commit/d4a6b8323d6c83be45669885b32febb545bdf797))
+
+## [1.72.0-beta.13](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.12...core-v1.72.0-beta.13) (2026-01-08)
+
+
+### Features
+
+* **afs,bash:** add physical path mapping for AFS modules in bash execution ([#881](https://github.com/AIGNE-io/aigne-framework/issues/881)) ([50dbda2](https://github.com/AIGNE-io/aigne-framework/commit/50dbda224bd666d951494d2449779830d8db57fc))
+
+
+### Bug Fixes
+
+* bump version ([696560f](https://github.com/AIGNE-io/aigne-framework/commit/696560fa2673eddcb4d00ac0523fbbbde7273cb3))
+* **core:** disable session manger for compactor and memory extractor ([#882](https://github.com/AIGNE-io/aigne-framework/issues/882)) ([0ef8702](https://github.com/AIGNE-io/aigne-framework/commit/0ef8702b785b78859131ed45b4e71ab4064f3635))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.7
+    * @aigne/afs-history bumped to 1.2.0-beta.8
+    * @aigne/observability-api bumped to 0.11.14-beta.2
+    * @aigne/platform-helpers bumped to 0.6.7-beta.1
+
+## [1.72.0-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.11...core-v1.72.0-beta.12) (2026-01-07)
+
+
+### Bug Fixes
+
+* **afs:** support `~` in the local path for local-fs & add agent-skill example ([#877](https://github.com/AIGNE-io/aigne-framework/issues/877)) ([c86293f](https://github.com/AIGNE-io/aigne-framework/commit/c86293f3d70447974395d02e238305a42b256b66))
+
+## [1.72.0-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.10...core-v1.72.0-beta.11) (2026-01-06)
+
+
+### Bug Fixes
+
+* **core:** preserve Agent Skill in session compact and support complex tool result content ([#876](https://github.com/AIGNE-io/aigne-framework/issues/876)) ([edb86ae](https://github.com/AIGNE-io/aigne-framework/commit/edb86ae2b9cfe56a8f08b276f843606e310566cf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.6
+    * @aigne/afs-history bumped to 1.2.0-beta.7
+
+## [1.72.0-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.9...core-v1.72.0-beta.10) (2026-01-06)
+
+
+### Features
+
+* **core:** add cross session user memory support ([#873](https://github.com/AIGNE-io/aigne-framework/issues/873)) ([f377aa1](https://github.com/AIGNE-io/aigne-framework/commit/f377aa17f2cf8004fd3225ade4a37fd90af1292f))
+
+
+### Bug Fixes
+
+* **core:** compact current turn messages ([#871](https://github.com/AIGNE-io/aigne-framework/issues/871)) ([08c19d7](https://github.com/AIGNE-io/aigne-framework/commit/08c19d7651fb0ff0a0f7faa347746cf62b34f1f5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs-history bumped to 1.2.0-beta.6
+
+## [1.72.0-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.8...core-v1.72.0-beta.9) (2026-01-02)
+
+
+### Features
+
+* **cli:** add run-skill command ([#868](https://github.com/AIGNE-io/aigne-framework/issues/868)) ([f62ffe2](https://github.com/AIGNE-io/aigne-framework/commit/f62ffe21acc49ec1a68349fbb35a13d0fadd239a))
+
 ## [1.72.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/core-v1.72.0-beta.7...core-v1.72.0-beta.8) (2025-12-31)
 
 

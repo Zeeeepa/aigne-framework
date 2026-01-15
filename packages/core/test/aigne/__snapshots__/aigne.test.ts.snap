@@ -16,6 +16,20 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
   },
   {
     "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+    },
+  },
+  {
+    "progress": {
       "agent": {
         "name": "OpenAIChatModel",
       },
@@ -32,27 +46,19 @@ exports[`AIGNE.invoke should respond progressing chunks correctly 1`] = `
             "role": "user",
           },
         ],
-        "modelOptions": {},
+        "modelOptions": {
+          "cacheConfig": {
+            "autoBreakpoints": {
+              "lastMessage": true,
+            },
+          },
+        },
         "outputFileType": undefined,
         "responseFormat": undefined,
         "toolChoice": undefined,
         "tools": undefined,
       },
       "taskTitle": undefined,
-    },
-  },
-  {
-    "progress": {
-      "event": "message",
-      "message": {
-        "content": [
-          {
-            "text": "hello",
-            "type": "text",
-          },
-        ],
-        "role": "user",
-      },
     },
   },
   {
@@ -222,6 +228,20 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
   },
   {
     "progress": {
+      "event": "message",
+      "message": {
+        "content": [
+          {
+            "text": "hello",
+            "type": "text",
+          },
+        ],
+        "role": "user",
+      },
+    },
+  },
+  {
+    "progress": {
       "agent": {
         "name": "OpenAIChatModel",
       },
@@ -238,27 +258,19 @@ exports[`AIGNE.invoke should respond progressing chunks (with failed chunks) cor
             "role": "user",
           },
         ],
-        "modelOptions": {},
+        "modelOptions": {
+          "cacheConfig": {
+            "autoBreakpoints": {
+              "lastMessage": true,
+            },
+          },
+        },
         "outputFileType": undefined,
         "responseFormat": undefined,
         "toolChoice": undefined,
         "tools": undefined,
       },
       "taskTitle": undefined,
-    },
-  },
-  {
-    "progress": {
-      "event": "message",
-      "message": {
-        "content": [
-          {
-            "text": "hello",
-            "type": "text",
-          },
-        ],
-        "role": "user",
-      },
     },
   },
   {
@@ -345,7 +357,16 @@ exports[`AIGNE.invoke should respond $metafield with usage metrics with {
     "progress": {
       "event": "message",
       "message": {
-        "content": "{"message":"Hello world"}",
+        "content": [
+          {
+            "isAgentSkill": undefined,
+            "text": 
+"message: Hello world
+"
+,
+            "type": "text",
+          },
+        ],
         "role": "tool",
         "toolCallId": "greet",
       },

@@ -6,6 +6,66 @@
   * dependencies
     * @aigne/afs bumped to 1.2.0
 
+## [1.2.0-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.9...afs-history-v1.2.0-beta.10) (2026-01-14)
+
+
+### Features
+
+* **afs:** add module access control and schema validation support ([#904](https://github.com/AIGNE-io/aigne-framework/issues/904)) ([d0b279a](https://github.com/AIGNE-io/aigne-framework/commit/d0b279aac07ebe2bcc1fd4148498fc3f6bbcd561))
+
+
+### Bug Fixes
+
+* improve test coverage tracking and reporting ([#903](https://github.com/AIGNE-io/aigne-framework/issues/903)) ([031144e](https://github.com/AIGNE-io/aigne-framework/commit/031144e74f29e882cffe52ffda8f7a18c76ace7f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.9
+    * @aigne/sqlite bumped to 0.4.9-beta.2
+
+## [1.2.0-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.8...afs-history-v1.2.0-beta.9) (2026-01-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.8
+
+## [1.2.0-beta.8](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.7...afs-history-v1.2.0-beta.8) (2026-01-08)
+
+
+### Bug Fixes
+
+* bump version ([696560f](https://github.com/AIGNE-io/aigne-framework/commit/696560fa2673eddcb4d00ac0523fbbbde7273cb3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.7
+    * @aigne/sqlite bumped to 0.4.9-beta.1
+
+## [1.2.0-beta.7](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.6...afs-history-v1.2.0-beta.7) (2026-01-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0-beta.6
+
+## [1.2.0-beta.6](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.5...afs-history-v1.2.0-beta.6) (2026-01-06)
+
+
+### Features
+
+* **core:** add cross session user memory support ([#873](https://github.com/AIGNE-io/aigne-framework/issues/873)) ([f377aa1](https://github.com/AIGNE-io/aigne-framework/commit/f377aa17f2cf8004fd3225ade4a37fd90af1292f))
+
 ## [1.2.0-beta.5](https://github.com/AIGNE-io/aigne-framework/compare/afs-history-v1.2.0-beta.4...afs-history-v1.2.0-beta.5) (2025-12-31)
 
 

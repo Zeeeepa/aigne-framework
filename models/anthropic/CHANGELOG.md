@@ -1,5 +1,210 @@
 # Changelog
 
+## [0.14.16-beta.25](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.24...anthropic-v0.14.16-beta.25) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.23
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.23
+
+## [0.14.16-beta.24](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.23...anthropic-v0.14.16-beta.24) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.22
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.22
+
+## [0.14.16-beta.23](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.22...anthropic-v0.14.16-beta.23) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.21
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.21
+
+## [0.14.16-beta.22](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.21...anthropic-v0.14.16-beta.22) (2026-01-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.20
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.20
+
+## [0.14.16-beta.21](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.20...anthropic-v0.14.16-beta.21) (2026-01-14)
+
+
+### Bug Fixes
+
+* improve test coverage tracking and reporting ([#903](https://github.com/AIGNE-io/aigne-framework/issues/903)) ([031144e](https://github.com/AIGNE-io/aigne-framework/commit/031144e74f29e882cffe52ffda8f7a18c76ace7f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.19
+    * @aigne/platform-helpers bumped to 0.6.7-beta.2
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.19
+
+## [0.14.16-beta.20](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.19...anthropic-v0.14.16-beta.20) (2026-01-13)
+
+
+### Bug Fixes
+
+* **anthropic:** handle null content blocks in streaming responses ([9fefd6f](https://github.com/AIGNE-io/aigne-framework/commit/9fefd6fcca58bb8a59616560f86a04a0015f6aca))
+
+## [0.14.16-beta.19](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.18...anthropic-v0.14.16-beta.19) (2026-01-13)
+
+
+### Bug Fixes
+
+* **anthropic:** simplify structured output with output tool pattern ([#899](https://github.com/AIGNE-io/aigne-framework/issues/899)) ([a6033c8](https://github.com/AIGNE-io/aigne-framework/commit/a6033c8a9ccf5e8ff6bcb14bc68c43a990ce2fa2))
+* **anthropic:** update structured output tool name to generate_json ([897e94d](https://github.com/AIGNE-io/aigne-framework/commit/897e94d82a1bbfa46ae13038a58a65cba6a3b259))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.18
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.18
+
+## [0.14.16-beta.18](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.17...anthropic-v0.14.16-beta.18) (2026-01-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.17
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.17
+
+## [0.14.16-beta.17](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.16...anthropic-v0.14.16-beta.17) (2026-01-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.16
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.16
+
+## [0.14.16-beta.16](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.15...anthropic-v0.14.16-beta.16) (2026-01-10)
+
+
+### Bug Fixes
+
+* **core:** simplify token-estimator logic for remaining characters ([45d43cc](https://github.com/AIGNE-io/aigne-framework/commit/45d43ccd3afd636cfb459eea2e6551e8f9c53765))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.15
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.15
+
+## [0.14.16-beta.15](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.14...anthropic-v0.14.16-beta.15) (2026-01-09)
+
+
+### Bug Fixes
+
+* **core:** default enable auto breakpoints for chat model ([d4a6b83](https://github.com/AIGNE-io/aigne-framework/commit/d4a6b8323d6c83be45669885b32febb545bdf797))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.14
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.14
+
+## [0.14.16-beta.14](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.13...anthropic-v0.14.16-beta.14) (2026-01-08)
+
+
+### Bug Fixes
+
+* bump version ([696560f](https://github.com/AIGNE-io/aigne-framework/commit/696560fa2673eddcb4d00ac0523fbbbde7273cb3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.13
+    * @aigne/platform-helpers bumped to 0.6.7-beta.1
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.13
+
+## [0.14.16-beta.13](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.12...anthropic-v0.14.16-beta.13) (2026-01-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.12
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.12
+
+## [0.14.16-beta.12](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.11...anthropic-v0.14.16-beta.12) (2026-01-06)
+
+
+### Bug Fixes
+
+* **core:** preserve Agent Skill in session compact and support complex tool result content ([#876](https://github.com/AIGNE-io/aigne-framework/issues/876)) ([edb86ae](https://github.com/AIGNE-io/aigne-framework/commit/edb86ae2b9cfe56a8f08b276f843606e310566cf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.11
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.11
+
+## [0.14.16-beta.11](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.10...anthropic-v0.14.16-beta.11) (2026-01-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.10
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.10
+
+## [0.14.16-beta.10](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.9...anthropic-v0.14.16-beta.10) (2026-01-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/core bumped to 1.72.0-beta.9
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69-beta.9
+
 ## [0.14.16-beta.9](https://github.com/AIGNE-io/aigne-framework/compare/anthropic-v0.14.16-beta.8...anthropic-v0.14.16-beta.9) (2025-12-31)
 
 

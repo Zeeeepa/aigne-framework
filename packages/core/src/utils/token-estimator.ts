@@ -5,7 +5,7 @@
 const CHAR_TYPE_RATIOS = {
   chinese: 1.5, // Chinese characters: ~1.5 characters per token
   word: 0.75, // English words: ~0.75 tokens per word (accounting for subword tokenization)
-  other: 4, // Other characters (punctuation, numbers, etc.): ~4 characters per token
+  other: 1, // Other characters (punctuation, numbers, etc.): ~1 character per token
 };
 
 /**

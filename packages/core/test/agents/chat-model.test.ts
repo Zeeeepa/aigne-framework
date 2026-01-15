@@ -484,14 +484,12 @@ test("ChatModel should retry after tool not found error", async () => {
 });
 
 test("ChatModel should save file to local", async () => {
-  const context = new AIGNE().newContext();
   const model = new OpenAIChatModel({});
 
-  const result = await model.transformFileType(
-    undefined,
-    { type: "file", data: Buffer.from("test data").toString("base64") },
-    { context },
-  );
+  const result = await model.transformFileType(undefined, {
+    type: "file",
+    data: Buffer.from("test data").toString("base64"),
+  });
   expect(result).toMatchInlineSnapshot(
     { path: expect.any(String) },
     `
@@ -505,16 +503,14 @@ test("ChatModel should save file to local", async () => {
 });
 
 test("ChatModel should download file", async () => {
-  const context = new AIGNE().newContext();
   const model = new OpenAIChatModel({});
 
   const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("test png file"));
 
-  const result = await model.transformFileType(
-    "file",
-    { type: "url", url: "https://www.example.com/test.png" },
-    { context },
-  );
+  const result = await model.transformFileType("file", {
+    type: "url",
+    url: "https://www.example.com/test.png",
+  });
   expect(result).toMatchInlineSnapshot(`
     {
       "data": "dGVzdCBwbmcgZmlsZQ==",
@@ -652,18 +648,28 @@ test("ChatModel getModelOptions should support nested getter pattern", async () 
     { context },
   );
 
-  expect(resolvedOptions).toEqual({
-    temperature: 0.5,
-    topP: 0.9,
-    customConfig: {
-      nestedValue: "resolved-from-context",
-      staticValue: "unchanged",
-      deepNested: {
-        level2: 42,
-        array: ["resolved-array-item", "static"],
+  expect(resolvedOptions).toMatchInlineSnapshot(`
+    {
+      "cacheConfig": {
+        "autoBreakpoints": {
+          "lastMessage": true,
+        },
       },
-    },
-  });
+      "customConfig": {
+        "deepNested": {
+          "array": [
+            "resolved-array-item",
+            "static",
+          ],
+          "level2": 42,
+        },
+        "nestedValue": "resolved-from-context",
+        "staticValue": "unchanged",
+      },
+      "temperature": 0.5,
+      "topP": 0.9,
+    }
+  `);
 });
 
 test("ChatModel getModelOptions should resolve nested getter from input properties", async () => {
@@ -691,9 +697,16 @@ test("ChatModel getModelOptions should resolve nested getter from input properti
     { context },
   );
 
-  expect(resolvedOptions).toEqual({
-    config: {
-      value: "from-input-property",
-    },
-  });
+  expect(resolvedOptions).toMatchInlineSnapshot(`
+    {
+      "cacheConfig": {
+        "autoBreakpoints": {
+          "lastMessage": true,
+        },
+      },
+      "config": {
+        "value": "from-input-property",
+      },
+    }
+  `);
 });

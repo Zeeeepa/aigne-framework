@@ -1,6 +1,6 @@
 {
   "name": "@aigne/test-browser",
-  "version": "0.0.2-beta.3",
+  "version": "0.0.2-beta.4",
   "description": "A demonstration of using AIGNE Framework in the browser",
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
   "homepage": "https://github.com/AIGNE-io/aigne-framework/tree/main/examples/brwoser",
@@ -22,9 +22,9 @@
     "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text"
   },
   "dependencies": {
+    "@aigne/afs-history": "workspace:^",
     "@aigne/agent-library": "workspace:^",
     "@aigne/core": "workspace:^",
-    "@aigne/default-memory": "workspace:^",
     "@aigne/openai": "workspace:^",
     "@aigne/transport": "workspace:^",
     "react": "^19.1.1",
