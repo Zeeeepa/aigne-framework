@@ -179,6 +179,9 @@
     },
     "afs/local-fs": {
       "prerelease-type": "beta"
+    },
+    "@aigne/afs-sqlite": {
+      "prerelease-type": "beta"
     }
   },
   "plugins": [
