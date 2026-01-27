@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.5.0-beta](https://github.com/AIGNE-io/aigne-framework/compare/afs-local-fs-v1.4.0...afs-local-fs-v1.5.0-beta) (2026-01-20)
+
+
+### Features
+
+* **afs:** add @aigne/afs-utils package ([#927](https://github.com/AIGNE-io/aigne-framework/issues/927)) ([3922635](https://github.com/AIGNE-io/aigne-framework/commit/3922635981aab4578607c5bf1fb882c8e45725ce))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs-utils bumped to 1.0.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.70-beta
+
+## [1.4.0](https://github.com/AIGNE-io/aigne-framework/compare/afs-local-fs-v1.4.0-beta.26...afs-local-fs-v1.4.0) (2026-01-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @aigne/afs bumped to 1.4.0
+    * @aigne/core bumped to 1.72.0
+  * devDependencies
+    * @aigne/test-utils bumped to 0.5.69
+
 ## [1.4.0-beta.26](https://github.com/AIGNE-io/aigne-framework/compare/afs-local-fs-v1.4.0-beta.25...afs-local-fs-v1.4.0-beta.26) (2026-01-16)
 
 

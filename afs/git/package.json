@@ -1,6 +1,6 @@
 {
   "name": "@aigne/afs-git",
-  "version": "1.1.0-beta",
+  "version": "1.2.0-beta",
   "description": "AIGNE AFS module for git storage",
   "publishConfig": {
     "access": "public"
@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "@aigne/afs": "workspace:^",
-    "@aigne/core": "workspace:^",
+    "@aigne/afs-utils": "workspace:^",
     "simple-git": "^3.27.0",
     "zod": "^3.25.67"
   },
